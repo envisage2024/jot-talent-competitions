@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ranks · Leaderboard</title>
+    <style>
+        :root{
+            --bg:#0f1724;
+            --card:#0b1220;
+            --muted:#9aa4b2;
+            --accent:#2dd4bf;
+            --accent-2:#60a5fa;
+            --danger:#fb7185;
+            --glass: rgba(255,255,255,0.03);
+            --radius:10px;
+            --gap:14px;
+            font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+        }
+        html,body{height:100%;margin:0;background:linear-gradient(180deg,#071025 0%, #07142a 100%);color:#e6eef6}
+        a{color:inherit;text-decoration:none}
+        /* Top nav */
+        .topbar{
+            display:flex;align-items:center;gap:16px;padding:14px 20px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            position:sticky;top:0;z-index:10;
+        }
+        .brand{display:flex;align-items:center;gap:12px}
+        .logo{
+            width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+            display:flex;align-items:center;justify-content:center;font-weight:700;color:#052025;
+            box-shadow:0 6px 18px rgba(47,128,237,0.06);
+        }
+        .app-name{font-weight:600;font-size:16px}
+        .navlinks{margin-left:18px;display:flex;gap:8px;align-items:center}
+        .navlinks a{padding:8px 12px;border-radius:8px;color:var(--muted);font-size:14px}
+        .navlinks a.active{background:var(--glass);color:var(--accent-2);box-shadow:inset 0 -1px 0 rgba(255,255,255,0.02)}
+        .topbar .spacer{flex:1}
+        .control-btn{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:8px 10px;border-radius:10px;color:var(--muted);cursor:pointer}
+        /* layout */
+        .container{display:flex;gap:20px;padding:20px;max-width:1200px;margin:20px auto}
+        .sidebar{width:220px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:16px;border-radius:12px}
+        .sidebar a{display:block;padding:10px;border-radius:8px;color:var(--muted);margin-bottom:6px}
+        .sidebar a.active{background:rgba(255,255,255,0.02);color:var(--accent)}
+        .main{flex:1}
+        .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:16px;border-radius:var(--radius);box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.02)}
+        .row{display:flex;gap:12px;align-items:center}
+        .controls{display:flex;gap:10px;flex-wrap:wrap}
+        .btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:none;color:#03202a;padding:8px 12px;border-radius:9px;cursor:pointer;font-weight:600}
+        .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+        .small{font-size:13px;padding:6px 8px;border-radius:8px}
+        /* leaderboard table */
+        .leaderboard{margin-top:14px;border-radius:8px;overflow:hidden}
+        .lb-header{display:grid;grid-template-columns:60px 1fr 120px 110px;gap:12px;padding:12px;background:rgba(255,255,255,0.01);font-size:13px;color:var(--muted);align-items:center}
+        .lb-row{display:grid;grid-template-columns:60px 1fr 120px 110px;gap:12px;padding:12px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.02)}
+        .rank-circle{width:44px;height:44px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,0.015),transparent);display:flex;align-items:center;justify-content:center;font-weight:700}
+        .rank-1{background:linear-gradient(135deg,#ffd166,#fca311);color:#111}
+        .rank-2{background:linear-gradient(135deg,#e0e0e0,#cfcfcf);color:#041017}
+        .rank-3{background:linear-gradient(135deg,#f1c0e8,#d69de1);color:#08111a}
+        .participant{display:flex;gap:12px;align-items:center}
+        .avatar{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#1e293b,#0b1220);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)}
+        .muted{color:var(--muted);font-size:13px}
+        .badge{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);font-weight:600;font-size:13px}
+        .qualified{background:linear-gradient(90deg,#16a34a,#34d399);color:#012214}
+        .not-qualified{background:linear-gradient(90deg,#ef4444,#fb7185);color:#2a0a0a}
+        .actions{display:flex;gap:6px;justify-content:flex-end}
+        .action-btn{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:8px;color:var(--muted);cursor:pointer}
+        .empty{padding:24px;text-align:center;color:var(--muted)}
+        /* responsive */
+        @media (max-width:880px){.container{padding:12px;flex-direction:column}.sidebar{width:100%}.row{flex-direction:column;align-items:stretch}.lb-header,.lb-row{grid-template-columns:56px 1fr 90px 90px}}
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="logo">LB</div>
+            <div>
+                <div class="app-name">Competition App</div>
+                <div style="font-size:12px;color:var(--muted)">Leaderboards & Ranks</div>
+            </div>
+        </div>
+        <nav class="navlinks" aria-label="main navigation">
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/ranks.html" class="active">Ranks</a>
+            <a href="/competitions.html">Competitions</a>
+        </nav>
+        <div class="spacer"></div>
+        <button class="control-btn" id="importBtn">Import</button>
+        <button class="control-btn" id="exportBtn">Export</button>
+    </header>
+
+    <main class="container">
+        <aside class="sidebar card">
+            <div style="font-weight:700;margin-bottom:8px">Navigation</div>
+            <a href="/dashboard.html">Overview</a>
+            <a href="/competitions.html">Competitions</a>
+            <a href="/ranks.html" class="active">All Ranks</a>
+            <a href="/settings.html">Settings</a>
+            <div style="height:12px"></div>
+            <div style="font-size:13px;color:var(--muted)">Local storage size: <span id="lsSize">-</span></div>
+            <div style="height:8px"></div>
+            <button class="btn small" id="sampleBtn">Add sample data</button>
+            <button class="btn small ghost" id="clearAllBtn">Clear all ranks</button>
+        </aside>
+
+        <section class="main">
+            <div class="card">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                    <div>
+                        <h2 style="margin:0 0 6px 0">Leaderboard — All Rounds</h2>
+                        <div style="color:var(--muted);font-size:13px">View saved ranks from all competitions and rounds. These are stored client-side (localStorage). This page will update automatically when other pages save ranks.</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center">
+                        <select id="roundSelect" class="small" aria-label="Choose round">
+                            <option value="">-- All rounds --</option>
+                        </select>
+                        <input id="search" placeholder="Search participant..." class="small" style="min-width:160px" />
+                        <button class="btn small" id="addBtn">Add rank</button>
+                    </div>
+                </div>
+
+                <div class="leaderboard" id="leaderboard" style="margin-top:12px">
+                    <div class="lb-header">
+                        <div>Rank</div>
+                        <div>Participant</div>
+                        <div>Points</div>
+                        <div style="text-align:right">Actions</div>
+                    </div>
+                    <div id="lbBody"></div>
+                </div>
+            </div>
+
+            <div style="height:14px"></div>
+
+            <div class="card" id="formCard" style="display:none;margin-top:8px">
+                <form id="rankForm">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                        <input name="round" placeholder="Round name (e.g. Round 1 - Qualifiers)" required class="small" style="min-width:240px"/>
+                        <input name="name" placeholder="Participant name" required class="small" />
+                        <input name="position" type="number" placeholder="Position (1 = top)" required class="small" style="width:120px"/>
+                        <input name="points" type="number" placeholder="Points" class="small" style="width:120px"/>
+                        <select name="approvedBy" class="small" style="width:160px">
+                            <option value="judge">Approved by judge</option>
+                            <option value="public">Approved by public</option>
+                        </select>
+                        <label style="display:flex;align-items:center;gap:8px">
+                            <input name="qualified" type="checkbox" /> <span style="color:var(--muted)">Qualified</span>
+                        </label>
+                        <div style="flex:1"></div>
+                        <div class="actions">
+                            <button type="button" class="btn ghost" id="cancelForm">Cancel</button>
+                            <button type="submit" class="btn">Save rank</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        // Simple localStorage-backed leaderboard manager with cross-tab/page sync
+        const STORAGE_KEY = 'ranks_data_v1';
+        // Broadcast channel name used for real-time sync between pages
+        const BC_NAME = 'ranks_channel';
+
+        function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+        function readData(){
+            try{
+                return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"rounds":{}}');
+            }catch(e){
+                return {rounds:{}};
+            }
+        }
+        function writeData(data){
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            updateLSSize();
+        }
+
+        // merge incoming -> existing: keep latest by ts, avoid duplicate ids
+        function mergeData(incoming){
+            if(!incoming || !incoming.rounds) return readData();
+            const existing = readData();
+            const result = { rounds: {} };
+
+            // start with existing rounds
+            for(const [r, arr] of Object.entries(existing.rounds || {})){
+                result.rounds[r] = arr.slice();
+            }
+            // merge incoming
+            for(const [r, arr] of Object.entries(incoming.rounds || {})){
+                if(!result.rounds[r]) result.rounds[r] = [];
+                for(const item of arr){
+                    const idx = result.rounds[r].findIndex(x=>x.id === item.id);
+                    if(idx === -1){
+                        result.rounds[r].push(item);
+                    }else{
+                        // choose latest by ts (if provided)
+                        if((item.ts || 0) >= (result.rounds[r][idx].ts || 0)){
+                            result.rounds[r][idx] = item;
+                        }
+                    }
+                }
+            }
+            // optional: remove empty rounds
+            for(const [r, arr] of Object.entries(result.rounds)){
+                if(!arr || arr.length === 0) delete result.rounds[r];
+            }
+            return result;
+        }
+
+        // BroadcastChannel (fallback gracefully if not supported)
+        let bc = null;
+        try{ if('BroadcastChannel' in window) bc = new BroadcastChannel(BC_NAME); }catch(e){ bc = null; }
+
+        // UI refs
+        const roundSelect = document.getElementById('roundSelect');
+        const lbBody = document.getElementById('lbBody');
+        const searchInput = document.getElementById('search');
+        const addBtn = document.getElementById('addBtn');
+        const formCard = document.getElementById('formCard');
+        const rankForm = document.getElementById('rankForm');
+        const cancelForm = document.getElementById('cancelForm');
+        const sampleBtn = document.getElementById('sampleBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const importBtn = document.getElementById('importBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const lsSizeEl = document.getElementById('lsSize');
+
+        function updateLSSize(){
+            try{
+                const size = new Blob([localStorage.getItem(STORAGE_KEY) || '']).size;
+                lsSizeEl.textContent = (size/1024).toFixed(2) + ' KB';
+            }catch(e){ lsSizeEl.textContent = '-'; }
+        }
+
+        function refreshRoundSelect(){
+            const rounds = getAllRounds();
+            roundSelect.innerHTML = '<option value="">-- All rounds --</option>';
+            for(const r of rounds){
+                const opt = document.createElement('option');
+                opt.value = r; opt.textContent = r;
+                roundSelect.appendChild(opt);
+            }
+        }
+
+        function getAllRounds(){
+            const data = readData();
+            return Object.keys(data.rounds).sort();
+        }
+
+        function getVisibleEntries(){
+            const data = readData();
+            const selected = roundSelect.value;
+            const query = (searchInput.value || '').toLowerCase().trim();
+            let entries = [];
+            for(const [round, arr] of Object.entries(data.rounds)){
+                if(selected && round !== selected) continue;
+                for(const e of arr){
+                    entries.push(Object.assign({round}, e));
+                }
+            }
+            if(query){
+                entries = entries.filter(e => (e.name || '').toLowerCase().includes(query) || (e.round || '').toLowerCase().includes(query));
+            }
+            // sort by round then by position numerically
+            entries.sort((a,b)=> {
+                if(a.round < b.round) return -1;
+                if(a.round > b.round) return 1;
+                return (Number(a.position) || 999) - (Number(b.position) || 999);
+            });
+            return entries;
+        }
+
+        function renderLeaderboard(){
+            const entries = getVisibleEntries();
+            lbBody.innerHTML = '';
+            if(entries.length === 0){
+                lbBody.innerHTML = '<div class="empty">No ranks saved for the selected round/search.</div>';
+                return;
+            }
+            // group by round to show each round header
+            let currentRound = null;
+            for(const e of entries){
+                if(e.round !== currentRound){
+                    currentRound = e.round;
+                    const hdr = document.createElement('div');
+                    hdr.style.padding = '10px 12px';
+                    hdr.style.fontWeight = '700';
+                    hdr.style.color = 'var(--muted)';
+                    hdr.textContent = currentRound;
+                    lbBody.appendChild(hdr);
+                }
+                const row = document.createElement('div');
+                row.className = 'lb-row';
+                // rank
+                const rankDiv = document.createElement('div');
+                const rankC = document.createElement('div');
+                rankC.className = 'rank-circle';
+                if(Number(e.position) === 1) rankC.classList.add('rank-1');
+                else if(Number(e.position) === 2) rankC.classList.add('rank-2');
+                else if(Number(e.position) === 3) rankC.classList.add('rank-3');
+                rankC.textContent = e.position != null ? e.position : '-';
+                rankDiv.appendChild(rankC);
+                // participant
+                const participant = document.createElement('div');
+                participant.className = 'participant';
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.textContent = (e.name || '?').split(' ').map(s=>s[0]?.toUpperCase()).slice(0,2).join('');
+                const info = document.createElement('div');
+                const nameEl = document.createElement('div');
+                nameEl.textContent = e.name;
+                nameEl.style.fontWeight = 700;
+                const meta = document.createElement('div');
+                meta.className = 'muted';
+                meta.textContent = `${e.approvedBy || 'judge'} • ${e.round}`;
+                info.appendChild(nameEl); info.appendChild(meta);
+                participant.appendChild(avatar); participant.appendChild(info);
+                // points
+                const pointsDiv = document.createElement('div');
+                pointsDiv.style.display='flex';pointsDiv.style.justifyContent='flex-start';pointsDiv.style.gap='8px';pointsDiv.style.alignItems='center';
+                const pts = document.createElement('div');
+                pts.style.fontWeight='700'; pts.textContent = e.points != null ? e.points : '-';
+                pointsDiv.appendChild(pts);
+                if(e.qualified){
+                    const q = document.createElement('div');
+                    q.className='badge qualified';
+                    q.textContent='Qualified';
+                    pointsDiv.appendChild(q);
+                } else {
+                    const nq = document.createElement('div');
+                    nq.className='badge not-qualified';
+                    nq.textContent='Out';
+                    pointsDiv.appendChild(nq);
+                }
+                // actions
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                const del = document.createElement('button');
+                del.className = 'action-btn';
+                del.textContent = 'Delete';
+                del.onclick = ()=>{ if(confirm('Delete this rank?')) deleteEntry(e.round,e.id); };
+                const edit = document.createElement('button');
+                edit.className = 'action-btn';
+                edit.textContent = 'Edit';
+                edit.onclick = ()=> openEditForm(e);
+                actions.appendChild(edit); actions.appendChild(del);
+
+                row.appendChild(rankDiv);
+                row.appendChild(participant);
+                row.appendChild(pointsDiv);
+                const actionWrap = document.createElement('div');
+                actionWrap.style.textAlign='right';
+                actionWrap.appendChild(actions);
+                row.appendChild(actionWrap);
+
+                lbBody.appendChild(row);
+            }
+        }
+
+        // send current data to other pages/tabs
+        function broadcastSync(){
+            if(!bc) return;
+            try{
+                bc.postMessage({ type: 'sync', data: readData() });
+            }catch(e){}
+        }
+
+        // When receiving a sync message from other pages, merge and apply
+        if(bc){
+            bc.onmessage = (ev) => {
+                try{
+                    const msg = ev.data;
+                    if(!msg || !msg.type) return;
+                    if(msg.type === 'sync_request'){
+                        // other page asked for current data
+                        bc.postMessage({ type: 'sync', data: readData() });
+                    } else if(msg.type === 'sync'){
+                        // merge incoming changes and update local store
+                        const merged = mergeData(msg.data);
+                        writeData(merged);
+                        refreshRoundSelect();
+                        renderLeaderboard();
+                    } else if(msg.type === 'clear_all'){
+                        // another page cleared all ranks
+                        localStorage.removeItem(STORAGE_KEY);
+                        updateLSSize();
+                        refreshRoundSelect();
+                        renderLeaderboard();
+                    }
+                }catch(e){}
+            };
+        }
+
+        // listen to storage events (other tabs that modify localStorage directly)
+        window.addEventListener('storage', (ev) => {
+            if(ev.key === STORAGE_KEY){
+                // data changed elsewhere - refresh UI
+                refreshRoundSelect();
+                renderLeaderboard();
+            }
+        });
+
+        function saveEntry(round, entry){
+            const data = readData();
+            if(!data.rounds[round]) data.rounds[round] = [];
+            // if id exists replace, else push
+            const i = data.rounds[round].findIndex(x=>x.id === entry.id);
+            if(i>=0) data.rounds[round][i] = entry;
+            else data.rounds[round].push(entry);
+            writeData(data);
+            refreshRoundSelect();
+            renderLeaderboard();
+            // notify other pages
+            broadcastSync();
+        }
+
+        function deleteEntry(round,id){
+            const data = readData();
+            if(!data.rounds[round]) return;
+            data.rounds[round] = data.rounds[round].filter(x=>x.id !== id);
+            if(data.rounds[round].length === 0) delete data.rounds[round];
+            writeData(data);
+            refreshRoundSelect();
+            renderLeaderboard();
+            broadcastSync();
+        }
+
+        function clearAll(){
+            if(!confirm('Clear all saved ranks from this browser?')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            updateLSSize();
+            refreshRoundSelect();
+            renderLeaderboard();
+            // inform other pages
+            if(bc){
+                try{ bc.postMessage({ type: 'clear_all' }); }catch(e){}
+            }
+        }
+
+        function openEditForm(e){
+            formCard.style.display = '';
+            rankForm.round.value = e.round;
+            rankForm.name.value = e.name;
+            rankForm.position.value = e.position;
+            rankForm.points.value = e.points;
+            rankForm.approvedBy.value = e.approvedBy || 'judge';
+            rankForm.qualified.checked = !!e.qualified;
+            rankForm.dataset.editId = e.id;
+            window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+        }
+
+        function openAddForm(){
+            formCard.style.display = '';
+            rankForm.reset();
+            delete rankForm.dataset.editId;
+            rankForm.round.focus();
+        }
+
+        rankForm.addEventListener('submit', (ev)=>{
+            ev.preventDefault();
+            const f = rankForm;
+            const obj = {
+                id: f.dataset.editId || uid(),
+                name: f.name.value.trim(),
+                position: f.position.value !== '' ? Number(f.position.value) : null,
+                points: f.points.value !== '' ? Number(f.points.value) : null,
+                approvedBy: f.approvedBy.value,
+                qualified: !!f.qualified.checked,
+                ts: Date.now()
+            };
+            const round = f.round.value.trim() || 'Unspecified';
+            saveEntry(round,obj);
+            f.reset();
+            delete f.dataset.editId;
+            formCard.style.display = 'none';
+        });
+
+        cancelForm.addEventListener('click', ()=>{
+            rankForm.reset();
+            delete rankForm.dataset.editId;
+            formCard.style.display = 'none';
+        });
+
+        addBtn.addEventListener('click', openAddForm);
+        sampleBtn.addEventListener('click', addSampleData);
+        clearAllBtn.addEventListener('click', clearAll);
+        searchInput.addEventListener('input', renderLeaderboard);
+        roundSelect.addEventListener('change', renderLeaderboard);
+
+        exportBtn.addEventListener('click', ()=> {
+            const data = readData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'ranks-export.json'; a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        importBtn.addEventListener('click', ()=> {
+            const inp = document.createElement('input');
+            inp.type = 'file'; inp.accept='.json,application/json';
+            inp.onchange = ()=> {
+                const f = inp.files[0]; if(!f) return;
+                const reader = new FileReader();
+                reader.onload = ()=> {
+                    try{
+                        const imported = JSON.parse(reader.result);
+                        if(imported && imported.rounds && typeof imported.rounds === 'object'){
+                            // merge imported data with existing
+                            const merged = mergeData(imported);
+                            writeData(merged);
+                            refreshRoundSelect();
+                            renderLeaderboard();
+                            // notify other pages
+                            broadcastSync();
+                            alert('Import successful.');
+                        }else{
+                            alert('Invalid file format.');
+                        }
+                    }catch(err){
+                        alert('Could not parse file.');
+                    }
+                };
+                reader.readAsText(f);
+            };
+            inp.click();
+        });
+
+        function addSampleData(){
+            const data = readData();
+            const r1 = 'Round 1 - Qualifiers';
+            const r2 = 'Round 2 - Semifinal';
+            if(!data.rounds[r1]) data.rounds[r1] = [];
+            if(!data.rounds[r2]) data.rounds[r2] = [];
+            data.rounds[r1].push(
+                {id:uid(), name:'Aisha Khan', position:1, points:98, approvedBy:'judge', qualified:true, ts:Date.now()},
+                {id:uid(), name:'Marco Silva', position:2, points:92, approvedBy:'public', qualified:true, ts:Date.now()},
+                {id:uid(), name:'Lina Park', position:3, points:87, approvedBy:'judge', qualified:true, ts:Date.now()},
+                {id:uid(), name:'Evan Cole', position:4, points:78, approvedBy:'judge', qualified:false, ts:Date.now()}
+            );
+            data.rounds[r2].push(
+                {id:uid(), name:'Aisha Khan', position:1, points:99, approvedBy:'judge', qualified:true, ts:Date.now()},
+                {id:uid(), name:'Marco Silva', position:2, points:95, approvedBy:'public', qualified:true, ts:Date.now()}
+            );
+            writeData(data);
+            refreshRoundSelect();
+            renderLeaderboard();
+            broadcastSync();
+        }
+
+        // initialization
+        (function init(){
+            updateLSSize();
+            refreshRoundSelect();
+            renderLeaderboard();
+            // place keyboard shortcut: "/" focus search
+            window.addEventListener('keydown', e=>{
+                if(e.key === '/') { e.preventDefault(); searchInput.focus(); }
+            });
+            // new tab/page can request sync by broadcasting a 'sync_request'
+            // respond immediately with current data
+            if(bc){
+                try{ bc.postMessage({ type: 'sync_request' }); }catch(e){}
+            }
+        })();
+    </script>
+</body>
+</html>

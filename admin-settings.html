@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - Jot Talent Competitions</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css" />
+    <script>
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        }
+      </script>
+    <script>
+        (function(){
+            try {
+                var adminRaw = localStorage.getItem('jot_talent_current_admin');
+                var loginOrigin = null; try { loginOrigin = sessionStorage.getItem('jot_talent_admin_login_origin'); } catch(e){}
+                if (!adminRaw || !loginOrigin) { window.location.href = 'admin-login.html'; return; }
+                try { var adminObj = JSON.parse(adminRaw); if (!adminObj || !adminObj.email) { window.location.href = 'admin-login.html'; } } catch(e) { window.location.href = 'admin-login.html'; }
+            } catch(e){}
+        })();
+    </script>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar admin-nav">
+            <div class="nav-brand">
+                <a href="admin-dashboard.html">
+                    <img src="images/logo.png" id="img-logo">
+                    <span>Jot Talent Admin</span>
+                </a>
+            </div>
+            <div class="nav-links admin-nav-links">
+                <a href="admin-dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-announcements.html"><i class="fas fa-bullhorn"></i> Announcements</a>
+                <a href="admin-settings.html"><i class="fas fa-cog"></i> Settings</a>
+                <a href="#" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+    <script src="js/theme.js"></script>
+
+    <main class="admin-main">
+        <div class="container">
+            <div class="admin-header">
+                <h1><i class="fas fa-cog"></i> Competition Rounds Management</h1>
+                <p>Activate and manage competition rounds. Only qualified participants will proceed to the next stage.</p>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-card">
+                    <h3><i class="fas fa-layer-group"></i> Rounds Control</h3>
+                    <button class="primary-button" onclick="activateRound(2)"><i class="fas fa-play"></i> Activate Second Round</button>
+                    <button class="primary-button" onclick="activateRound(3)"><i class="fas fa-play"></i> Activate Third Round</button>
+                    <button class="primary-button" onclick="activateFinalRound()"><i class="fas fa-vote-yea"></i> Activate Final Round (Public Voting)</button>
+                </div>
+                <div class="rounds-history">
+                    <h4><i class="fas fa-history"></i> Rounds Status</h4>
+                    <ul id="roundsList">
+                        <!-- Rounds will be listed here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/script.js"></script>
+    <script src="js/admin-settings.js"></script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

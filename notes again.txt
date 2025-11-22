@@ -1,0 +1,17 @@
+Nav bar
+Contact Us
+Light and dark theme
+I agree to the "Terms and Conditions" link
+Firebase supported chart room
+Certificates and the cash prizes
+
+Categories too
+    1. UGX 500,000      Gold
+    2. UGX 300,000      Silver
+    3. UGX 200,000      Bronze
+
+The judges page
+
+
+Make sure the test round is fully linked to the Firebase
+All users should have a status, unpaid when they join at first and then paid after making the payment

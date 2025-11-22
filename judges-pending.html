@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Submissions - Judges - Jot Talent Competitions</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css" />
+    <!-- Firebase (needed to load submissions directly from Firestore) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        // Firebase configuration (same project)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgnkqrg_2clJ77WTonEQFC3gwVrG7HrO4",
+            authDomain: "jot-talent-competitions-72b9f.firebaseapp.com",
+            databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com",
+            projectId: "jot-talent-competitions-72b9f",
+            storageBucket: "jot-talent-competitions-72b9f.firebasestorage.app",
+            messagingSenderId: "25581487736",
+            appId: "1:25581487736:web:a3730b66cd4fb7d9ebcf8d",
+            measurementId: "G-8NRD37H5YD"
+        };
+        try {
+            if (!window.firebase || !firebase.apps || !firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+        } catch (e) { console.warn('Firebase init skipped or failed', e); }
+        // expose db
+        const db = (window.firebase && firebase.firestore) ? firebase.firestore() : null;
+    </script>
+    <script>
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-mode");
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="judges-pending.html">
+                    <img src="images/logo.png" id="img-logo">
+                    <span>Jot Talent Judges</span>
+                </a>
+            </div>
+            <div class="nav-links user-nav">
+                <a href="judges-pending.html" class="active"><i class="fas fa-hourglass-half"></i> Pending Submissions</a>
+                <a href="#" onclick="judgeLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="page-main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-hourglass-half"></i> Pending Submissions</h1>
+                <p>Review and judge articles anonymously. Submitters' names and usernames are hidden.</p>
+            </div>
+
+            <div class="filters" style="margin:18px 0; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                <label style="display:flex; gap:8px; align-items:center;"><strong>Category</strong>
+                    <select id="filterCategory">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label style="display:flex; gap:8px; align-items:center;"><strong>Round</strong>
+                    <select id="filterRound">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label style="display:flex; gap:8px; align-items:center;">
+                    <input id="filterSearch" type="search" placeholder="Search title or content" style="padding:8px 10px; border-radius:8px; border:1px solid #ddd;">
+                </label>
+                <button id="filterClear" class="primary-button" style="padding:8px 12px; border-radius:8px;">Clear</button>
+            </div>
+
+            <div id="pendingSubmissionsList">
+                <!-- Submissions will be rendered here by js/judges-pending.js -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Feedback modal (global) -->
+    <div id="feedbackModal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:9999;">
+        <div class="modal-dialog" style="background:#fff; width:820px; max-width:95%; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.4); overflow:hidden;">
+            <div style="padding:18px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div>
+                    <h3 id="modalTitle" style="margin:0; font-size:18px;">Provide feedback</h3>
+                    <div id="modalMeta" style="color:#666; font-size:13px; margin-top:6px;"></div>
+                </div>
+                <button id="modalClose" class="secondary-button" style="background:transparent; border:none; font-size:18px; padding:8px 12px;">✕</button>
+            </div>
+            <div style="padding:18px; display:grid; grid-template-columns: 1fr 340px; gap:18px;">
+                <div>
+                    <div id="modalContent" style="max-height:420px; overflow:auto; padding-right:6px; color:#222;"></div>
+                </div>
+                <div>
+                    <form id="modalFeedbackForm" style="display:flex; flex-direction:column; gap:12px;">
+                        <div>
+                            <label style="font-weight:600; display:flex; justify-content:space-between; align-items:center;"><span>Rating (1-10)</span><span id="modalRatingDisplay" style="font-weight:700; color:#f59e0b;">5</span></label>
+                            <input type="range" name="rating" id="modalRating" min="1" max="10" value="5" style="width:100%;" />
+                        </div>
+                        <div>
+                            <label style="font-weight:600;">Feedback</label>
+                            <textarea id="modalFeedback" name="feedback" rows="8" placeholder="Write constructive feedback for the author..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #e5e7eb;"></textarea>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:6px;">
+                            <button type="submit" class="primary-button" style="flex:1;">Submit & Mark Reviewed</button>
+                            <button type="button" id="modalCancel" class="secondary-button" style="flex:0 0 auto; background:#f3f4f6;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/judge-session.js"></script>
+    <script>
+        // Enforce judge session
+        (function() {
+            const sess = window.getJudgeSession();
+            if (!sess || !sess.uid) {
+                window.location.href = 'judges-login.html';
+                return;
+            }
+            // Attach logout handler to nav link
+            window.judgeLogout = function() {
+                window.setJudgeSession(null);
+                window.location.href = 'judges-login.html';
+            };
+        })();
+    </script>
+    <script src="js/judges-pending.js"></script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

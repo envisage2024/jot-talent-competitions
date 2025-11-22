@@ -1,0 +1,16 @@
+/* Notifications page styles - consistent with theme */
+.notifications-list {
+	display: grid;
+	gap: 12px;
+}
+.notification-item {
+	background: var(--white);
+	padding: 12px 14px;
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-sm);
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+}
+.notification-item.unread { border-left: 4px solid var(--primary-orange); }
+.notification-meta { color: var(--text-light); font-size:0.95rem; }

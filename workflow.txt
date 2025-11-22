@@ -1,0 +1,42 @@
+Here’s a recommended order for linking your pages and data with Firebase, based on your workflow:
+
+Authentication First
+
+Link signup.html and login.html to Firebase Auth.
+Ensure users can register, log in, and their session is tracked.
+Profile & Payment
+
+After signup, direct users to a profile or payment page.
+Integrate payment (external service) and store payment status in Firestore.
+Submission
+
+Once payment is confirmed, allow access to submit.html.
+Use Firebase Storage for file uploads and Firestore for submission metadata.
+User Dashboard
+
+On dashboard.html, fetch user’s submissions, payment status, and review progress from Firestore.
+Admin Pages
+
+Link admin pages (admin-dashboard.html, admin-settings.html, admin-announcements.html) to Firestore for managing rounds, announcements, and user data.
+Judges Pages
+
+Judges log in via judges-login.html.
+On judges-dashboard.html and judges-pending.html, fetch submissions from Firestore, allow rating, advancing, or disqualifying.
+Announcements & Notifications
+
+Store announcements in Firestore.
+Display them on relevant pages (dashboard, public, etc.).
+Public Voting
+
+After judges select finalists, display them on a public page.
+Allow public voting, store votes in Firestore.
+Category Organization
+
+Store all submissions and rounds with a category field in Firestore.
+Filter and display data by category on all relevant pages.
+Summary of Linking:
+
+Start with authentication.
+Gate access to submission and dashboard by payment status.
+Use Firestore and Storage for all data (submissions, reviews, rounds, announcements, votes).
+Organize everything by category for easy filtering.

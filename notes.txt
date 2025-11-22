@@ -1,0 +1,45 @@
+⦁	Not just writings (Home page to be fixed with image slider)
+⦁	Usernames? Alongside full names ☑
+⦁	Currency ☑
+-   Light and dark theme 
+⦁	Prizes 
+⦁	No. of participants should not be seen by everyone
+⦁	Ranking as per category, three top winners per category
+⦁	Remove the other option and change it to play
+⦁	Certificates for the participants with their full names
+⦁	Both names (2) First and Second then other (optional)
+⦁	Reviewed / completed reviews page
+⦁	Separate the recent activites into categories
+⦁	Separate the submissions for the categories to view them differently
+⦁	Final round, the audience will be the one to vote
+⦁	Use of AI banned, wont be reviewed
+⦁	Be able to close submissions at a point
+⦁	Disqualify people and and only qualified will proceed
+- Show the where did you hear about data on the admin page
+
+Judges side to only review submissions and rate, give opinions, ONLY!
+Public side judging for last round.
+
+
+Jot Talent Competitions Management Ltd
+
+
+Contact Info (Public)
+compsjot6@gmail.com           Usernames: jot.comps
+Jotcomps@2025!                Universal password
+
+0785020480
+0749619467
+
+02200020003 Bank Code Account
+
+Namuddu Janet Katende
+Nalweyiso Joana Meek
+Jot Comps
+
+the AI api 1
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script>
+ 
+Admin login credentials error

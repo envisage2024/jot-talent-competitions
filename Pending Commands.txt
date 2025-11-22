@@ -1,0 +1,27 @@
+Okay, can you help do a code cleanup, place all css in stylesheets, (make another one) and the js for the pages in other js files (for each page) keep evrything working ad all well
+
+Okay, this is how the site is supposed to work, the client section for people to signup pya and submit their work and track their progress, the admin section to manage the settings and competition features, the judges section to review work, give ratings, advance and disqualify and then the public opinion where the overall winner will be selected from. Everything is to be organzied in the categories of submissions.
+
+Concrete suggestions and snippets
+
+Data model (recommended collections & docs)
+users/{uid}
+uid, username, fullName, email, bio, referralSource, termsAccepted, role, createdAt
+competitions/{competitionId}
+title, description, openAt, closeAt, rules, createdAt
+submissions/{submissionId}
+uid (author), competitionId, title, body/url, attachments (storage paths), createdAt, status
+votes/{voteId} or subcollection submissions/{id}/votes
+submissionId, voterUid (or anonymous token), value, createdAt
+notifications/{id} or users/{uid}/notifications
+targetUid, title, body, read, createdAt
+
+
+This is how login is supposed to work, When a user clicks on the login button from index.html, it is supposed to play that logo splash screen animation as it tries to see if the user had a previous session from when they never logged out. If it detects one it logs them into that account to dashbaord.html. If the session is not found, it should take the users to login.html. Now from here a user should be able to log in using their email and password details from when they created their account. Or they can log in with their goole account by clicking the login with google. After this they should also be logged into dashboard.html. In the case they have no account, they should be able to create one from signup.html. If they click sign in with google and they have no account, it should bring a dialog box asking them that they should complete the sign in by entering their remaining details which could not be fetched directly from their google account. After this it should allow the person to log into dashboard.html. Logging in also has to be persistent to the other user pages such as feedback.html, notifications.html and the rest. If a user who has not signed in tries to access these pages, it should redirect them back to login.html to force them to sign in first
+
+Now on this page, also add two more competitions, for now which are just saying coming soon. That is round two and round three. These ones are to be activated by the admin on the page admin-rounds.html When they activate them then those who qualified after getting a 5 star rating from the first trial by the judges are the only ones who can proceed. They should be notified in notifications.html that they went through to round two, and their personal feedback reflected on feedback.html. After that the same will also happen in round two, judges judge those with a 5 star rating and below are disqualified and above are allowed to proceed to the third and final round, which is to also be activated by the admin on admin-rounds.html When they submit to this still from submit.html, (which should enable them to only submit to that specific round they are participating in), this time their article goes to public.html whereby it will be the public to vote for their best article. It is open to anyone to vote and also after that then the admin can stop that round in admin-rounds.html too and the whole competition is closed. Take keen note on how feedbacks from judges on each writer's article is supposed to work, as well as notifications that accompany stopping rounds, qualifying and being disqualified. Help implement this 
+
+PUBLIC 
+this is the public side where all articles from those who qualified from round two and are participating for round three will be judged from. All their articles will be shown here and it will be the public (everyone/anyone) will be able to vote for their favourite article. When the admin stops this round, the people will be graded as per the highest number of votes.
+
+Now here on join, help add an test round. It is simply called test and we shall remove it later. Make anyone able to join it, also update submit such that one is able to have a field where they can select the round they are participating in (and if the rounds are doen, then those options should be invalid / disabled ) Now allow me to be able to test by joining the test, submitting my article to test round, and the judge receives and provides feedback which also is received by me on feedback.html (which should also be updated to show the feedback for the different rounds and all) and then i will know that the project has been properly linked to the firebase project with the different working databases

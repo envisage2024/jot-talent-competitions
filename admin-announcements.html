@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #f9c74f;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.05), 0 6px 6px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 14px 28px rgba(0, 0, 0, 0.12), 0 10px 10px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ec 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: left;
+            padding: 15px ;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand img {
+            height: 45px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-brand:hover img {
+            transform: rotate(10deg);
+        }
+
+        .nav-brand span {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--gray);
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: right;
+            gap: 8px;
+        }
+
+        .nav-links a:hover {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-links a.active {
+            background: rgba(67, 97, 238, 0.15);
+            color: var(--primary);
+        }
+
+        .nav-links a i {
+            font-size: 16px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* Admin Header */
+        .admin-header {
+            padding: 30px 0 20px;
+            text-align: center;
+        }
+
+        .admin-header h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .admin-header p {
+            font-size: 18px;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .stat-icon.blue {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .stat-icon.green {
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.orange {
+            background-color: rgba(249, 199, 79, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.pink {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--accent);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* Announcements Container */
+        .announcements-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 1024px) {
+            .announcements-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-card, .announcements-history {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .form-card:hover, .announcements-history:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+        .form-card h3, .history-header h3 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: var(--transition);
+            background-color: white;
+            color: var(--dark);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-group input {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        /* Buttons */
+        .primary-button, .secondary-button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Poppins', sans-serif;
+            border: none;
+        }
+
+        .primary-button {
+            background: var(--primary);
+            color: white;
+        }
+
+        .primary-button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .secondary-button {
+            background: white;
+            color: var(--dark);
+            border: 1px solid var(--light-gray);
+        }
+
+        .secondary-button:hover {
+            background: var(--light-gray);
+            transform: translateY(-2px);
+        }
+
+        /* History Section */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        #historyFilter {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--light-gray);
+            background-color: white;
+            color: var(--dark);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: var(--transition);
+            background-color: white;
+            color: var(--dark);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        .announcements-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .announcements-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .announcements-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .announcements-list::-webkit-scrollbar-thumb {
+            background-color: #c1c1c1;
+            border-radius: 20px;
+        }
+
+        .announcement-item {
+            padding: 18px;
+            border-radius: 12px;
+            background-color: var(--light);
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .announcement-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .announcement-title {
+            font-weight: 600;
+            font-size: 17px;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .announcement-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: var(--gray);
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .priority-badge {
+            padding: 3px 8px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .priority-normal {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .priority-important {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .priority-urgent {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .announcement-message {
+            color: var(--gray);
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .announcement-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: none;
+        }
+
+        .edit-btn {
+            background-color: transparent;
+            border: 1px solid var(--gray);
+            color: var(--gray);
+        }
+
+        .edit-btn:hover {
+            background-color: var(--gray);
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .delete-btn:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-sent {
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--success);
+        }
+
+        .status-scheduled {
+            background-color: rgba(249, 199, 79, 0.1);
+            color: var(--warning);
+        }
+
+        .status-draft {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+        .no-announcements {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+
+        .empty-icon {
+            font-size: 50px;
+            color: var(--light-gray);
+            margin-bottom: 15px;
+        }
+
+        .no-announcements h4 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        /* Quick Announcements */
+        .quick-announcements {
+            margin-top: 40px;
+            padding: 25px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .quick-announcements h3 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .quick-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .quick-announcement-btn {
+            padding: 15px;
+            background-color: var(--light);
+            border: 1px dashed var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .quick-announcement-btn:hover {
+            background-color: #e9ecef;
+            border-style: solid;
+            transform: translateY(-3px);
+        }
+
+        .quick-announcement-btn i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .modal-header h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-header h3 i {
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--dark);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .announcement-preview {
+            padding: 20px;
+            background-color: var(--light);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .preview-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .preview-message {
+            line-height: 1.6;
+            color: var(--gray);
+        }
+
+        .preview-stats {
+            padding: 15px;
+            background-color: var(--light);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        /* Confirmation Dialog */
+        .confirmation-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialog-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        .dialog-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .dialog-header h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dialog-body {
+            padding: 25px;
+        }
+
+        .dialog-message {
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: white;
+            color: var(--dark);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--accent);
+        }
+
+        .toast i {
+            font-size: 20px;
+        }
+
+        .toast.success i {
+            color: var(--success);
+        }
+
+        .toast.error i {
+            color: var(--accent);
+        }
+
+        /* Animation for new elements */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .announcement-item {
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .history-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .admin-header h1 {
+                font-size: 28px;
+            }
+            
+            .admin-header p {
+                font-size: 16px;
+            }
+            
+            .announcement-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .announcement-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar admin-nav">
+            <div class="nav-brand">
+                <a href="admin-dashboard.html">
+                    <img src="images/logo.png" id="img-logo">
+                    <span>Jot Talent Admin</span>
+                </a>
+            </div>
+            <div class="nav-links admin-nav-links">
+                <a href="admin-dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-completed.html"><i class="fas fa-check-circle"></i> Completed</a>
+                <a href="admin-announcements.html" class="active"><i class="fas fa-bullhorn"></i> Announcements</a>
+                <a href="#" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="admin-header">
+                <h1><i class="fas fa-bullhorn"></i> Manage Announcements</h1>
+                <p>Create and manage announcements for your organization</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div class="stat-value" id="totalAnnouncements">24</div>
+                    <div class="stat-label">Total Announcements</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-value" id="sentAnnouncements">18</div>
+                    <div class="stat-label">Sent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-value" id="scheduledAnnouncements">3</div>
+                    <div class="stat-label">Scheduled</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon pink">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-value" id="draftAnnouncements">3</div>
+                    <div class="stat-label">Drafts</div>
+                </div>
+            </div>
+
+            <div class="announcements-container">
+                <!-- Form Card -->
+                <div class="form-card">
+                    <h3><i class="fas fa-plus-circle"></i> Create New Announcement</h3>
+                    <form id="announcementForm">
+                        <div class="form-group">
+                            <label for="announcementTitle"><i class="fas fa-heading"></i> Title</label>
+                            <input type="text" id="announcementTitle" placeholder="Enter announcement title" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="announcementMessage"><i class="fas fa-align-left"></i> Message</label>
+                            <textarea id="announcementMessage" rows="5" placeholder="Enter your announcement message" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="announcementPriority"><i class="fas fa-exclamation-circle"></i> Priority</label>
+                            <select id="announcementPriority">
+                                <option value="normal">Normal</option>
+                                <option value="important">Important</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="announcementAudience"><i class="fas fa-users"></i> Audience</label>
+                            <select id="announcementAudience">
+                                <option value="all">All Users</option>
+                                <option value="students">Students Only</option>
+                                <option value="staff">Staff Only</option>
+                                <option value="faculty">Faculty Only</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="scheduleAnnouncement">
+                                <label for="scheduleAnnouncement">Schedule for later</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group hidden" id="scheduleField">
+                            <label for="announcementSchedule"><i class="fas fa-calendar-alt"></i> Schedule Date & Time</label>
+                            <input type="datetime-local" id="announcementSchedule">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="primary-button">
+                                <i class="fas fa-paper-plane"></i> Publish Announcement
+                            </button>
+                            <button type="button" class="secondary-button" id="saveDraftBtn">
+                                <i class="fas fa-save"></i> Save Draft
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Announcements History -->
+                <div class="announcements-history">
+                    <div class="history-header">
+                        <h3><i class="fas fa-history"></i> Announcement History</h3>
+                        <select id="historyFilter">
+                            <option value="all">All Announcements</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" id="searchAnnouncements" placeholder="Search announcements...">
+                    </div>
+
+                    <div class="announcements-list" id="announcementsList">
+                        <div class="announcement-item">
+                            <div class="announcement-header">
+                                <div>
+                                    <div class="announcement-title">System Maintenance Notice</div>
+                                    <div class="announcement-meta">
+                                        <span><i class="far fa-clock"></i> 2 hours ago</span>
+                                        <span><i class="fas fa-users"></i> All Users</span>
+                                        <span class="priority-badge priority-important">Important</span>
+                                    </div>
+                                </div>
+                                <span class="status-badge status-sent">Sent</span>
+                            </div>
+                            <div class="announcement-message">
+                                There will be a scheduled system maintenance on Saturday from 10 PM to 2 AM. The system will be unavailable during this time.
+                            </div>
+                            <div class="announcement-actions">
+                                <button class="action-btn edit-btn"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn"><i class="fas fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+
+                        <div class="announcement-item">
+                            <div class="announcement-header">
+                                <div>
+                                    <div class="announcement-title">New Feature Release</div>
+                                    <div class="announcement-meta">
+                                        <span><i class="far fa-clock"></i> 1 day ago</span>
+                                        <span><i class="fas fa-users"></i> Faculty Only</span>
+                                        <span class="priority-badge priority-normal">Normal</span>
+                                    </div>
+                                </div>
+                                <span class="status-badge status-sent">Sent</span>
+                            </div>
+                            <div class="announcement-message">
+                                We've released a new grading feature that allows for more detailed assessment. Check it out in the faculty portal.
+                            </div>
+                            <div class="announcement-actions">
+                                <button class="action-btn edit-btn"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn"><i class="fas fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+
+                        <div class="announcement-item">
+                            <div class="announcement-header">
+                                <div>
+                                    <div class="announcement-title">Upcoming Deadline Reminder</div>
+                                    <div class="announcement-meta">
+                                        <span><i class="far fa-clock"></i> 3 days ago</span>
+                                        <span><i class="fas fa-users"></i> Students Only</span>
+                                        <span class="priority-badge priority-urgent">Urgent</span>
+                                    </div>
+                                </div>
+                                <span class="status-badge status-sent">Sent</span>
+                            </div>
+                            <div class="announcement-message">
+                                Just a friendly reminder that the deadline for submitting your projects is this Friday at 5 PM. Late submissions will not be accepted.
+                            </div>
+                            <div class="announcement-actions">
+                                <button class="action-btn edit-btn"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn"><i class="fas fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Announcements -->
+            <div class="quick-announcements">
+                <h3><i class="fas fa-bolt"></i> Quick Announcements</h3>
+                <div class="quick-buttons">
+                    <div class="quick-announcement-btn">
+                        <i class="fas fa-tools"></i>
+                        <span>Maintenance Alert</span>
+                    </div>
+                    <div class="quick-announcement-btn">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Urgent Update</span>
+                    </div>
+                    <div class="quick-announcement-btn">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Event Reminder</span>
+                    </div>
+                    <div class="quick-announcement-btn">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Academic Update</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-eye"></i> Preview Announcement</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="announcement-preview">
+                    <div class="preview-title" id="previewTitle">Announcement Title</div>
+                    <div class="preview-message" id="previewMessage">Announcement message content will appear here...</div>
+                </div>
+                <div class="preview-stats">
+                    This announcement will be sent to <strong id="previewAudience">All Users</strong> with <strong id="previewPriority">Normal</strong> priority.
+                </div>
+                <div class="modal-actions">
+                    <button class="secondary-button" id="modalEditBtn">Edit</button>
+                    <button class="primary-button" id="modalConfirmBtn">Confirm & Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div class="confirmation-dialog" id="confirmationDialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h3>
+            </div>
+            <div class="dialog-body">
+                <p class="dialog-message">Are you sure you want to delete this announcement? This action cannot be undone.</p>
+                <div class="dialog-actions">
+                    <button class="secondary-button" id="dialogCancelBtn">Cancel</button>
+                    <button class="primary-button" id="dialogConfirmBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <div id="toastMessage">Operation completed successfully</div>
+    </div>
+
+    <!-- Core app script (provides broadcastAnnouncement, storage helpers, etc) -->
+    <script src="js/script.js"></script>
+
+    <script>
+        // Firestore-backed announcements
+        let announcements = [];
+        let nextId = Date.now();
+
+        // Ensure Firebase SDKs are present and initialize the app if needed
+        (function ensureFirebaseAndInit(){
+            try {
+                if (typeof firebase === 'undefined') {
+                    const s1 = document.createElement('script'); s1.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js'; s1.async = false; document.head.appendChild(s1);
+                    const s2 = document.createElement('script'); s2.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js'; s2.async = false; document.head.appendChild(s2);
+                    const s3 = document.createElement('script'); s3.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js'; s3.async = false; document.head.appendChild(s3);
+                    const s4 = document.createElement('script'); s4.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js'; s4.async = false; document.head.appendChild(s4);
+                }
+            } catch (e) { console.warn('Could not inject Firebase SDK', e); }
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyBgnkqrg_2clJ77WTonEQFC3gwVrG7HrO4",
+                authDomain: "jot-talent-competitions-72b9f.firebaseapp.com",
+                databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com",
+                projectId: "jot-talent-competitions-72b9f",
+                storageBucket: "jot-talent-competitions-72b9f.appspot.com",
+                messagingSenderId: "25581487736",
+                appId: "1:25581487736:web:a3730b66cd4fb7d9ebcf8d",
+                measurementId: "G-8NRD37H5YD"
+            };
+
+            /*
+             * Realtime Database mirroring
+             * ----------------------------
+             * This page writes a mirror of announcements to both Firestore (primary) and
+             * the Firebase Realtime Database under the path `announcements/{id}`. This
+             * allows lightweight realtime clients to read announcements from RTDB.
+             *
+             * Requirements:
+             * - The Firebase config above must include a valid `databaseURL`.
+             * - The Firebase Realtime Database rules should allow the server/client
+             *   to write to `/announcements/*` (or secure with auth as appropriate).
+             *
+             * Behavior:
+             * - On draft save: write to RTDB with `status: 'draft'` and `createdAt` ISO timestamp.
+             * - On publish/send: write to RTDB with `status: 'sent'` or `status: 'scheduled'` and `sentAt` ISO timestamp.
+             * - On delete: attempt to remove the entry from RTDB when deleting from Firestore.
+             *
+             * All RTDB writes are best-effort: failures are logged but don't block the UI.
+             */
+
+            (function tryInit(){
+                if (typeof firebase !== 'undefined' && firebase && (!firebase.apps || !firebase.apps.length)) {
+                    try { firebase.initializeApp(firebaseConfig); window._firebaseInitialized = true; } catch (e) { /* ignore if already initialized */ }
+                }
+                if (typeof firebase === 'undefined') setTimeout(tryInit, 200);
+            })();
+        })();
+
+        // Subscribe to Firestore announcements in real-time (if available)
+        function subscribeAnnouncementsRealtime() {
+            if (!(window.firebase && firebase.firestore)) {
+                // fallback: load from local history
+                try { announcements = getAnnouncementsHistory() || []; renderAnnouncements(); updateStats(); } catch (e) { console.warn('Fallback loadAnnouncements failed', e); }
+                return;
+            }
+
+            try {
+                const db = firebase.firestore();
+                // Listen for real-time updates ordered by createdAt or sentAt
+                db.collection('announcements').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                    // If RTDB is providing announcements prefer that source and skip Firestore mapping
+                    if (rtdbAnnouncementsAvailable) return;
+
+                    const arr = snapshot.docs.map(d => {
+                        const data = d.data() || {};
+                        // normalize timestamps
+                        if (data.createdAt && data.createdAt.toDate) data.createdAt = data.createdAt.toDate();
+                        if (data.sentAt && data.sentAt.toDate) data.sentAt = data.sentAt.toDate();
+                        if (data.timestamp && data.timestamp.toDate) data.timestamp = data.timestamp.toDate();
+                        // ensure timestamp fallback
+                        data.timestamp = data.timestamp || data.sentAt || data.createdAt || new Date();
+                        data.id = d.id || data.id;
+                        return data;
+                    });
+                    announcements = arr;
+                    try { renderAnnouncements(); updateStats(); } catch (e) { console.warn('Render after snapshot failed', e); }
+                }, err => {
+                    console.warn('Announcements snapshot error', err);
+                    // fallback to local history
+                    try { announcements = getAnnouncementsHistory() || []; renderAnnouncements(); updateStats(); } catch (e) {}
+                });
+            } catch (e) {
+                console.warn('Could not subscribe to announcements', e);
+                try { announcements = getAnnouncementsHistory() || []; renderAnnouncements(); updateStats(); } catch (e) {}
+            }
+        }
+    let announcementToDelete = null;
+    let editingAnnouncementId = null; // when editing an existing announcement (id may be string from Firestore)
+
+        // DOM elements
+        const announcementsList = document.getElementById('announcementsList');
+        const searchInput = document.getElementById('searchAnnouncements');
+        const historyFilter = document.getElementById('historyFilter');
+        const toast = document.getElementById('toast');
+        const confirmationDialog = document.getElementById('confirmationDialog');
+
+        // Initialize the dashboard
+        function initDashboard() {
+            updateStats();
+            renderAnnouncements();
+
+            // Wait until Firebase SDKs are loaded and initializeApp has run before starting subscriptions.
+            // This avoids the "No Firebase App '[DEFAULT]' has been created" runtime error.
+            whenFirebaseReady(() => {
+                try { subscribeAnnouncementsRealtime(); } catch (e) { console.warn('Could not start announcements realtime subscription', e); }
+                try { subscribeRealtimeStats(); } catch (e) { console.warn('Could not start RTDB stats subscription', e); }
+                try { subscribeAnnouncementsRTDB(); } catch (e) { console.warn('Could not start RTDB announcements subscription', e); }
+            });
+            
+            // Load theme preference from localStorage (guard if toggle not present)
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            const themeToggleEl = document.getElementById('theme-toggle');
+            if (themeToggleEl) themeToggleEl.checked = isDarkMode;
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        // Helper: run callback once firebase is present and initialized (firebase.apps.length > 0)
+        function whenFirebaseReady(cb, interval = 200, maxAttempts = 50) {
+            let attempts = 0;
+            const tick = () => {
+                attempts++;
+                if ((window._firebaseInitialized) || (window.firebase && Array.isArray(firebase.apps) && firebase.apps.length > 0)) {
+                    try { cb(); } catch (e) { console.error('whenFirebaseReady callback error', e); }
+                    return;
+                }
+                if (attempts >= maxAttempts) {
+                    // give up — still try to call once if firebase object exists but no apps
+                    if (window.firebase && typeof cb === 'function') {
+                        try { cb(); } catch (e) { console.error('whenFirebaseReady final callback error', e); }
+                    }
+                    return;
+                }
+                setTimeout(tick, interval);
+            };
+            tick();
+        }
+
+        // Update statistics cards
+    // Realtime RTDB mirrors and flags
+    let rtdbStats = { total: null, sent: null, scheduled: null, drafts: null };
+    let rtdbStatsAvailable = false;
+    // When true the page will prefer RTDB announcements over Firestore for rendering
+    let rtdbAnnouncementsAvailable = false;
+
+        function updateStats() {
+            // Prefer RTDB counts when available (they reflect the project's realtime DB)
+            if (rtdbStatsAvailable) {
+                document.getElementById('totalAnnouncements').textContent = rtdbStats.total || 0;
+                document.getElementById('sentAnnouncements').textContent = rtdbStats.sent || 0;
+                document.getElementById('scheduledAnnouncements').textContent = rtdbStats.scheduled || 0;
+                document.getElementById('draftAnnouncements').textContent = rtdbStats.drafts || 0;
+                return;
+            }
+
+            // Fallback to local announcements array
+            const total = announcements.length;
+            const sent = announcements.filter(a => a.status === 'sent').length;
+            const scheduled = announcements.filter(a => a.status === 'scheduled').length;
+            const drafts = announcements.filter(a => a.status === 'draft').length;
+            
+            document.getElementById('totalAnnouncements').textContent = total;
+            document.getElementById('sentAnnouncements').textContent = sent;
+            document.getElementById('scheduledAnnouncements').textContent = scheduled;
+            document.getElementById('draftAnnouncements').textContent = drafts;
+        }
+
+        // Subscribe to RTDB announcement counts and update rtdbStats in realtime (best-effort)
+        function subscribeRealtimeStats() {
+            try {
+                if (!(window.firebase && firebase.database)) return;
+                const rdb = firebase.database();
+                const announcementsRef = rdb.ref('announcements');
+
+                // Maintain live map of announcement statuses
+                const statusCounts = { total: 0, sent: 0, scheduled: 0, draft: 0 };
+
+                // Helper to compute counts from snapshot value (object of announcements)
+                const computeCountsFromSnapshot = snapVal => {
+                    if (!snapVal) return { total: 0, sent: 0, scheduled: 0, drafts: 0 };
+                    let total = 0, sent = 0, scheduled = 0, drafts = 0;
+                    Object.keys(snapVal).forEach(k => {
+                        const item = snapVal[k] || {};
+                        total++;
+                        const st = (item.status || '').toLowerCase();
+                        if (st === 'sent') sent++;
+                        else if (st === 'scheduled') scheduled++;
+                        else if (st === 'draft') drafts++;
+                    });
+                    return { total, sent, scheduled, drafts };
+                };
+
+                // Use value listener to get full snapshot initially and on changes
+                announcementsRef.on('value', snapshot => {
+                    try {
+                        const val = snapshot.val();
+                        const counts = computeCountsFromSnapshot(val);
+                        rtdbStats = { total: counts.total, sent: counts.sent, scheduled: counts.scheduled, drafts: counts.drafts };
+                        rtdbStatsAvailable = true;
+                        updateStats();
+                    } catch (e) {
+                        console.warn('Failed to compute RTDB stats', e);
+                    }
+                });
+            } catch (e) {
+                console.warn('Could not subscribe to Realtime DB stats', e);
+            }
+        }
+
+        // Subscribe to RTDB announcements to populate the announcements list in realtime
+        function subscribeAnnouncementsRTDB() {
+            try {
+                if (!(window.firebase && firebase.database)) return;
+                const rdb = firebase.database();
+                const announcementsRef = rdb.ref('announcements');
+
+                // Use value to fetch the current set and update on changes
+                announcementsRef.orderByChild('createdAt').limitToLast(200).on('value', snapshot => {
+                    try {
+                        const val = snapshot.val();
+                        const arr = [];
+                        if (val) {
+                            Object.keys(val).forEach(key => {
+                                const data = val[key] || {};
+                                const ts = data.sentAt || data.createdAt || data.timestamp || new Date().toISOString();
+                                arr.push({
+                                    id: key,
+                                    title: data.title || 'Announcement',
+                                    message: data.message || '',
+                                    priority: data.priority || 'normal',
+                                    audience: data.audience || 'all',
+                                    status: (data.status || (data.sentAt ? 'sent' : (data.createdAt && data.createdAt === data.sentAt ? 'sent' : 'sent'))).toLowerCase(),
+                                    timestamp: new Date(ts)
+                                });
+                            });
+                        }
+
+                        // Sort newest first
+                        arr.sort((a, b) => b.timestamp - a.timestamp);
+
+                        announcements = arr;
+                        // Mark RTDB announcements as primary source
+                        rtdbAnnouncementsAvailable = true;
+
+                        // Compute counts for stats
+                        rtdbStats = {
+                            total: announcements.length,
+                            sent: announcements.filter(a => a.status === 'sent').length,
+                            scheduled: announcements.filter(a => a.status === 'scheduled').length,
+                            drafts: announcements.filter(a => a.status === 'draft').length
+                        };
+                        rtdbStatsAvailable = true;
+
+                        renderAnnouncements();
+                        updateStats();
+                    } catch (e) {
+                        console.warn('Failed to parse RTDB announcements snapshot', e);
+                    }
+                });
+            } catch (e) {
+                console.warn('Could not subscribe to RTDB announcements', e);
+            }
+        }
+
+        // Render announcements list
+        function renderAnnouncements(filteredAnnouncements = null) {
+            const list = filteredAnnouncements || announcements;
+            
+            // Clear the list
+            announcementsList.innerHTML = '';
+            
+            if (list.length === 0) {
+                announcementsList.innerHTML = `
+                    <div class="no-announcements">
+                        <div class="empty-icon"><i class="far fa-folder-open"></i></div>
+                        <h4>No announcements found</h4>
+                        <p>Try adjusting your search or filter criteria</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by timestamp (newest first)
+            const sortedAnnouncements = [...list].sort((a, b) => b.timestamp - a.timestamp);
+            
+            // Create announcement items
+            sortedAnnouncements.forEach(announcement => {
+                const timeAgo = getTimeAgo(announcement.timestamp);
+                const audienceText = getAudienceText(announcement.audience);
+                
+                const announcementEl = document.createElement('div');
+                announcementEl.className = 'announcement-item';
+                announcementEl.innerHTML = `
+                    <div class="announcement-header">
+                        <div>
+                            <div class="announcement-title">${announcement.title}</div>
+                            <div class="announcement-meta">
+                                <span><i class="far fa-clock"></i> ${timeAgo}</span>
+                                <span><i class="fas fa-users"></i> ${audienceText}</span>
+                                <span class="priority-badge priority-${announcement.priority}">${announcement.priority.charAt(0).toUpperCase() + announcement.priority.slice(1)}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-${announcement.status}">${announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}</span>
+                    </div>
+                    <div class="announcement-message">
+                        ${announcement.message}
+                    </div>
+                    <div class="announcement-actions">
+                        <button class="action-btn edit-btn" data-id="${announcement.id}"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="action-btn delete-btn" data-id="${announcement.id}"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                `;
+                
+                announcementsList.appendChild(announcementEl);
+            });
+            
+            // Add event listeners to action buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', handleEdit);
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', handleDelete);
+            });
+        }
+
+        // Get time ago text
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const diff = now - timestamp;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`;
+            
+            return timestamp.toLocaleDateString();
+        }
+
+        // Get audience display text
+        function getAudienceText(audience) {
+            const audienceMap = {
+                'all': 'All Users',
+                'students': 'Students Only',
+                'staff': 'Staff Only',
+                'faculty': 'Faculty Only'
+            };
+            
+            return audienceMap[audience] || audience;
+        }
+
+        // Handle edit button click
+        function handleEdit(e) {
+            const id = e.currentTarget.getAttribute('data-id');
+            const announcement = announcements.find(a => String(a.id) === String(id));
+
+            if (announcement) {
+                // Mark editing id so save will update existing doc instead of creating new
+                editingAnnouncementId = announcement.id;
+
+                // Fill form with announcement data
+                document.getElementById('announcementTitle').value = announcement.title;
+                document.getElementById('announcementMessage').value = announcement.message;
+                document.getElementById('announcementPriority').value = announcement.priority;
+                document.getElementById('announcementAudience').value = announcement.audience;
+                
+                // Scroll to form
+                document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+                
+                // Show notification
+                showToast('Announcement loaded for editing', 'success');
+            }
+        }
+
+        // Handle delete button click
+        function handleDelete(e) {
+            const id = e.currentTarget.getAttribute('data-id');
+            announcementToDelete = id;
+
+            // Show confirmation dialog
+            confirmationDialog.style.display = 'flex';
+        }
+
+        // Confirm deletion
+        function confirmDeletion() {
+            const id = announcementToDelete;
+            if (!id) {
+                confirmationDialog.style.display = 'none';
+                return;
+            }
+
+            // If Firestore available, delete from collection
+            if (window.firebase && firebase.firestore) {
+                try {
+                    const db = firebase.firestore();
+                    db.collection('announcements').doc(String(id)).delete().then(() => {
+                        // Remove locally for immediate feedback; realtime subscription will also update list
+                        announcements = announcements.filter(a => String(a.id) !== String(id));
+                        renderAnnouncements();
+                        updateStats();
+                        // Also remove from Realtime Database if present (best-effort)
+                        try {
+                            if (firebase.database) {
+                                firebase.database().ref('announcements/' + String(id)).remove().catch(err => console.warn('Failed to remove announcement from RTDB', err));
+                            }
+                        } catch (e) { console.warn('RTDB delete skipped', e); }
+
+                        showToast('Announcement deleted successfully', 'success');
+                        announcementToDelete = null;
+                    }).catch(err => {
+                        console.error('Failed to delete announcement', err);
+                        showToast('Failed to delete announcement', 'error');
+                    }).finally(() => {
+                        confirmationDialog.style.display = 'none';
+                    });
+                    return;
+                } catch (e) {
+                    console.warn('Error deleting announcement from Firestore', e);
+                }
+            }
+
+            // Fallback: delete locally
+            announcements = announcements.filter(a => a.id !== id && String(a.id) !== String(id));
+            renderAnnouncements();
+            updateStats();
+            showToast('Announcement deleted successfully', 'success');
+            announcementToDelete = null;
+            confirmationDialog.style.display = 'none';
+        }
+
+        // Cancel deletion
+        function cancelDeletion() {
+            announcementToDelete = null;
+            confirmationDialog.style.display = 'none';
+        }
+
+        // Filter announcements based on search input
+        function filterAnnouncements() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filterValue = historyFilter.value;
+            
+            let filtered = announcements;
+            
+            // Apply search filter
+            if (searchTerm) {
+                filtered = filtered.filter(a => 
+                    a.title.toLowerCase().includes(searchTerm) || 
+                    a.message.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Apply time filter
+            const now = new Date();
+            if (filterValue === 'today') {
+                filtered = filtered.filter(a => {
+                    const announcementDate = new Date(a.timestamp);
+                    return announcementDate.toDateString() === now.toDateString();
+                });
+            } else if (filterValue === 'week') {
+                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                filtered = filtered.filter(a => new Date(a.timestamp) >= oneWeekAgo);
+            } else if (filterValue === 'month') {
+                const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                filtered = filtered.filter(a => new Date(a.timestamp) >= oneMonthAgo);
+            }
+            
+            renderAnnouncements(filtered);
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.querySelector('#toastMessage').textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Export data function
+        function exportData() {
+            const dataStr = JSON.stringify(announcements, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'announcements.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showToast('Data exported successfully', 'success');
+        }
+
+        // Initialize event listeners
+        function initEventListeners() {
+            // Toggle dark mode
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('change', () => {
+                    const isDarkMode = themeToggle.checked;
+                    document.body.classList.toggle('dark-mode', isDarkMode);
+                    localStorage.setItem('darkMode', isDarkMode);
+                });
+            }
+
+            // Show/hide schedule field
+            const scheduleCheckbox = document.getElementById('scheduleAnnouncement');
+            const scheduleField = document.getElementById('scheduleField');
+            
+            scheduleCheckbox.addEventListener('change', () => {
+                scheduleField.classList.toggle('hidden', !scheduleCheckbox.checked);
+            });
+
+            // Form submission
+            const announcementForm = document.getElementById('announcementForm');
+            announcementForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // Get form values
+                const title = document.getElementById('announcementTitle').value;
+                const message = document.getElementById('announcementMessage').value;
+                const priority = document.getElementById('announcementPriority').value;
+                const audience = document.getElementById('announcementAudience').value;
+                const isScheduled = document.getElementById('scheduleAnnouncement').checked;
+                const scheduleDate = document.getElementById('announcementSchedule').value;
+                
+                // Update preview modal
+                document.getElementById('previewTitle').textContent = title;
+                document.getElementById('previewMessage').textContent = message;
+                document.getElementById('previewAudience').textContent = 
+                    document.getElementById('announcementAudience').options[document.getElementById('announcementAudience').selectedIndex].text;
+                document.getElementById('previewPriority').textContent = priority;
+                
+                // Show preview modal
+                document.getElementById('previewModal').style.display = 'flex';
+            });
+
+            // Save draft button
+            document.getElementById('saveDraftBtn').addEventListener('click', async () => {
+                const title = document.getElementById('announcementTitle').value;
+                const message = document.getElementById('announcementMessage').value;
+                const priority = document.getElementById('announcementPriority').value;
+                const audience = document.getElementById('announcementAudience').value;
+
+                if (!title || !message) {
+                    showToast('Please add a title and message before saving', 'error');
+                    return;
+                }
+
+                const announcementBase = {
+                    title,
+                    message,
+                    priority,
+                    audience,
+                    status: 'draft',
+                    timestamp: new Date()
+                };
+
+                // If Firestore is available, persist the draft there (and let realtime subscription update UI)
+                if (window.firebase && firebase.firestore) {
+                    try {
+                        const db = firebase.firestore();
+                        let docRef;
+                        if (editingAnnouncementId) {
+                            docRef = db.collection('announcements').doc(String(editingAnnouncementId));
+                            announcementBase.id = String(editingAnnouncementId);
+                        } else {
+                            docRef = db.collection('announcements').doc();
+                            announcementBase.id = docRef.id;
+                        }
+
+                        // write with createdAt server timestamp
+                        const writeData = Object.assign({}, announcementBase, { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                        await docRef.set(writeData, { merge: true });
+
+                        // Optionally save to local history and notify
+                        try { if (typeof saveAnnouncementToHistory === 'function') saveAnnouncementToHistory(announcementBase); } catch (e) {}
+
+                        // Also mirror the draft to Firebase Realtime Database (best-effort)
+                        try {
+                            if (firebase.database) {
+                                const rtdb = firebase.database();
+                                const rtdbRef = rtdb.ref('announcements/' + announcementBase.id);
+                                const rtdbPayload = Object.assign({}, announcementBase, { createdAt: (new Date()).toISOString() });
+                                rtdbRef.set(rtdbPayload).catch(err => console.warn('Failed to write draft to RTDB', err));
+                            }
+                        } catch (e) { console.warn('RTDB draft write skipped', e); }
+
+                        // Reset editing state and form
+                        editingAnnouncementId = null;
+                        document.getElementById('announcementForm').reset();
+                        document.getElementById('scheduleField').classList.add('hidden');
+                        document.getElementById('scheduleAnnouncement').checked = false;
+
+                        showToast('Draft saved successfully', 'success');
+                        return;
+                    } catch (err) {
+                        console.error('Failed to save draft to Firestore', err);
+                        showToast('Failed to save draft to server, saving locally', 'error');
+                    }
+                }
+
+                // Fallback: save locally
+                if (editingAnnouncementId) {
+                    // update existing local draft
+                    announcements = announcements.map(a => {
+                        if (String(a.id) === String(editingAnnouncementId)) return Object.assign({}, a, announcementBase);
+                        return a;
+                    });
+                    editingAnnouncementId = null;
+                } else {
+                    announcementBase.id = nextId++;
+                    announcements.push(announcementBase);
+                }
+
+                renderAnnouncements();
+                updateStats();
+
+                // Clear form
+                document.getElementById('announcementForm').reset();
+                document.getElementById('scheduleField').classList.add('hidden');
+                document.getElementById('scheduleAnnouncement').checked = false;
+
+                showToast('Draft saved locally', 'success');
+            });
+
+            // Modal buttons
+            document.getElementById('modalEditBtn').addEventListener('click', () => {
+                document.getElementById('previewModal').style.display = 'none';
+            });
+
+            document.getElementById('modalConfirmBtn').addEventListener('click', async () => {
+                const title = document.getElementById('announcementTitle').value;
+                const message = document.getElementById('announcementMessage').value;
+                const priority = document.getElementById('announcementPriority').value;
+                const audience = document.getElementById('announcementAudience').value;
+                const isScheduled = document.getElementById('scheduleAnnouncement').checked;
+                const scheduleDateVal = document.getElementById('announcementSchedule').value;
+
+                if (!title || !message) {
+                    showToast('Please add a title and message before sending', 'error');
+                    return;
+                }
+
+                const announcementBase = {
+                    title,
+                    message,
+                    priority,
+                    audience,
+                    status: isScheduled ? 'scheduled' : 'sent',
+                    timestamp: isScheduled ? new Date(scheduleDateVal) : new Date(),
+                };
+
+                // If Firestore is available, persist and optionally broadcast
+                if (window.firebase && firebase.firestore) {
+                    try {
+                        const db = firebase.firestore();
+                        let docRef;
+                        if (editingAnnouncementId) {
+                            docRef = db.collection('announcements').doc(String(editingAnnouncementId));
+                            announcementBase.id = String(editingAnnouncementId);
+                        } else {
+                            docRef = db.collection('announcements').doc();
+                            announcementBase.id = docRef.id;
+                        }
+
+                        const writeData = Object.assign({}, announcementBase, {
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            sentAt: isScheduled ? firebase.firestore.Timestamp.fromDate(new Date(scheduleDateVal)) : firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        await docRef.set(writeData, { merge: true });
+
+                        // Save to history and broadcast if immediate send
+                        try { if (typeof saveAnnouncementToHistory === 'function') saveAnnouncementToHistory(announcementBase); } catch (e) {}
+                        if (!isScheduled) {
+                            try { if (typeof broadcastAnnouncement === 'function') broadcastAnnouncement(announcementBase); } catch (e) {}
+                        }
+
+                        // Mirror to Realtime Database (best-effort) so realtime clients can retrieve announcements
+                        try {
+                            if (firebase.database) {
+                                const rtdb = firebase.database();
+                                const rtdbRef = rtdb.ref('announcements/' + announcementBase.id);
+                                const rtdbPayload = Object.assign({}, announcementBase, {
+                                    createdAt: new Date().toISOString(),
+                                    sentAt: announcementBase.status === 'sent' ? new Date().toISOString() : (isScheduled ? new Date(scheduleDateVal).toISOString() : null)
+                                });
+                                rtdbRef.set(rtdbPayload).catch(err => console.warn('Failed to write announcement to RTDB', err));
+                            }
+                        } catch (e) { console.warn('RTDB publish write skipped', e); }
+
+                        // Reset editing state and form
+                        editingAnnouncementId = null;
+                        document.getElementById('announcementForm').reset();
+                        document.getElementById('scheduleField').classList.add('hidden');
+                        document.getElementById('scheduleAnnouncement').checked = false;
+
+                        document.getElementById('previewModal').style.display = 'none';
+                        showToast(`Announcement ${isScheduled ? 'scheduled' : 'sent'} successfully`, 'success');
+                        return;
+                    } catch (err) {
+                        console.error('Failed to publish announcement to Firestore', err);
+                        showToast('Failed to send announcement to server, saving locally', 'error');
+                    }
+                }
+
+                // Fallback: add to local list
+                if (editingAnnouncementId) {
+                    announcements = announcements.map(a => {
+                        if (String(a.id) === String(editingAnnouncementId)) return Object.assign({}, a, announcementBase);
+                        return a;
+                    });
+                    editingAnnouncementId = null;
+                } else {
+                    announcementBase.id = nextId++;
+                    announcements.push(announcementBase);
+                }
+
+                renderAnnouncements();
+                updateStats();
+
+                // Clear form and close preview
+                document.getElementById('announcementForm').reset();
+                document.getElementById('scheduleField').classList.add('hidden');
+                document.getElementById('scheduleAnnouncement').checked = false;
+                document.getElementById('previewModal').style.display = 'none';
+
+                showToast(`Announcement ${isScheduled ? 'scheduled' : 'sent'} locally`, 'success');
+            });
+
+            // Close modal
+            document.querySelector('.modal-close').addEventListener('click', () => {
+                document.getElementById('previewModal').style.display = 'none';
+            });
+
+            // Close modal if clicked outside
+            window.addEventListener('click', (e) => {
+                if (e.target === document.getElementById('previewModal')) {
+                    document.getElementById('previewModal').style.display = 'none';
+                }
+                if (e.target === confirmationDialog) {
+                    cancelDeletion();
+                }
+            });
+
+            // Quick announcement buttons
+            document.querySelectorAll('.quick-announcement-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const type = button.querySelector('span').textContent;
+                    
+                    // Set form values based on quick announcement type
+                    document.getElementById('announcementTitle').value = type;
+                    
+                    if (type === 'Maintenance Alert') {
+                        document.getElementById('announcementMessage').value = 'We will be performing scheduled maintenance on our systems. During this time, services may be temporarily unavailable. We apologize for any inconvenience.';
+                        document.getElementById('announcementPriority').value = 'important';
+                    } else if (type === 'Urgent Update') {
+                        document.getElementById('announcementMessage').value = 'Important update requiring immediate attention. Please review the details and take appropriate action as necessary.';
+                        document.getElementById('announcementPriority').value = 'urgent';
+                    } else if (type === 'Event Reminder') {
+                        document.getElementById('announcementMessage').value = 'This is a reminder about the upcoming event. Please make sure to mark your calendars and prepare accordingly.';
+                        document.getElementById('announcementPriority').value = 'normal';
+                    } else if (type === 'Academic Update') {
+                        document.getElementById('announcementMessage').value = 'Important academic information update. Please review the changes and reach out if you have any questions.';
+                        document.getElementById('announcementPriority').value = 'important';
+                    }
+                    
+                    // Scroll to form
+                    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+                    
+                    showToast('Quick announcement template loaded', 'success');
+                });
+            });
+
+            // Filter history
+            historyFilter.addEventListener('change', filterAnnouncements);
+            
+            // Search announcements
+            searchInput.addEventListener('input', filterAnnouncements);
+            
+            // Export button (guarded)
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) exportBtn.addEventListener('click', exportData);
+            
+            // Confirmation dialog buttons
+            document.getElementById('dialogCancelBtn').addEventListener('click', cancelDeletion);
+            document.getElementById('dialogConfirmBtn').addEventListener('click', confirmDeletion);
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            initDashboard();
+            initEventListeners();
+        });
+    </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

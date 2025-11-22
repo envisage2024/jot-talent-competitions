@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Competition Rounds</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        .container { max-width: 500px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+        h1 { text-align: center; }
+        .round-section { margin-bottom: 2em; }
+        button { padding: 0.7em 1.5em; font-size: 1em; border: none; border-radius: 4px; background: #0078d4; color: #fff; cursor: pointer; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status { margin-top: 0.5em; font-size: 0.95em; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Competition Rounds Admin</h1>
+        <div class="round-section" id="round2-section">
+            <h2>Round Two</h2>
+            <p>Activate and start round two after judges have finished judging and disqualifying entries.</p>
+            <p style="font-size:0.9em;color:#666;margin-top:6px;">Note: Round activation is saved to Firestore and becomes the source of truth for all clients. Ensure you are logged in as an admin with write access.</p>
+            <button id="activate-round2">Activate Round Two</button>
+            <div class="status" id="status-round2"></div>
+        </div>
+        <div class="round-section" id="round3-section">
+            <h2>Final Round (Round Three)</h2>
+            <p>Activate the final round to allow qualified articles to proceed to public voting.</p>
+            <button id="activate-round3" disabled>Activate Final Round</button>
+            <div class="status" id="status-round3"></div>
+        </div>
+    </div>
+    <script>
+    // Read persisted round status from Firestore (preferred). Local storage fallback removed in favor of Firestore.
+    let round2Activated = false;
+    let round3Activated = false;
+
+        const btnRound2 = document.getElementById('activate-round2');
+        const btnRound3 = document.getElementById('activate-round3');
+        const statusRound2 = document.getElementById('status-round2');
+        const statusRound3 = document.getElementById('status-round3');
+
+        async function loadPersisted() {
+            // prefer Firestore meta doc if available (use helper)
+            try {
+                if (typeof window.getRoundsMetaFromFirestore === 'function') {
+                    const meta = await window.getRoundsMetaFromFirestore();
+                    if (typeof meta.round2Activated !== 'undefined') round2Activated = !!meta.round2Activated;
+                    if (typeof meta.round3Activated !== 'undefined') round3Activated = !!meta.round3Activated;
+                } else if (window.firebase && firebase.firestore) {
+                    // older environments: direct read
+                    const db = firebase.firestore();
+                    const doc = await db.collection('meta').doc('rounds').get();
+                    if (doc && doc.exists) {
+                        const d = doc.data();
+                        if (typeof d.round2Activated !== 'undefined') round2Activated = !!d.round2Activated;
+                        if (typeof d.round3Activated !== 'undefined') round3Activated = !!d.round3Activated;
+                    }
+                } else {
+                    statusRound2.textContent = 'Firestore not available — rounds data unavailable.';
+                    statusRound3.textContent = 'Firestore not available — rounds data unavailable.';
+                }
+            } catch (e) { console.warn('Could not load rounds meta from Firestore', e); }
+
+            updateUI();
+        }
+
+        function updateUI() {
+            statusRound2.textContent = round2Activated ? 'Round Two activated. Judges can now proceed.' : 'Round Two is inactive.';
+            statusRound3.textContent = round3Activated ? 'Final Round activated. Public voting open.' : 'Final Round is inactive.';
+            btnRound2.textContent = round2Activated ? 'Deactivate Round Two' : 'Activate Round Two';
+            btnRound3.textContent = round3Activated ? 'Deactivate Final Round' : 'Activate Final Round';
+            btnRound3.disabled = !round2Activated && !round3Activated && !round2Activated; // ensure round2 must be active first to activate round3 in UI
+        }
+
+        async function persistRounds() {
+            try {
+                // Persist to Firestore via helper
+                if (typeof window.setRoundsMetaToFirestore === 'function') {
+                    await window.setRoundsMetaToFirestore({ round2Activated: round2Activated, round3Activated: round3Activated });
+                } else if (window.firebase && firebase.firestore) {
+                    const db = firebase.firestore();
+                    await db.collection('meta').doc('rounds').set({ round2Activated: round2Activated, round3Activated: round3Activated }, { merge: true });
+                } else {
+                    console.warn('Firestore not available; could not persist rounds.');
+                }
+            } catch (e) { console.warn('persistRounds failed', e); }
+            updateUI();
+        }
+
+        btnRound2.onclick = async function() {
+            round2Activated = !round2Activated;
+            // when deactivating, also deactivate round3 for safety
+            if (!round2Activated) round3Activated = false;
+            await persistRounds();
+            // send simple admin notification (could be extended)
+            alert(round2Activated ? 'Round Two activated' : 'Round Two deactivated');
+        };
+
+        btnRound3.onclick = async function() {
+            if (!round2Activated && !round3Activated) {
+                alert('Activate Round Two before activating the Final Round.');
+                return;
+            }
+            round3Activated = !round3Activated;
+            await persistRounds();
+            alert(round3Activated ? 'Final Round activated' : 'Final Round deactivated');
+        };
+
+        // initial load
+        loadPersisted();
+    </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

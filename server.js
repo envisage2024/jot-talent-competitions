@@ -1,0 +1,523 @@
+const express = require('express');
+const cors = require('cors');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin
+let db = null;
+let adminInitAvailable = true;
+try {
+    const serviceAccount = require('./serviceAccountKey.json'); // Optional locally
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com"
+    });
+    db = admin.firestore();
+    console.log('Firebase Admin initialized from serviceAccountKey.json');
+} catch (err) {
+    // Fail gracefully for local dev if serviceAccountKey.json is missing
+    adminInitAvailable = false;
+    console.warn('Firebase Admin initialization skipped: serviceAccountKey.json not found or failed to load.');
+    console.warn('Admin-only endpoints (/admin/*) will return 503 until proper credentials are provided.');
+}
+
+// Your ioTec credentials
+const clientId = 'pay-caed774a-d7d0-4a74-b751-5b77be5b3911';
+const clientSecret = 'IO-BdUCLRbm7xxYyz35WqpSu2QcPqrP3Eigg';
+const walletId = 'a563af4c-3137-4085-a888-93bdf3fb29b4';
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Enhanced CORS configuration to allow requests from anywhere
+app.use(cors({
+    origin: '*', // Allow all origins
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+app.use(express.json({limit: '10mb'}));
+app.use(express.urlencoded({extended: true, limit: '10mb'}));
+
+// Ensure CORS preflight is handled for all routes (defensive)
+app.options('*', cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
+}));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        message: 'Payment server is running',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+    });
+});
+
+// Get access token from ioTec
+async function getAccessToken() {
+    const tokenUrl = 'https://id.iotec.io/connect/token';
+    const params = new URLSearchParams();
+    params.append('client_id', clientId);
+    params.append('client_secret', clientSecret);
+    params.append('grant_type', 'client_credentials');
+
+    try {
+        const response = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Token error: ${response.status} ${errorText}`);
+        }
+        
+        const data = await response.json();
+        return data.access_token;
+    } catch (error) {
+        console.error('Error getting access token:', error);
+        throw error;
+    }
+}
+
+// Payment endpoint
+app.post('/pay', async (req, res) => {
+    try {
+        const { amount, method, phone, email, competitionId } = req.body;
+        
+        if (!amount || !method) {
+            return res.status(400).json({ message: 'Amount and payment method are required.' });
+        }
+
+        if (method === 'MobileMoney' && !phone) {
+            return res.status(400).json({ message: 'Phone number is required for Mobile Money payments.' });
+        }
+
+        // Get access token
+        const accessToken = await getAccessToken();
+
+        // Generate a unique transaction ID
+        const transactionId = 'TXN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+        // Prepare payment payload
+        const collectPayload = {
+            walletId: walletId,
+            amount: Number(amount),
+            currency: 'UGX',
+            externalId: transactionId,
+            payer: phone,
+            payerNote: 'Jot Talent Competition Entry Fee',
+            payeeNote: `Payment for competition entry. Email: ${email}`
+        };
+
+        console.log('Outgoing collect payload:', JSON.stringify(collectPayload, null, 2));
+
+        // Make payment request to ioTec
+        const response = await fetch('https://pay.iotec.io/api/collections/collect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(collectPayload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Mobile Money collection failed:', response.status, response.statusText, errorData);
+            return res.status(response.status).json({ 
+                message: 'Mobile Money collection failed', 
+                error: errorData 
+            });
+        }
+
+        const data = await response.json();
+        console.log('Mobile Money collection successful:', response.status, data);
+        
+        // Store payment data in Firestore
+        try {
+            const paymentData = {
+                transactionId: transactionId,
+                ioTecTransactionId: data.id || data.transactionId,
+                amount: Number(amount),
+                currency: 'UGX',
+                method: method,
+                phone: phone,
+                email: email,
+                competitionId: competitionId || 'firstRound',
+                status: data.status || 'PENDING',
+                statusMessage: data.statusMessage || 'Payment initiated',
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            };
+            
+            await db.collection('payments').doc(transactionId).set(paymentData);
+            console.log('Payment data stored in Firestore:', transactionId);
+        } catch (firestoreError) {
+            console.error('Error storing payment data in Firestore:', firestoreError);
+            // Continue with the response even if Firestore fails
+        }
+        
+        // Return payment response to client
+        return res.json({
+            ...data,
+            transactionId: transactionId
+        });
+    } catch (error) {
+        console.error("An error occurred:", error);
+        return res.status(500).json({ 
+            message: 'Internal server error',
+            error: error.message 
+        });
+    }
+});
+
+// Payment status endpoint
+app.get('/payment-status/:transactionId', async (req, res) => {
+    try {
+        const { transactionId } = req.params;
+        const accessToken = await getAccessToken();
+        
+        // First check Firestore for the transaction
+        try {
+            const paymentDoc = await db.collection('payments').doc(transactionId).get();
+            if (paymentDoc.exists) {
+                const paymentData = paymentDoc.data();
+                
+                // If payment is already confirmed in Firestore, return that
+                if (paymentData.status === 'SUCCESS' || paymentData.status === 'SUCCESSFUL') {
+                    return res.json(paymentData);
+                }
+                
+                // If payment failed in Firestore, return that
+                if (paymentData.status === 'FAILED') {
+                    return res.json(paymentData);
+                }
+            }
+        } catch (firestoreError) {
+            console.error('Error checking Firestore for payment status:', firestoreError);
+            // Continue with ioTec check if Firestore fails
+        }
+        
+        // If not found in Firestore or status is pending, check with ioTec
+        const response = await fetch(`https://pay.iotec.io/api/collections/${transactionId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Failed to get payment status from ioTec:', response.status, response.statusText, errorData);
+            
+            // Return the Firestore data if available, otherwise return error
+            try {
+                const paymentDoc = await db.collection('payments').doc(transactionId).get();
+                if (paymentDoc.exists) {
+                    return res.json(paymentDoc.data());
+                }
+            } catch (firestoreError) {
+                console.error('Error getting payment data from Firestore:', firestoreError);
+            }
+            
+            return res.status(response.status).json({ 
+                message: 'Failed to get payment status', 
+                error: errorData 
+            });
+        }
+        
+        const data = await response.json();
+        
+        // Update Firestore with the latest status
+        try {
+            await db.collection('payments').doc(transactionId).update({
+                status: data.status || 'UNKNOWN',
+                statusMessage: data.statusMessage || 'Status checked',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (firestoreError) {
+            console.error('Error updating payment status in Firestore:', firestoreError);
+        }
+        
+        res.json({
+            ...data,
+            transactionId: transactionId
+        });
+    } catch (error) {
+        console.error("An error occurred:", error);
+        res.status(500).json({ 
+            message: 'Internal server error',
+            error: error.message 
+        });
+    }
+});
+
+// Endpoint to verify email and complete registration
+app.post('/verify-email', async (req, res) => {
+    try {
+        const { email, verificationCode, transactionId } = req.body;
+        
+        if (!email || !verificationCode) {
+            return res.status(400).json({ message: 'Email and verification code are required.' });
+        }
+        
+        // Check if verification code is valid
+        const verificationDoc = await db.collection('verificationCodes').doc(email).get();
+        if (!verificationDoc.exists) {
+            return res.status(400).json({ message: 'No verification code found for this email.' });
+        }
+        
+        const verificationData = verificationDoc.data();
+        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+        const codeTimestamp = verificationData.timestamp.toDate();
+        
+        if (verificationData.code !== verificationCode) {
+            return res.status(400).json({ message: 'Invalid verification code.' });
+        }
+        
+        if (verificationData.used) {
+            return res.status(400).json({ message: 'This verification code has already been used.' });
+        }
+        
+        if (codeTimestamp <= tenMinutesAgo) {
+            return res.status(400).json({ message: 'This verification code has expired.' });
+        }
+        
+        // Mark code as used
+        await db.collection('verificationCodes').doc(email).update({
+            used: true,
+            usedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Update payment record with verification status
+        if (transactionId) {
+            await db.collection('payments').doc(transactionId).update({
+                emailVerified: true,
+                verifiedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        // Create or update user record
+        const userData = {
+            email: email,
+            verified: true,
+            lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+            competitions: admin.firestore.FieldValue.arrayUnion('firstRound')
+        };
+        
+        await db.collection('users').doc(email).set(userData, { merge: true });
+        
+        res.json({ 
+            success: true, 
+            message: 'Email verified successfully.' 
+        });
+        
+    } catch (error) {
+        console.error("An error occurred:", error);
+        res.status(500).json({ 
+            message: 'Internal server error',
+            error: error.message 
+        });
+    }
+});
+
+// Endpoint to resend verification code
+app.post('/resend-verification', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required.' });
+        }
+        
+        // Generate a new verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Store the code in Firestore
+        await db.collection('verificationCodes').doc(email).set({
+            code: verificationCode,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            used: false
+        });
+        
+        // In a real application, you would send an email here
+        console.log(`Verification code for ${email}: ${verificationCode}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Verification code resent successfully.',
+            code: verificationCode // Remove this in production
+        });
+        
+    } catch (error) {
+        console.error("An error occurred:", error);
+        res.status(500).json({ 
+            message: 'Internal server error',
+            error: error.message 
+        });
+    }
+});
+
+// Start server on all network interfaces
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Payment server running on port ${PORT}`);
+    console.log(`Local access: http://localhost:${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+});
+
+// Function to get local IP address
+function getIPAddress() {
+    const interfaces = require('os').networkInterfaces();
+    for (const devName in interfaces) {
+        const iface = interfaces[devName];
+        for (let i = 0; i < iface.length; i++) {
+            const alias = iface[i];
+            if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+                return alias.address;
+            }
+        }
+    }
+    return 'localhost';
+}
+
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+    console.log('Shutting down gracefully...');
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('Shutting down gracefully...');
+    process.exit(0);
+});
+
+// Helper: verify Firebase ID token from Authorization header
+async function verifyIdToken(req, res, next) {
+    try {
+        const authHeader = req.headers.authorization || '';
+        if (!authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Missing or invalid Authorization header' });
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        // Simple admin check: allow if custom claim 'admin' is true or email matches env ADMIN_EMAIL
+        const adminEmail = process.env.ADMIN_EMAIL || '';
+        if (decoded.admin === true || (adminEmail && decoded.email === adminEmail)) {
+            req.auth = decoded;
+            return next();
+        }
+        return res.status(403).json({ message: 'Insufficient permissions' });
+    } catch (err) {
+        console.error('Token verification failed', err);
+        return res.status(401).json({ message: 'Unauthorized', error: err.message });
+    }
+}
+
+// Admin endpoints: create, update, delete judge
+app.post('/admin/create-judge', verifyIdToken, async (req, res) => {
+    if (!adminInitAvailable) return res.status(503).json({ message: 'Admin functionality unavailable: missing service account.' });
+    try {
+        console.log('/admin/create-judge called by', req.auth && (req.auth.email || req.auth.uid));
+        console.log('  body:', JSON.stringify(req.body));
+        const { email, password, name, bio } = req.body;
+        if (!email || !password || !name) return res.status(400).json({ message: 'email, password and name required' });
+
+        // Create user in Firebase Auth
+        const userRecord = await admin.auth().createUser({
+            email: email,
+            password: password,
+            displayName: name
+        });
+
+        // Optionally set custom claims for judge role
+        await admin.auth().setCustomUserClaims(userRecord.uid, { judge: true });
+
+        // Compute passwordHash (SHA-256) to store in Firestore for compatibility
+        const crypto = require('crypto');
+        const passwordHash = crypto.createHash('sha256').update(String(password)).digest('hex');
+
+        // Save to Firestore (document id is uid so judges-login can check by uid)
+        await db.collection('judges').doc(userRecord.uid).set({
+            name: name,
+            email: email,
+            bio: bio || '',
+            role: 'judge',
+            passwordHash: passwordHash,
+            reviewedCount: 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true, uid: userRecord.uid });
+    } catch (error) {
+        console.error('create-judge error', error);
+        res.status(500).json({ message: 'Failed to create judge', error: error.message });
+    }
+});
+
+app.post('/admin/update-judge', verifyIdToken, async (req, res) => {
+    if (!adminInitAvailable) return res.status(503).json({ message: 'Admin functionality unavailable: missing service account.' });
+    try {
+        console.log('/admin/update-judge called by', req.auth && (req.auth.email || req.auth.uid));
+        console.log('  body:', JSON.stringify(req.body));
+        const { uid, email, name, bio, reviewedCount, password } = req.body;
+        if (!uid) return res.status(400).json({ message: 'uid required' });
+
+        // Update auth user if email or displayName provided
+        const updateAuth = {};
+        if (email) updateAuth.email = email;
+        if (name) updateAuth.displayName = name;
+        if (password) updateAuth.password = password; // update auth password if provided
+        if (Object.keys(updateAuth).length) {
+            await admin.auth().updateUser(uid, updateAuth);
+        }
+
+        // Update Firestore doc
+        const updateDoc = {};
+        if (name) updateDoc.name = name;
+        if (email) updateDoc.email = email;
+        if (typeof bio !== 'undefined') updateDoc.bio = bio;
+        if (typeof reviewedCount !== 'undefined') updateDoc.reviewedCount = Number(reviewedCount) || 0;
+
+        // If password provided, compute and store passwordHash for compatibility
+        if (password) {
+            const crypto = require('crypto');
+            updateDoc.passwordHash = crypto.createHash('sha256').update(String(password)).digest('hex');
+        }
+
+        if (Object.keys(updateDoc).length) {
+            await db.collection('judges').doc(uid).set(updateDoc, { merge: true });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('update-judge error', error);
+        res.status(500).json({ message: 'Failed to update judge', error: error.message });
+    }
+});
+
+app.post('/admin/delete-judge', verifyIdToken, async (req, res) => {
+    if (!adminInitAvailable) return res.status(503).json({ message: 'Admin functionality unavailable: missing service account.' });
+    try {
+        console.log('/admin/delete-judge called by', req.auth && (req.auth.email || req.auth.uid));
+        console.log('  body:', JSON.stringify(req.body));
+        const { uid } = req.body;
+        if (!uid) return res.status(400).json({ message: 'uid required' });
+
+        // Delete from Auth
+        await admin.auth().deleteUser(uid);
+        // Delete Firestore doc
+        await db.collection('judges').doc(uid).delete();
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('delete-judge error', error);
+        res.status(500).json({ message: 'Failed to delete judge', error: error.message });
+    }
+});

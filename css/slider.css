@@ -1,0 +1,309 @@
+/* Enhanced Hero Slider Styles */
+.hero-slider {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--text-dark);
+}
+
+.hero {
+    position: relative;
+    width: 500%;
+    height: 100%;
+    display: flex;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-content {
+    position: relative;
+    width: 20%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.hero-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 1;
+    transition: transform 8s ease-out;
+}
+
+.hero-content.active .hero-image {
+    transform: scale(1.05);
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, 0.4) 0%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(255, 107, 53, 0.2) 100%
+    );
+    z-index: 2;
+}
+
+.hero-text-content {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    color: white;
+    max-width: 600px;
+    padding: var(--spacing-xl);
+    animation-fill-mode: both;
+}
+
+.hero-text-content h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-lg);
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    margin-bottom: var(--spacing-xl);
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    line-height: 1.4;
+}
+
+.hero-content-animate {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: var(--delay, 0s);
+}
+
+.hero-content.active .hero-content-animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Slider Navigation */
+.arrows {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 var(--spacing-xl);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.slider-arrow {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
+    pointer-events: all;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slider-arrow:hover {
+    background: rgba(255, 107, 53, 0.8);
+    border-color: var(--primary-orange);
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+}
+
+.slider-arrow:active {
+    transform: scale(0.95);
+}
+
+/* Slider Dots */
+.slider-dots {
+    position: absolute;
+    bottom: var(--spacing-xl);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-md);
+    z-index: 10;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+}
+
+.dot:hover {
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(1.2);
+}
+
+.dot.active {
+    background: var(--primary-orange);
+    border-color: var(--primary-orange);
+    transform: scale(1.3);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+}
+
+/* Progress Bar */
+.slider-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    z-index: 10;
+}
+
+.slider-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-orange), var(--secondary-orange));
+    width: 0%;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+}
+
+/* Pause on hover */
+.hero-slider:hover .slider-progress-bar {
+    animation-play-state: paused;
+}
+
+/* Responsive Design for Slider */
+@media (max-width: 768px) {
+    .hero-slider {
+        height: 70vh;
+    }
+    
+    .hero-text-content {
+        padding: var(--spacing-lg);
+        max-width: 90%;
+    }
+    
+    .hero-text-content h1 {
+        font-size: 2.5rem;
+        line-height: 1.3;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .slider-arrow {
+        width: 50px;
+        height: 50px;
+        font-size: 1rem;
+    }
+    
+    .arrows {
+        padding: 0 var(--spacing-lg);
+    }
+    
+    .slider-dots {
+        bottom: var(--spacing-lg);
+        gap: var(--spacing-sm);
+    }
+    
+    .dot {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-slider {
+        height: 60vh;
+    }
+    
+    .hero-text-content h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .cta-button {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        font-size: 0.9rem;
+    }
+    
+    .slider-arrow {
+        width: 45px;
+        height: 45px;
+        font-size: 0.9rem;
+    }
+    
+    .arrows {
+        padding: 0 var(--spacing-md);
+    }
+}
+
+/* Touch/Swipe Support Indicators */
+.hero-slider.touch-active {
+    cursor: grabbing;
+}
+
+.hero-slider.touch-active .hero {
+    transition: none;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .hero,
+    .hero-content-animate,
+    .slider-arrow,
+    .dot,
+    .slider-progress-bar {
+        transition: none;
+        animation: none;
+    }
+    
+    .hero-image {
+        transform: none !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .slider-arrow {
+        background: rgba(0, 0, 0, 0.8);
+        border-color: white;
+    }
+    
+    .dot {
+        background: white;
+        border-color: black;
+    }
+    
+    .dot.active {
+        background: var(--primary-orange);
+        border-color: white;
+    }
+}

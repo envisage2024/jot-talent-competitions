@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Jot Talent Competitions</title>
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        :root {
+            --primary: #FF7F00;
+            --primary-dark: #E67200;
+            --primary-light: #FFA340;
+            --secondary: #FF5500;
+            --secondary-light: #FF8040;
+            --accent: #00BFFF;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --dark: #1e293b;
+            --dark-light: #334155;
+            --light: #fef8f4;
+            --lighter: #ffffff;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --light-gray: #e2e8f0;
+            --border-radius: 16px;
+            --border-radius-lg: 20px;
+            --shadow: 0 10px 25px rgba(255, 127, 0, 0.08);
+            --shadow-md: 0 15px 30px rgba(255, 127, 0, 0.12);
+            --shadow-lg: 0 20px 40px rgba(255, 127, 0, 0.15);
+            --shadow-hover: 0 20px 35px rgba(255, 127, 0, 0.2);
+            --transition: all 0.3s ease;
+            --transition-slow: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fff8f0 0%, #fff0e6 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: var(--lighter);
+            box-shadow: var(--shadow);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.97);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 6px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: 12px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--primary);
+            transition: var(--transition);
+            transform: translateX(-50%);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+            background-color: rgba(255, 127, 0, 0.08);
+        }
+
+        .nav-links a:hover:before, .nav-links a.active:before {
+            width: 60%;
+        }
+
+        .nav-links a i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .page-main {
+            padding: 40px 0;
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .page-header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .page-header h1 i {
+            color: var(--primary);
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.1) 0%, rgba(230, 114, 0, 0.1) 100%);
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto 24px;
+        }
+
+        /* Notifications Section */
+        .notifications-section {
+            background: linear-gradient(135deg, #ffffff 0%, #fffaf5 100%);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 127, 0, 0.15);
+        }
+
+        .notifications-section:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px 10px 0 0;
+        }
+
+        .notifications-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            border: none;
+            background: transparent;
+            color: var(--gray);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 127, 0, 0.08);
+            color: var(--primary);
+        }
+
+        .mark-all-read {
+            margin-left: auto;
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary-light);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mark-all-read:hover {
+            background: rgba(255, 127, 0, 0.08);
+        }
+
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .notification-item {
+            background: var(--lighter);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 127, 0, 0.1);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary-light);
+        }
+
+        .notification-item.unread {
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.05) 0%, rgba(255, 85, 0, 0.05) 100%);
+            border-left: 4px solid var(--primary);
+        }
+
+        .notification-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.1) 0%, rgba(230, 114, 0, 0.1) 100%);
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .notification-icon.announcement {
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.1) 0%, rgba(230, 114, 0, 0.1) 100%);
+            color: var(--primary);
+        }
+
+        .notification-icon.personal {
+            background: linear-gradient(135deg, rgba(255, 85, 0, 0.1) 0%, rgba(255, 128, 64, 0.1) 100%);
+            color: var(--secondary);
+        }
+
+        .notification-icon.system {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+            color: var(--success);
+        }
+
+        .notification-icon.admin {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+            color: #3b82f6;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .notification-header h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .notification-time {
+            font-size: 14px;
+            color: var(--gray);
+            white-space: nowrap;
+        }
+
+        .notification-content p {
+            color: var(--dark-light);
+            margin-bottom: 10px;
+        }
+
+        .notification-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 127, 0, 0.1);
+            color: var(--primary);
+        }
+
+        .notification-badge.personal {
+            background: rgba(255, 85, 0, 0.1);
+            color: var(--secondary);
+        }
+
+        .unread-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .no-notifications {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 60px;
+            color: var(--gray-light);
+            margin-bottom: 20px;
+        }
+
+        .no-notifications h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .no-notifications p {
+            color: var(--gray);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Decorative elements */
+        .orange-dots {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            background-image: radial-gradient(var(--primary-light) 2px, transparent 2px);
+            background-size: 20px 20px;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .dots-1 {
+            top: 10%;
+            left: 5%;
+        }
+
+        .dots-2 {
+            bottom: 10%;
+            right: 5%;
+        }
+
+        .floating-icon {
+            position: fixed;
+            color: var(--primary-light);
+            opacity: 0.1;
+            font-size: 64px;
+            z-index: -1;
+        }
+
+        .icon-1 {
+            top: 20%;
+            right: 10%;
+        }
+
+        .icon-2 {
+            bottom: 20%;
+            left: 10%;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .page-header h1 {
+                font-size: 32px;
+            }
+            
+            .notifications-section {
+                padding: 30px;
+            }
+            
+            .notification-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .notification-time {
+                margin-top: 5px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .notifications-section {
+                padding: 24px;
+            }
+            
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            .page-header h1 {
+                font-size: 28px;
+            }
+            
+            .page-header p {
+                font-size: 16px;
+            }
+            
+            .page-header h1 i {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .orange-dots, .floating-icon {
+                display: none;
+            }
+            
+            .notification-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .notification-icon {
+                margin-bottom: 15px;
+            }
+            
+            .notifications-actions {
+                flex-direction: column;
+            }
+            
+            .mark-all-read {
+                margin-left: 0;
+                justify-content: center;
+            }
+        }
+    </style>
+    <script>
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        }
+    </script>
+</head>
+<body>
+    <!-- Decorative elements -->
+    <div class="orange-dots dots-1"></div>
+    <div class="orange-dots dots-2"></div>
+    <div class="floating-icon icon-1"><i class="fas fa-bell"></i></div>
+    <div class="floating-icon icon-2"><i class="fas fa-comments"></i></div>
+
+    <header class="header">
+        <nav class="navbar container">
+            <div class="nav-brand">
+                <a href="dashboard.html">
+                    <div class="logo">
+                        <span class="logo-icon"><i class="fas fa-pen-fancy"></i></span>
+                        JOT TALENT
+                    </div>
+                </a>
+            </div>
+            <div class="nav-links user-nav">
+                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="join.html"><i class="fas fa-plus-circle"></i> Join Competition</a>
+                <a href="submit.html"><i class="fas fa-upload"></i> Submit</a>
+                <a href="notifications.html" class="active"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="feedback.html"><i class="fas fa-comments"></i> Feedback</a>
+                <a href="progress.html"><i class="fas fa-chart-line"></i> Progress</a>
+                <a href="support.html"><i class="fas fa-headset"></i> Support</a>
+                <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="page-main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-bell"></i> Notifications</h1>
+                <p>Stay updated with the latest announcements and updates</p>
+            </div>
+
+            <section class="notifications-section">
+                <div class="notifications-actions">
+                    <button class="tab-button active" onclick="switchTab('all')">
+                        <i class="fas fa-layer-group"></i> All Notifications
+                    </button>
+                    <button class="tab-button" onclick="switchTab('announcements')">
+                        <i class="fas fa-bullhorn"></i> Announcements
+                    </button>
+                    <button class="tab-button" onclick="switchTab('personal')">
+                        <i class="fas fa-user"></i> Personal
+                    </button>
+                    <button class="mark-all-read" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double"></i> Mark all as read
+                    </button>
+                </div>
+
+                <div id="notificationsList" class="notifications-list">
+                    <!-- Notifications will be injected here by JavaScript -->
+                </div>
+
+                <div id="emptyState" class="no-notifications">
+                    <div class="empty-icon">
+                        <i class="fas fa-bell-slash"></i>
+                    </div>
+                    <h3>No notifications yet</h3>
+                    <p>When you receive notifications, they'll appear here.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/auth-guard.js"></script>
+    <script src="js/login.js"></script>
+    <script src="js/logout.js"></script>
+    <script>
+        (function() {
+            const el = document.getElementById('logoutLink');
+            if (!el) return;
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (typeof performLogout === 'function') return performLogout();
+                if (typeof logout === 'function') return logout();
+                if (window.firebase && firebase.auth) { try { firebase.auth().signOut(); } catch(e){} }
+            });
+        })();
+    </script>
+    <script>
+        // Ensure Firebase SDKs are present (app, auth, firestore, database) so subscription code can use them.
+        (function ensureFirebase(){
+            try {
+                if (typeof firebase === 'undefined') {
+                    const s1 = document.createElement('script'); s1.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js'; s1.async = false; document.head.appendChild(s1);
+                    const s2 = document.createElement('script'); s2.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js'; s2.async = false; document.head.appendChild(s2);
+                    const s3 = document.createElement('script'); s3.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js'; s3.async = false; document.head.appendChild(s3);
+                    const s4 = document.createElement('script'); s4.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js'; s4.async = false; document.head.appendChild(s4);
+                }
+            } catch (e) { console.warn('Could not inject Firebase SDK', e); }
+        })();
+    </script>
+    <script>
+        let currentTab = 'all';
+        
+        // Sample notifications data (in a real app, this would come from a server)
+        // Explicit default welcome messages shown to every new user
+        const defaultWelcomeMessages = [
+            {
+                id: 'welcome-1',
+                type: 'announcement',
+                title: 'Welcome to Jot Talent Competitions!',
+                message: 'Thank you for joining our writing community. We\'re excited to see your creative submissions. The competition is open for entries until December 31, 2025.',
+                timestamp: new Date(),
+                read: false
+            },
+            {
+                id: 'welcome-2',
+                type: 'announcement',
+                title: 'How to Participate',
+                message: 'To participate: Join a competition, submit your entry, and check the dashboard for feedback and results. Visit the Resources section for writing tips.',
+                timestamp: new Date(),
+                read: false
+            },
+            {
+                id: 'welcome-3',
+                type: 'announcement',
+                title: 'Need Help?',
+                message: 'If you need assistance, open a support ticket via the Support page or contact our team at support@jottalent.com.',
+                timestamp: new Date(),
+                read: false
+            }
+        ];
+
+        // Local sample notifications used as fallback and additional demo items
+        const sampleNotifications = [
+            {
+                id: '1',
+                type: 'announcement',
+                title: 'Competition Deadline Extended',
+                message: 'The submission deadline has been extended to December 15th. Please make sure to submit your entries before the new deadline.',
+                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+                read: false
+            },
+            {
+                id: '2',
+                type: 'personal',
+                title: 'Your Submission Has Been Received',
+                message: 'Thank you for submitting your article "The Art of Creative Writing". Our judges will review it and provide feedback within 7-10 days.',
+                timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+                read: false
+            },
+            {
+                id: '3',
+                type: 'system',
+                title: 'System Maintenance Notice',
+                message: 'We will be performing system maintenance on Sunday, November 20th from 2:00 AM to 4:00 AM EST. The platform may be unavailable during this time.',
+                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+                read: true
+            },
+            {
+                id: '4',
+                type: 'admin',
+                title: 'New Writing Tips Available',
+                message: 'Check out our latest writing tips and techniques in the Resources section. Learn how to improve your storytelling skills!',
+                timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+                read: true
+            }
+        ];
+        
+        // Firestore-backed announcements that will be merged into notifications
+        let firestoreAnnouncements = [];
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Prefer Firestore-backed user profile when available before rendering
+            try {
+                if (window.waitForCurrentUser) await window.waitForCurrentUser(1200);
+            } catch (e) {}
+            try { subscribeAnnouncementsForNotifications(); } catch (e) { console.warn('Could not subscribe to firestore announcements', e); }
+            try { subscribeRealtimeDbAnnouncementsAndUserNotifications(); } catch (e) { console.warn('Could not subscribe to realtime db announcements', e); }
+            loadNotifications();
+        });
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update active tab
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Reload notifications for the selected tab
+            loadNotifications();
+        }
+        
+        function loadNotifications() {
+            // Start with default welcome messages (always visible to new users)
+            let notifications = Array.isArray(defaultWelcomeMessages) ? defaultWelcomeMessages.slice() : [];
+
+            // Merge sample/local notifications after welcome messages
+            if (Array.isArray(sampleNotifications)) notifications = notifications.concat(sampleNotifications.slice());
+
+            // Map firestoreAnnouncements to notification shape
+            if (Array.isArray(firestoreAnnouncements) && firestoreAnnouncements.length) {
+                const mapped = firestoreAnnouncements.map(a => ({
+                    id: String(a.id || a._id || a.docId || a.timestamp?.getTime() || Math.random()),
+                    type: 'announcement',
+                    title: a.title || 'Announcement',
+                    message: a.message || '',
+                    timestamp: a.timestamp ? new Date(a.timestamp) : (a.sentAt ? new Date(a.sentAt) : new Date()),
+                    read: false
+                }));
+
+                // Prepend announcements so newest are first
+                notifications = mapped.concat(notifications);
+                // Deduplicate by id/content
+                notifications = dedupeNotifications(notifications);
+            }
+
+            const filteredNotifications = filterNotifications(notifications, currentTab);
+            displayNotifications(filteredNotifications);
+        }
+
+        // Subscribe to announcements collection and keep firestoreAnnouncements updated
+        function subscribeAnnouncementsForNotifications() {
+            if (!(window.firebase && firebase.firestore)) {
+                // no firestore available; keep using sampleNotifications
+                return;
+            }
+
+            try {
+                const db = firebase.firestore();
+                db.collection('announcements').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                    // map docs to normalized announcements, but merge carefully to avoid duplicates
+                    const mapped = snapshot.docs.map(d => {
+                        const data = d.data() || {};
+                        if (data.createdAt && data.createdAt.toDate) data.createdAt = data.createdAt.toDate();
+                        if (data.sentAt && data.sentAt.toDate) data.sentAt = data.sentAt.toDate();
+                        data.id = d.id || data.id;
+                        data.timestamp = data.timestamp || data.sentAt || data.createdAt || new Date();
+                        return {
+                            id: String(data.id || d.id || Math.random()),
+                            type: 'announcement',
+                            title: data.title || 'Announcement',
+                            message: data.message || '',
+                            timestamp: data.timestamp
+                        };
+                    });
+
+                    // Replace firestoreAnnouncements with mapped normalized items
+                    firestoreAnnouncements = mapped;
+                    // refresh UI
+                    loadNotifications();
+                }, err => {
+                    console.warn('Announcements snapshot error', err);
+                });
+            } catch (e) {
+                console.warn('Could not subscribe to announcements for notifications page', e);
+            }
+        }
+
+        // Deduplicate notifications by id and content. Keeps first occurrence (earlier in list wins)
+        function dedupeNotifications(list) {
+            const seenIds = new Set();
+            const seenHashes = new Set();
+            const out = [];
+
+            for (const n of list) {
+                const id = n.id ? String(n.id) : null;
+                const hash = `${(n.title||'').trim()}|${(n.message||'').trim()}`;
+                if (id && seenIds.has(id)) continue;
+                if (seenHashes.has(hash)) continue;
+                if (id) seenIds.add(id);
+                seenHashes.add(hash);
+                out.push(n);
+            }
+
+            return out;
+        }
+
+        // Additionally subscribe to Firebase Realtime Database for announcements and per-user notifications
+        function subscribeRealtimeDbAnnouncementsAndUserNotifications() {
+            try {
+                if (!(window.firebase && firebase.database)) return;
+                const rdb = firebase.database();
+
+                // Global announcements feed
+                const announcementsRef = rdb.ref('announcements');
+
+                // child_added - new announcements
+                announcementsRef.limitToLast(50).on('child_added', snapshot => {
+                    const data = snapshot.val();
+                    if (!data) return;
+                    const ts = data.sentAt || data.createdAt || data.timestamp || new Date().toISOString();
+
+                    const newAnn = {
+                        id: snapshot.key,
+                        type: 'announcement',
+                        title: data.title || 'Announcement',
+                        message: data.message || '',
+                        timestamp: new Date(ts)
+                    };
+
+                    // merge into firestoreAnnouncements but avoid duplicates
+                    const merged = [...firestoreAnnouncements];
+                    merged.unshift(newAnn);
+                    firestoreAnnouncements = dedupeNotifications(merged);
+                    loadNotifications();
+                });
+
+                // child_changed - updates to announcements
+                announcementsRef.on('child_changed', snapshot => {
+                    const data = snapshot.val();
+                    if (!data) return;
+                    const ts = data.sentAt || data.createdAt || data.timestamp || new Date().toISOString();
+                    const updated = {
+                        id: snapshot.key,
+                        type: 'announcement',
+                        title: data.title || 'Announcement',
+                        message: data.message || '',
+                        timestamp: new Date(ts)
+                    };
+
+                    // replace any existing with same id then refresh
+                    firestoreAnnouncements = firestoreAnnouncements.filter(a => String(a.id) !== String(snapshot.key));
+                    firestoreAnnouncements.unshift(updated);
+                    firestoreAnnouncements = dedupeNotifications(firestoreAnnouncements);
+                    loadNotifications();
+                });
+
+                // child_removed - remove announcement
+                announcementsRef.on('child_removed', snapshot => {
+                    const key = snapshot.key;
+                    firestoreAnnouncements = firestoreAnnouncements.filter(a => String(a.id) !== String(key));
+                    loadNotifications();
+                });
+
+                // Per-user notifications (if signed in and email available)
+                if (window.firebase && firebase.auth) {
+                    firebase.auth().onAuthStateChanged(user => {
+                        if (!user) return;
+                        const email = user.email || user.displayName || user.uid || 'unknown';
+                        const docId = (email || 'unknown').replace(/[^a-zA-Z0-9-_\.]/g, '_');
+                        const userRef = rdb.ref('user_notifications/' + docId);
+                        userRef.limitToLast(50).on('child_added', snap => {
+                            const n = snap.val();
+                            if (!n) return;
+                            const ntf = {
+                                id: n.id || snap.key,
+                                type: n.type || 'announcement',
+                                title: n.title || 'Announcement',
+                                message: n.message || '',
+                                timestamp: n.timestamp ? new Date(n.timestamp) : new Date(),
+                                read: !!n.read
+                            };
+
+                            // Prepend into sampleNotifications but dedupe across combined list
+                            const combined = [...defaultWelcomeMessages, ...sampleNotifications, ...firestoreAnnouncements];
+                            // If an item with same id or title|message exists, skip
+                            const existing = combined.find(x => (x.id && x.id === ntf.id) || ((x.title||'').trim() === (ntf.title||'').trim() && (x.message||'').trim() === (ntf.message||'').trim()));
+                            if (!existing) {
+                                sampleNotifications.unshift(ntf);
+                                loadNotifications();
+                            }
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn('Could not subscribe to Realtime Database announcements', e);
+            }
+        }
+        
+        function filterNotifications(notifications, tab) {
+            switch(tab) {
+                case 'announcements':
+                    return notifications.filter(n => n.type === 'announcement' || n.type === 'admin');
+                case 'personal':
+                    return notifications.filter(n => n.type === 'personal');
+                default:
+                    return notifications;
+            }
+        }
+        
+        function displayNotifications(notifications) {
+            const container = document.getElementById('notificationsList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (notifications.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = notifications.map(notification => {
+                let badge = '';
+                if (notification.type === 'announcement' || notification.type === 'admin') {
+                    badge = '<span class="notification-badge">Public</span>';
+                } else if (notification.type === 'personal') {
+                    badge = '<span class="notification-badge personal">Personal</span>';
+                } else {
+                    badge = `<span class="notification-badge">${notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}</span>`;
+                }
+                return `
+                <div class="notification-item ${notification.read ? 'read' : 'unread'}" 
+                     onclick="markAsRead('${notification.id}')">
+                    <div class="notification-icon ${notification.type}">
+                        <i class="fas ${getNotificationIcon(notification.type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-header">
+                            <h4>${notification.title}</h4>
+                            <span class="notification-time">${formatDate(notification.timestamp)}</span>
+                        </div>
+                        <p>${notification.message}</p>
+                        ${badge}
+                    </div>
+                    ${!notification.read ? '<div class="unread-indicator"></div>' : ''}
+                </div>
+                `;
+            }).join('');
+        }
+        
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 'announcement': return 'fa-bullhorn';
+                case 'personal': return 'fa-user';
+                case 'system': return 'fa-cog';
+                case 'admin': return 'fa-user-shield';
+                default: return 'fa-info-circle';
+            }
+        }
+        
+        function formatDate(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} min ago`;
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            
+            return date.toLocaleDateString();
+        }
+        
+        function markAsRead(notificationId) {
+            // In a real app, this would update the server or localStorage
+            const notification = sampleNotifications.find(n => n.id === notificationId);
+            
+            if (notification && !notification.read) {
+                notification.read = true;
+                loadNotifications();
+            }
+        }
+        
+        function markAllAsRead() {
+            // In a real app, this would update the server or localStorage
+            sampleNotifications.forEach(n => n.read = true);
+            loadNotifications();
+        }
+        
+        // Local placeholder logout removed to use centralized logout helper (js/logout.js)
+    </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

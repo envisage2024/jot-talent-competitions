@@ -1,0 +1,16 @@
+{
+  "name": "jot-email-sender",
+  "version": "0.1.0",
+  "description": "Example service to generate Firebase email verification links and send via SendGrid for improved deliverability",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^7.9.0",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.10.0",
+    "body-parser": "^1.20.2"
+  }
+}

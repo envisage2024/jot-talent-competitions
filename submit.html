@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Article - Jot Talent Competitions</title>
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Project helpers (defines getStorageData and other helpers) -->
+    <script src="js/script.js"></script>
+    
+    <style>
+        :root {
+            --primary: #FF7F00;
+            --primary-dark: #E67200;
+            --primary-light: #FFA340;
+            --secondary: #FF5500;
+            --secondary-light: #FF8040;
+            --accent: #00BFFF;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --dark: #1e293b;
+            --dark-light: #334155;
+            --light: #fef8f4;
+            --lighter: #ffffff;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --light-gray: #e2e8f0;
+            --border-radius: 16px;
+            --border-radius-lg: 20px;
+            --shadow: 0 10px 25px rgba(255, 127, 0, 0.08);
+            --shadow-md: 0 15px 30px rgba(255, 127, 0, 0.12);
+            --shadow-lg: 0 20px 40px rgba(255, 127, 0, 0.15);
+            --shadow-hover: 0 20px 35px rgba(255, 127, 0, 0.2);
+            --transition: all 0.3s ease;
+            --transition-slow: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fff8f0 0%, #fff0e6 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: var(--lighter);
+            box-shadow: var(--shadow);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.97);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 6px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: 12px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--primary);
+            transition: var(--transition);
+            transform: translateX(-50%);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+            background-color: rgba(255, 127, 0, 0.08);
+        }
+
+        .nav-links a:hover:before, .nav-links a.active:before {
+            width: 60%;
+        }
+
+        .nav-links a i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .page-main {
+            padding: 40px 0;
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .page-header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .page-header h1 i {
+            color: var(--primary);
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.1) 0%, rgba(230, 114, 0, 0.1) 100%);
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto 24px;
+        }
+
+        /* Submission Container */
+        .submission-container {
+            background: linear-gradient(135deg, #ffffff 0%, #fffaf5 100%);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 127, 0, 0.15);
+        }
+
+        .submission-container:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px 10px 0 0;
+        }
+
+        .submission-status {
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.05) 0%, rgba(255, 85, 0, 0.05) 100%);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 127, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .submission-status i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .submission-status p {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .submission-guidelines {
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.08) 0%, rgba(255, 85, 0, 0.08) 100%);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 127, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .submission-guidelines h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .submission-guidelines ul {
+            margin-left: 20px;
+            color: var(--dark-light);
+        }
+
+        .submission-guidelines li {
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .submission-guidelines li:before {
+            content: '•';
+            color: var(--primary);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .submission-form {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .form-group label i {
+            color: var(--primary);
+            width: 20px;
+            text-align: center;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.8);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 127, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .word-count {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .word-count span {
+            font-weight: 600;
+        }
+
+        .word-limit {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input {
+            width: auto;
+            transform: scale(1.2);
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+        }
+
+        .submission-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .secondary-button, .submit-button {
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+        }
+
+        .secondary-button {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary-light);
+        }
+
+        .secondary-button:hover {
+            background: rgba(255, 127, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .submit-button:hover {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .submission-success {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-message i {
+            font-size: 60px;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .success-message h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .success-message p {
+            color: var(--gray);
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .success-button {
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            box-shadow: var(--shadow);
+        }
+
+        .success-button:hover {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Decorative elements */
+        .orange-dots {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            background-image: radial-gradient(var(--primary-light) 2px, transparent 2px);
+            background-size: 20px 20px;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .dots-1 {
+            top: 10%;
+            left: 5%;
+        }
+
+        .dots-2 {
+            bottom: 10%;
+            right: 5%;
+        }
+
+        .floating-icon {
+            position: fixed;
+            color: var(--primary-light);
+            opacity: 0.1;
+            font-size: 64px;
+            z-index: -1;
+        }
+
+        .icon-1 {
+            top: 20%;
+            right: 10%;
+        }
+
+        .icon-2 {
+            bottom: 20%;
+            left: 10%;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .page-header h1 {
+                font-size: 32px;
+            }
+            
+            .submission-actions, .success-actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .submission-container {
+                padding: 24px;
+            }
+            
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            .page-header h1 {
+                font-size: 28px;
+            }
+            
+            .page-header p {
+                font-size: 16px;
+            }
+            
+            .page-header h1 i {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .orange-dots, .floating-icon {
+                display: none;
+            }
+            
+            .form-group input, .form-group select, .form-group textarea {
+                padding: 14px 16px;
+            }
+            
+            .secondary-button, .submit-button, .success-button {
+                padding: 14px 20px;
+            }
+        }
+    </style>
+    <script>
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        }
+    </script>
+</head>
+<body>
+    <!-- Decorative elements -->
+    <div class="orange-dots dots-1"></div>
+    <div class="orange-dots dots-2"></div>
+    <div class="floating-icon icon-1"><i class="fas fa-pen-nib"></i></div>
+    <div class="floating-icon icon-2"><i class="fas fa-book-open"></i></div>
+
+    <header class="header">
+        <nav class="navbar container">
+            <div class="nav-brand">
+                <a href="dashboard.html">
+                    <div class="logo">
+                        <span class="logo-icon"><i class="fas fa-pen-fancy"></i></span>
+                        JOT TALENT
+                    </div>
+                </a>
+            </div>
+            <div class="nav-links user-nav">
+                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="join.html"><i class="fas fa-plus-circle"></i> Join Competition</a>
+                <a href="submit.html" class="active"><i class="fas fa-upload"></i> Submit</a>
+                <a href="notifications.html"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="feedback.html"><i class="fas fa-comments"></i> Feedback</a>
+                <a href="progress.html"><i class="fas fa-chart-line"></i> Progress</a>
+                <a href="support.html"><i class="fas fa-headset"></i> Support</a>
+                <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="page-main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-upload"></i> Submit Your Writing</h1>
+                <p>Share your creative work with our expert judges</p>
+            </div>
+
+            <div class="submission-container">
+                <div class="submission-status" id="submissionStatus">
+                    <i class="fas fa-info-circle"></i>
+                    <p>You have joined the competition. Please submit your article before the deadline.</p>
+                </div>
+
+                <div class="submission-form-container" id="submissionFormContainer">
+                    <div class="submission-guidelines">
+                        <h3><i class="fas fa-info-circle"></i> Submission Guidelines</h3>
+                        <ul>
+                            <li>Word count: 1000-2500 words</li>
+                            <li>Accepted formats: Essay, Short Story, Article</li>
+                            <li>Original work only - no plagiarism</li>
+                            <li>English language submissions only</li>
+                            <li>One submission per participant</li>
+                            <li>Deadline: December 31, 2025</li>
+                        </ul>
+                    </div>
+
+                    <form id="submissionForm" class="submission-form">
+                        <div class="form-group">
+                            <label for="articleTitle">
+                                <i class="fas fa-heading"></i>
+                                Article Title *
+                            </label>
+                            <input type="text" id="articleTitle" name="title" required 
+                                   placeholder="Enter your article title">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="articleCategory">
+                                <i class="fas fa-tags"></i>
+                                Category *
+                            </label>
+                            <select id="articleCategory" name="category" required>
+                                <option value="">Select a category</option>
+                                <option value="essay">Essay</option>
+                                <option value="short-story">Short Story</option>
+                                <option value="article">Article</option>
+                                <option value="poetry">Poetry</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                            <div class="form-group">
+                                <label for="competitionRound">
+                                    <i class="fas fa-layer-group"></i>
+                                    Competition Round *
+                                </label>
+                                <select id="competitionRound" name="competitionRound" required>
+                                    <option value="">Loading rounds...</option>
+                                </select>
+                            </div>
+
+                        <div class="form-group">
+                            <label for="articleContent">
+                                <i class="fas fa-pen"></i>
+                                Your Writing *
+                            </label>
+                            <textarea id="articleContent" name="content" required 
+                                      placeholder="Paste your writing here... (1000-2500 words)"
+                                      rows="20"></textarea>
+                            <div class="word-count">
+                                <span id="wordCount">0</span> words
+                                <span class="word-limit">(1000-2500 required)</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="authorNotes">
+                                <i class="fas fa-sticky-note"></i>
+                                Author's Notes (Optional)
+                            </label>
+                            <textarea id="authorNotes" name="notes" 
+                                      placeholder="Any additional notes for the judges..."
+                                      rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="originalWork" name="originalWork" required>
+                            <label for="originalWork">
+                                I confirm this is my original work and I have not submitted it elsewhere
+                            </label>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="finalSubmission" name="finalSubmission" required>
+                            <label for="finalSubmission">
+                                I understand this is my final submission and cannot be changed
+                            </label>
+                        </div>
+
+                        <div class="submission-actions">
+                            <button type="button" class="secondary-button" onclick="saveDraft()">
+                                <i class="fas fa-save"></i>
+                                Save as Draft
+                            </button>
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-paper-plane"></i>
+                                Submit Article
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="submission-success hidden" id="submissionSuccess">
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Submission Successful!</h3>
+                        <p>Your article has been submitted for review. You will receive feedback once our judges have completed their evaluation.</p>
+                        <div class="success-actions">
+                            <button class="success-button" onclick="window.location.href='progress.html'">
+                                <i class="fas fa-chart-line"></i>
+                                Track Progress
+                            </button>
+                            <button class="secondary-button" onclick="window.location.href='dashboard.html'">
+                                <i class="fas fa-home"></i>
+                                Back to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgnkqrg_2clJ77WTonEQFC3gwVrG7HrO4",
+            authDomain: "jot-talent-competitions-72b9f.firebaseapp.com",
+            databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com",
+            projectId: "jot-talent-competitions-72b9f",
+            storageBucket: "jot-talent-competitions-72b9f.firebasestorage.app",
+            messagingSenderId: "25581487736",
+            appId: "1:25581487736:web:a3730b66cd4fb7d9ebcf8d",
+            measurementId: "G-8NRD37H5YD"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication state
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    // User is not signed in, redirect to login
+                    alert('You need to be logged in to submit an article.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Determine target round from query string (default to firstRound)
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetRound = urlParams.get('round') || 'firstRound';
+
+                // Check if user has paid for the competition
+                const hasPaid = localStorage.getItem('paymentSuccess_firstRound') === 'true';
+                const hasJoined = localStorage.getItem('hasJoined_firstRound') === 'true';
+                const emailVerified = localStorage.getItem('emailVerified_firstRound') === 'true';
+
+                // If this is the test round, bypass payment/verification gating so testers can submit
+                if (!(targetRound === 'test') && (!hasPaid || !hasJoined || !emailVerified)) {
+                    // Hide the form and show a message
+                    document.getElementById('submissionFormContainer').style.display = 'none';
+                    document.getElementById('submissionStatus').innerHTML = `
+                        <i class="fas fa-exclamation-circle" style="color: #e74c3c;"></i>
+                        <p>You must complete payment and verification before submitting your article. <a href="join.html">Click here to complete registration</a></p>
+                    `;
+
+                    // Optionally redirect after a delay
+                    setTimeout(() => {
+                        window.location.href = 'join.html';
+                    }, 5000);
+
+                    return;
+                }
+
+                // User is authenticated and allowed (or it's test round), show the form
+                document.getElementById('submissionFormContainer').style.display = 'block';
+
+                // Check round activation and user eligibility
+                async function checkRoundAndEligibility() {
+                    // Load activation flags from Firestore preferred helper
+                    let round2Activated = false;
+                    let round3Activated = false;
+                    try {
+                        if (typeof window.getRoundsMetaFromFirestore === 'function') {
+                            const meta = await window.getRoundsMetaFromFirestore();
+                            if (typeof meta.round2Activated !== 'undefined') round2Activated = !!meta.round2Activated;
+                            if (typeof meta.round3Activated !== 'undefined') round3Activated = !!meta.round3Activated;
+                        } else if (window.firebase && firebase.firestore) {
+                            const metaDoc = await db.collection('meta').doc('rounds').get();
+                            if (metaDoc && metaDoc.exists) {
+                                const d = metaDoc.data();
+                                if (typeof d.round2Activated !== 'undefined') round2Activated = !!d.round2Activated;
+                                if (typeof d.round3Activated !== 'undefined') round3Activated = !!d.round3Activated;
+                            }
+                        }
+                    } catch(e) { console.warn('Could not read rounds meta', e); }
+
+                    const user = auth.currentUser;
+                    // local quick-check fallback for qualifications
+                    let qualifiedLocal = (localStorage.getItem('qualified_round2') === '1');
+                    if (targetRound === 'round2') {
+                        // must be activated and user qualified
+                        let qualifiedRemote = false;
+                        try {
+                            if (typeof window.isUserQualifiedRemote === 'function') qualifiedRemote = await window.isUserQualifiedRemote(user.uid, 'round2');
+                            else if (user && window.firebase && firebase.firestore) {
+                                const udoc = await db.collection('users').doc(user.uid).get();
+                                if (udoc && udoc.exists) {
+                                    const ud = udoc.data();
+                                    if (ud.qualifiedRounds && Array.isArray(ud.qualifiedRounds) && ud.qualifiedRounds.includes('round2')) qualifiedRemote = true;
+                                }
+                            }
+                        } catch(e) { console.warn('Could not verify qualification remotely', e); }
+                        if (!round2Activated) {
+                            document.getElementById('submissionFormContainer').style.display = 'none';
+                            document.getElementById('submissionStatus').innerHTML = `<i class='fas fa-clock'></i> Round Two is not open yet. Please wait for admin to open the round.`;
+                            return false;
+                        }
+                        if (!qualifiedLocal && !qualifiedRemote) {
+                            document.getElementById('submissionFormContainer').style.display = 'none';
+                            document.getElementById('submissionStatus').innerHTML = `<i class='fas fa-ban' style='color:#e74c3c;'></i> You are not qualified to submit to Round Two.`;
+                            return false;
+                        }
+                    }
+                    if (targetRound === 'round3') {
+                        let round3Open = round3Activated;
+                        if (!round3Open) {
+                            document.getElementById('submissionFormContainer').style.display = 'none';
+                            document.getElementById('submissionStatus').innerHTML = `<i class='fas fa-clock'></i> Final Round is not open yet.`;
+                            return false;
+                        }
+                        // check if qualified for round3
+                        let qualifiedRemote = false;
+                        try {
+                            if (typeof window.isUserQualifiedRemote === 'function') qualifiedRemote = await window.isUserQualifiedRemote(user.uid, 'round3');
+                            else if (user && window.firebase && firebase.firestore) {
+                                const udoc = await db.collection('users').doc(user.uid).get();
+                                if (udoc && udoc.exists) {
+                                    const ud = udoc.data();
+                                    if (ud.qualifiedRounds && Array.isArray(ud.qualifiedRounds) && ud.qualifiedRounds.includes('round3')) qualifiedRemote = true;
+                                }
+                            }
+                        } catch(e) { console.warn('Could not verify qualification remotely', e); }
+                        if (!qualifiedRemote) {
+                            document.getElementById('submissionFormContainer').style.display = 'none';
+                            document.getElementById('submissionStatus').innerHTML = `<i class='fas fa-ban' style='color:#e74c3c;'></i> You are not qualified to submit to the Final Round.`;
+                            return false;
+                        }
+                    }
+                    // additionally, allow test round if the user has joined it (server-side or local)
+                    if (targetRound === 'test') {
+                        try {
+                            // Check server-side joinedRounds if possible
+                            if (user && window.firebase && firebase.firestore) {
+                                const udoc = await db.collection('users').doc(user.uid).get();
+                                if (udoc && udoc.exists) {
+                                    const ud = udoc.data();
+                                    if (Array.isArray(ud.joinedRounds) && ud.joinedRounds.includes('test')) return true;
+                                }
+                            }
+                        } catch (e) { console.warn('Could not verify server-side joinedRounds', e); }
+                        // Fallback to local flag
+                        if (localStorage.getItem('hasJoined_test') === '1') return true;
+                        document.getElementById('submissionFormContainer').style.display = 'none';
+                        document.getElementById('submissionStatus').innerHTML = `<i class='fas fa-ban' style='color:#e74c3c;'></i> You must join the Test Round before submitting. Click Join on the competitions page.`;
+                        return false;
+                    }
+
+                    return true;
+                }
+                // run check and store targetRound for submit handler
+                // Populate round selector UI
+                async function populateRoundsSelector() {
+                    const sel = document.getElementById('competitionRound');
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="">Select a round</option>';
+                    let rounds = [];
+                    try {
+                        if (typeof window.getRounds === 'function') rounds = await window.getRounds();
+                        else rounds = getStorageData('jot_talent_rounds') || [];
+                    } catch (e) { rounds = getStorageData('jot_talent_rounds') || []; }
+                    // Fallback to seeded defaults if empty (mirror join.js defaults)
+                    if (!rounds || rounds.length === 0) rounds = [
+                        { round: 1, title: 'First Round', enabled: true, status: 'active' },
+                        { round: 2, title: 'Second Round', enabled: false, status: 'upcoming' },
+                        { round: 3, title: 'Final Round', enabled: false, status: 'upcoming' }
+                    ];
+
+                    // Ensure Test Round exists (append as last) so it can always be selected for testing
+                    try {
+                        if (!rounds.some(r => String(r.round) === 'test')) {
+                            rounds.push({ round: 'test', title: 'Test Round', enabled: true, status: 'active' });
+                        }
+                    } catch (e) { /* ignore */ }
+
+                    rounds.forEach(r => {
+                        const val = (typeof r.round === 'string' || typeof r.round === 'number') ? String(r.round) : '';
+                        const disabled = (r.enabled === false) ? 'disabled' : '';
+                        sel.insertAdjacentHTML('beforeend', `<option value="${val}" ${disabled}>${r.title}${disabled ? ' (closed)' : ''}</option>`);
+                    });
+                    // If URL has round param, preselect it
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlRound = urlParams.get('round');
+                    if (urlRound) {
+                        // If the requested round is 'test', ensure the option is enabled if the user has joined it
+                        if (String(urlRound) === 'test') {
+                            let joined = false;
+                            try {
+                                // Prefer server-side check when authenticated
+                                if (window.firebase && firebase.auth && firebase.firestore) {
+                                    // If user currently available, check now
+                                    const current = firebase.auth().currentUser;
+                                    if (current) {
+                                        const udoc = await firebase.firestore().collection('users').doc(current.uid).get();
+                                        if (udoc && udoc.exists) {
+                                            const ud = udoc.data();
+                                            if (Array.isArray(ud.joinedRounds) && ud.joinedRounds.includes('test')) joined = true;
+                                        }
+                                    } else {
+                                        // Wait briefly for auth to initialize and recheck later
+                                        // We'll re-run populateRoundsSelector via auth state listener below
+                                    }
+                                }
+                            } catch (e) { console.warn('Could not check server-side joinedRounds for preselect', e); }
+                            // fallback to local flag
+                            if (!joined) joined = (localStorage.getItem('hasJoined_test') === '1');
+
+                            // If joined, ensure the option is enabled and preselect it
+                            if (joined) {
+                                const opt = sel.querySelector('option[value="test"]');
+                                if (opt) opt.disabled = false;
+                                sel.value = 'test';
+                            }
+                        } else {
+                            sel.value = urlRound;
+                        }
+                    }
+                }
+
+                await populateRoundsSelector();
+
+                // If the user has already submitted to the selected round, show a read-only view and prevent resubmission
+                async function renderSubmittedSubmission(docId, data) {
+                    try {
+                        const container = document.getElementById('submissionFormContainer');
+                        if (container) container.style.display = 'none';
+
+                        // build a read-only view
+                        let view = document.getElementById('submissionView');
+                        if (!view) {
+                            view = document.createElement('div');
+                            view.id = 'submissionView';
+                            view.className = 'submission-view';
+                            const parent = document.querySelector('.submission-container');
+                            if (parent) parent.insertBefore(view, document.getElementById('submissionSuccess'));
+                        }
+                        const submittedAt = data.submittedAt && data.submittedAt.toDate ? data.submittedAt.toDate().toString() : (data.submittedAt || '');
+                        view.innerHTML = `
+                            <h3>Your submission (read-only)</h3>
+                            <div><strong>Title:</strong> ${escapeHtml(data.title || '')}</div>
+                            <div><strong>Category:</strong> ${escapeHtml(data.category || '')}</div>
+                            <div style="margin-top:12px;"><strong>Content</strong><div style="white-space:pre-wrap;border:1px solid #eee;padding:12px;border-radius:8px;margin-top:8px;background:#fff;">${escapeHtml(data.content || '')}</div></div>
+                            <div style="margin-top:12px;"><strong>Author notes</strong><div style="white-space:pre-wrap;border:1px solid #eee;padding:8px;border-radius:6px;background:#fff;">${escapeHtml(data.notes || '')}</div></div>
+                            <div style="margin-top:12px;color:#666;"><small>Status: ${escapeHtml(data.status || '')} • Submitted: ${escapeHtml(submittedAt)}</small></div>
+                            <div style="margin-top:16px;"><button class="secondary-button" onclick="window.location.href='dashboard.html'">Back to Dashboard</button></div>
+                        `;
+                        // ensure submit button is disabled
+                        const submitBtn = document.querySelector('.submit-button');
+                        if (submitBtn) submitBtn.disabled = true;
+                    } catch (e) { console.warn('renderSubmittedSubmission failed', e); }
+                }
+
+                async function checkAndLoadUserSubmission() {
+                    try {
+                        const sel = document.getElementById('competitionRound');
+                        if (!sel) return;
+                        const selectedRoundVal = sel.value || (new URLSearchParams(window.location.search).get('round')) || 'firstRound';
+                        // only proceed if user is authenticated
+                        const user = auth.currentUser;
+                        if (!user) return;
+
+                        try {
+                            const q = await db.collection('submissions')
+                                .where('userId', '==', user.uid)
+                                .where('competitionRound', '==', String(selectedRoundVal))
+                                .limit(1)
+                                .get();
+                            if (!q.empty) {
+                                const d = q.docs[0];
+                                renderSubmittedSubmission(d.id, d.data());
+                                return true;
+                            }
+                        } catch (e) { console.warn('Could not query existing submission', e); }
+
+                        // Fallback: check user's profile mirror flags
+                        try {
+                            const udoc = await db.collection('users').doc(user.uid).get();
+                            if (udoc && udoc.exists) {
+                                const ud = udoc.data();
+                                if (selectedRoundVal === 'test' && ud && ud.submissionStatus_test === 'submitted') {
+                                    // submission exists but not found in submissions collection (possibly mirrored); show generic notice and disable
+                                    const container = document.getElementById('submissionFormContainer');
+                                    if (container) container.style.display = 'none';
+                                    const parent = document.querySelector('.submission-container');
+                                    let view = document.getElementById('submissionView');
+                                    if (!view) { view = document.createElement('div'); view.id = 'submissionView'; view.className='submission-view'; parent.insertBefore(view, document.getElementById('submissionSuccess')); }
+                                    view.innerHTML = `<h3>Your submission</h3><p>You have submitted to this round. Submission details are not available at the moment. Contact support if you need help.</p><div style="margin-top:12px;"><button class="secondary-button" onclick="window.location.href='dashboard.html'">Back to Dashboard</button></div>`;
+                                    const submitBtn = document.querySelector('.submit-button'); if (submitBtn) submitBtn.disabled = true;
+                                    return true;
+                                }
+                            }
+                        } catch (e) { console.warn('Could not read user profile', e); }
+
+                        return false;
+                    } catch (e) { console.warn('checkAndLoadUserSubmission failed', e); return false; }
+                }
+
+                // Run initial check and re-run when the round selector changes
+                try { await checkAndLoadUserSubmission(); } catch(e) {}
+                const roundSel = document.getElementById('competitionRound');
+                if (roundSel) roundSel.addEventListener('change', function() { setTimeout(checkAndLoadUserSubmission, 200); });
+
+                // small helper to escape HTML when rendering content
+                function escapeHtml(str) { return String(str || '').replace(/[&<>"']/g, function(m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
+
+                // If auth becomes available after load, re-run the selector preselection to pick up server-side joinedRounds
+                try {
+                    if (window.firebase && firebase.auth) {
+                        firebase.auth().onAuthStateChanged(async (u) => {
+                            if (u) {
+                                // small delay to allow Firestore to be ready
+                                setTimeout(async () => { try { await populateRoundsSelector(); } catch(e) { /* ignore */ } }, 300);
+                            }
+                        });
+                    }
+                } catch (e) { /* ignore */ }
+
+                // Allow submission to test round regardless of payment/qualification
+                let targetRoundAllowed = await checkRoundAndEligibility();
+                
+                // If anonymous/local user already has a test submission recorded locally, show read-only message
+                try {
+                    if (!auth.currentUser && (localStorage.getItem('submissionStatus_test') === 'submitted')) {
+                        // hide form and show a simple read-only notice
+                        document.getElementById('submissionFormContainer').style.display = 'none';
+                        const container = document.querySelector('.submission-container');
+                        let view = document.getElementById('submissionView');
+                        if (!view) { view = document.createElement('div'); view.id = 'submissionView'; view.className='submission-view'; container.insertBefore(view, document.getElementById('submissionSuccess')); }
+                        view.innerHTML = `<h3>Your submission</h3><p>Our records indicate you've already submitted to this round (local record). Duplicate submissions are not allowed.</p><div style="margin-top:12px;"><button class="secondary-button" onclick="window.location.href='dashboard.html'">Back to Dashboard</button></div>`;
+                    }
+                } catch (e) { console.warn('Could not check local submission status', e); }
+
+                // Word count functionality
+                const contentTextarea = document.getElementById('articleContent');
+                const wordCountDisplay = document.getElementById('wordCount');
+                
+                contentTextarea.addEventListener('input', function() {
+                    const words = this.value.trim().split(/\s+/).filter(word => word.length > 0);
+                    wordCountDisplay.textContent = words.length;
+                    
+                    // Update styling based on word count
+                    const wordCount = words.length;
+                    if (wordCount < 1000) {
+                        wordCountDisplay.style.color = '#e74c3c';
+                    } else if (wordCount > 2500) {
+                        wordCountDisplay.style.color = '#e74c3c';
+                    } else {
+                        wordCountDisplay.style.color = '#27ae60';
+                    }
+                });
+                
+                // Form submission
+                document.getElementById('submissionForm').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    // Validate word count
+                    const words = contentTextarea.value.trim().split(/\s+/).filter(word => word.length > 0);
+                    if (words.length < 1000 || words.length > 2500) {
+                        alert('Your submission must be between 1000 and 2500 words.');
+                        return;
+                    }
+                    
+                    // Validate checkboxes
+                    if (!document.getElementById('originalWork').checked || 
+                        !document.getElementById('finalSubmission').checked) {
+                        alert('Please confirm the terms by checking both boxes.');
+                        return;
+                    }
+                    
+                    try {
+                        // Get current user
+                        const user = auth.currentUser;
+                        if (!user) {
+                            alert('You need to be logged in to submit an article.');
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                        
+                        // Get form data
+                        const title = document.getElementById('articleTitle').value;
+                        const category = document.getElementById('articleCategory').value;
+                        const content = document.getElementById('articleContent').value;
+                        const notes = document.getElementById('authorNotes').value;
+                        const wordCount = words.length;
+                        
+                        // Save submission to Firestore (include selected round)
+                        const selectedRoundVal = (document.getElementById('competitionRound') && document.getElementById('competitionRound').value) ? String(document.getElementById('competitionRound').value) : (targetRound || 'firstRound');
+                        if (selectedRoundVal === '' || !targetRoundAllowed) { alert('You are not allowed to submit to this round.'); return; }
+                        const competitionRoundValue = (selectedRoundVal === '1' || selectedRoundVal === 'firstRound') ? 'firstRound' : (selectedRoundVal === 'round2' ? 'round2' : (selectedRoundVal === 'round3' ? 'round3' : (selectedRoundVal === 'test' ? 'test' : 'firstRound')));
+
+                        // Prevent duplicate submissions to the same competition round by this user
+                        try {
+                            const prev = await db.collection('submissions')
+                                .where('userId', '==', user.uid)
+                                .where('competitionRound', '==', competitionRoundValue)
+                                .limit(1)
+                                .get();
+                            if (!prev.empty) {
+                                alert('You have already submitted to this round. Duplicate submissions are not allowed.');
+                                return;
+                            }
+                        } catch (e) { console.warn('Could not check previous submissions', e); }
+
+                        const docRef = await db.collection('submissions').add({
+                            userId: user.uid,
+                            userEmail: user.email,
+                            title: title,
+                            category: category,
+                            content: content,
+                            notes: notes,
+                            wordCount: wordCount,
+                            status: 'pending',
+                            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            competitionRound: competitionRoundValue
+                        });
+
+                        // Mirror submission status into user's profile for convenience (and to allow join page to reflect)
+                        try {
+                            if (competitionRoundValue === 'test') {
+                                await db.collection('users').doc(String(user.uid)).set({
+                                    submissionStatus_test: 'submitted',
+                                    joinedRounds: firebase.firestore.FieldValue.arrayUnion('test')
+                                }, { merge: true });
+                            } else if (competitionRoundValue === 'firstRound') {
+                                await db.collection('users').doc(String(user.uid)).set({
+                                    submissionStatus_firstRound: 'submitted'
+                                }, { merge: true });
+                            }
+                        } catch (e) { console.warn('Could not mirror submission status to user profile', e); }
+                        
+                        // Update UI to show success
+                        document.getElementById('submissionFormContainer').classList.add('hidden');
+                        document.getElementById('submissionSuccess').classList.remove('hidden');
+                        
+                        // Store submission status per round
+                        if (competitionRoundValue === 'firstRound') localStorage.setItem('submissionStatus_firstRound', 'submitted');
+                        else if (competitionRoundValue === 'round2') localStorage.setItem('submissionStatus_round2', 'submitted');
+                        else if (competitionRoundValue === 'round3') localStorage.setItem('submissionStatus_round3', 'submitted');
+                        else if (competitionRoundValue === 'test') localStorage.setItem('submissionStatus_test', 'submitted');
+                        
+                    } catch (error) {
+                        console.error('Error submitting article:', error);
+                        alert('There was an error submitting your article. Please try again.');
+                    }
+                });
+            });
+        });
+        
+        function saveDraft() {
+            alert('Draft saved successfully!');
+            // In a real implementation, this would save to Firestore or localStorage
+        }
+
+        // Logout functionality
+        document.getElementById('logoutLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                // Clear localStorage on logout
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Error signing out:', error);
+            });
+        });
+    </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

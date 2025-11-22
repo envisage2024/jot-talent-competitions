@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Jot Talent Competitions</title>
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF7F00;
+            --primary-dark: #E67200;
+            --primary-light: #FFA340;
+            --accent: #FF5500;
+            --accent-light: #FF8040;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --light: #fef8f4;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            --gradient-bg: linear-gradient(135deg, #fff8f0 0%, #fff0e6 100%);
+            --gradient-card: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+            --transition: all 0.3s ease;
+            --border-radius: 16px;
+            --shadow: 0 10px 30px rgba(255, 127, 0, 0.08);
+            --shadow-hover: 0 15px 40px rgba(255, 127, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--gradient-bg);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 15s infinite linear;
+        }
+
+        .bg-circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: var(--primary);
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+            animation-duration: 25s;
+        }
+
+        .bg-circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            background: var(--accent);
+            top: 70%;
+            left: 80%;
+            animation-delay: 2s;
+            animation-duration: 20s;
+        }
+
+        .bg-circle:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: var(--primary-light);
+            top: 30%;
+            left: 75%;
+            animation-delay: 4s;
+            animation-duration: 30s;
+        }
+
+        .bg-circle:nth-child(4) {
+            width: 150px;
+            height: 150px;
+            background: var(--warning);
+            top: 65%;
+            left: 10%;
+            animation-delay: 1s;
+            animation-duration: 18s;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            animation: slideDown 0.5s ease;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-brand img {
+            height: 45px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-brand:hover img {
+            transform: rotate(10deg) scale(1.1);
+        }
+
+        .nav-brand span {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--gray);
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-links a:hover:before {
+            width: 100%;
+        }
+
+        /* Main Layout */
+        .auth-main {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            padding: 100px 20px 50px;
+        }
+
+        /* Left side - decorative image */
+        .auth-decoration {
+            flex: 1;
+            background: url('https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            margin-right: 20px;
+        }
+
+        .auth-decoration:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, transparent 20%, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.1) 21%, transparent 21%, transparent);
+            background-size: 20px 20px;
+            opacity: 0.3;
+            transform: rotate(30deg);
+            animation: float 20s infinite linear;
+        }
+
+        .auth-quote {
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-quote h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease;
+        }
+
+        .auth-quote p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .floating-element:nth-child(1) {
+            width: 50px;
+            height: 50px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 30px;
+            height: 30px;
+            top: 60%;
+            left: 80%;
+            animation-delay: 2s;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            top: 40%;
+            left: 65%;
+            animation-delay: 4s;
+        }
+
+        .floating-element:nth-child(4) {
+            width: 25px;
+            height: 25px;
+            top: 70%;
+            left: 15%;
+            animation-delay: 6s;
+        }
+
+        /* Right side - signup form */
+        .auth-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 500px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .auth-card {
+            background: var(--gradient-card);
+            border-radius: var(--border-radius);
+            padding: 40px 35px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        .auth-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-5px);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-header i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: pulse 2s infinite;
+        }
+
+        .auth-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--dark);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .auth-header p {
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        .auth-form {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--dark);
+            transition: var(--transition);
+        }
+
+        .form-group label i {
+            color: var(--primary);
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.8);
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 127, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .form-group input:focus + .input-focus-line,
+        .form-group textarea:focus + .input-focus-line,
+        .form-group select:focus + .input-focus-line {
+            width: 100%;
+        }
+
+        .input-focus-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: var(--transition);
+            border-radius: 2px;
+        }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-container input {
+            padding-right: 50px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            z-index: 3;
+        }
+
+        .toggle-password:hover {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .auth-button:hover:before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(255, 127, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 127, 0, 0.4);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-footer p {
+            color: var(--gray);
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .auth-footer a:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: var(--transition);
+        }
+
+        .auth-footer a:hover {
+            color: var(--primary-dark);
+        }
+
+        .auth-footer a:hover:after {
+            width: 100%;
+        }
+
+        /* New decorative elements */
+        .orange-dots {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            background-image: radial-gradient(var(--primary-light) 2px, transparent 2px);
+            background-size: 20px 20px;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .dots-1 {
+            top: 10%;
+            left: 5%;
+        }
+
+        .dots-2 {
+            bottom: 10%;
+            right: 5%;
+        }
+
+        .floating-icon {
+            position: fixed;
+            color: var(--primary-light);
+            opacity: 0.1;
+            font-size: 64px;
+            z-index: -1;
+        }
+
+        .icon-1 {
+            top: 20%;
+            right: 10%;
+        }
+
+        .icon-2 {
+            bottom: 20%;
+            left: 10%;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (min-width: 992px) {
+            .auth-decoration {
+                display: flex;
+            }
+            
+            .auth-main {
+                flex-direction: row;
+                padding: 80px 40px 40px;
+            }
+            
+            .auth-content {
+                padding: 20px 0 20px 40px;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .auth-main {
+                flex-direction: column;
+            }
+            
+            .auth-decoration {
+                display: none;
+            }
+            
+            .auth-content {
+                width: 100%;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 12px 20px;
+            }
+            
+            .nav-brand span {
+                font-size: 18px;
+            }
+            
+            .nav-links {
+                gap: 12px;
+            }
+            
+            .nav-links a {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .auth-card {
+                padding: 30px 25px;
+            }
+            
+            .auth-header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .auth-header i {
+                font-size: 2.5rem;
+            }
+
+            .orange-dots, .floating-icon {
+                display: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .nav-brand span {
+                display: none;
+            }
+            
+            .auth-card {
+                padding: 25px 20px;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            }
+            
+            .auth-header i {
+                font-size: 2.2rem;
+            }
+            
+            .auth-header h2 {
+                font-size: 1.6rem;
+            }
+            
+            .auth-form {
+                margin-bottom: 15px;
+            }
+            
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                padding: 14px 16px;
+            }
+            
+            .auth-button {
+                padding: 14px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .nav-links a span {
+                display: none;
+            }
+            
+            .nav-links a i {
+                font-size: 1.2rem;
+                margin-right: 0;
+            }
+            
+            .auth-card {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+    <script>
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        }
+    </script>
+    <!-- Firebase SDKs (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Decorative elements -->
+    <div class="orange-dots dots-1"></div>
+    <div class="orange-dots dots-2"></div>
+    <div class="floating-icon icon-1"><i class="fas fa-pen-nib"></i></div>
+    <div class="floating-icon icon-2"><i class="fas fa-book-open"></i></div>
+
+    <!-- Animated background elements -->
+    <div class="bg-animation">
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+    </div>
+    
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="index.html">
+                    <img src="images/logo.png" id="img-logo">
+                    <span>Jot Talent Competitions</span>
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="login.html"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
+                <a href="index.html"><i class="fas fa-home"></i><span>Home</span></a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="auth-main">
+        <div class="auth-decoration">
+            <div class="floating-elements">
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+            </div>
+            <div class="auth-quote">
+                <h2>Unleash Your Writing Talent</h2>
+                <p>Join thousands of writers who have discovered their voice through our competitions</p>
+            </div>
+        </div>
+        
+        <div class="auth-content">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <i class="fas fa-user-plus"></i>
+                        <h2>Create Your Account</h2>
+                        <p>Join our writing community</p>
+                    </div>
+                    
+                    <form id="signupForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="username">
+                                <i class="fas fa-user-tag"></i>
+                                Username (public)
+                            </label>
+                            <input type="text" id="username" name="username" required pattern="^[A-Za-z.]{3,20}$" title="3-20 characters; letters and full stops (.) only" placeholder="Enter your username">
+                            <div class="input-focus-line"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fullName">
+                                <i class="fas fa-user"></i>
+                                Full Name
+                            </label>
+                            <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+                            <div class="input-focus-line"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dateOfBirth">
+                                <i class="fas fa-birthday-cake"></i>
+                                Date of birth
+                            </label>
+                            <input type="date" id="dateOfBirth" name="dateOfBirth" placeholder="YYYY-MM-DD" required>
+                            <small style="display:block;margin-top:6px;color:var(--gray);">We require your date of birth to ensure eligibility (minimum 13 years).</small>
+                            <div class="input-focus-line"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>
+                                Email Address
+                            </label>
+                            <input type="email" id="email" name="email" required placeholder="Enter your email">
+                            <div class="input-focus-line"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">
+                                <i class="fas fa-lock"></i>
+                                Password
+                            </label>
+                            <div class="password-container">
+                                <input type="password" id="password" name="password" required placeholder="Create a password">
+                                <button type="button" id="toggleSignupPassword" class="toggle-password">
+                                    <i class="fas fa-eye" id="signupPasswordIcon"></i>
+                                </button>
+                                <div class="input-focus-line"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">
+                                <i class="fas fa-lock"></i>
+                                Confirm Password
+                            </label>
+                            <div class="password-container">
+                                <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                                <button type="button" id="toggleConfirmPassword" class="toggle-password">
+                                    <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                                </button>
+                                <div class="input-focus-line"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bio">
+                                <i class="fas fa-pen"></i>
+                                Writing Bio (Optional)
+                            </label>
+                            <textarea id="bio" name="bio" rows="4" placeholder="Tell us about your writing experience..."></textarea>
+                            <div class="input-focus-line"></div>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="terms" name="terms" required>
+                            <label for="terms">I agree to the Terms and Conditions</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="referralSource">
+                                <i class="fas fa-bullhorn"></i>
+                                How did you hear about us?
+                            </label>
+                            <select id="referralSource" name="referralSource" required>
+                                <option value="">Select an option</option>
+                                <option value="YouTube">YouTube</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="TikTok">TikTok</option>
+                                <option value="WhatsApp">WhatsApp</option>
+                                <option value="Agents">Agents</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="input-focus-line"></div>
+                            <div id="otherReferralContainer" style="display:none;margin-top:12px;">
+                                <input type="text" id="otherReferral" name="otherReferral" placeholder="Please specify...">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="auth-button btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Create Account
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p>Already have an account? <a href="login.html">Login here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/signup.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password toggle functionality
+            const toggleSignup = document.getElementById('toggleSignupPassword');
+            if (toggleSignup) {
+                toggleSignup.addEventListener('click', function() {
+                    const pwd = document.getElementById('password');
+                    const icon = document.getElementById('signupPasswordIcon');
+                    if (pwd.type === 'password') {
+                        pwd.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        pwd.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
+            
+            const toggleConfirm = document.getElementById('toggleConfirmPassword');
+            if (toggleConfirm) {
+                toggleConfirm.addEventListener('click', function() {
+                    const pwd = document.getElementById('confirmPassword');
+                    const icon = document.getElementById('confirmPasswordIcon');
+                    if (pwd.type === 'password') {
+                        pwd.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        pwd.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
+            
+            // Show/hide other referral input
+            const referralSource = document.getElementById('referralSource');
+            const otherContainer = document.getElementById('otherReferralContainer');
+            
+            if (referralSource && otherContainer) {
+                referralSource.addEventListener('change', function() {
+                    if (this.value === 'Other') {
+                        otherContainer.style.display = 'block';
+                    } else {
+                        otherContainer.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

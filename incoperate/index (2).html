@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jot Talent Competitions - Writing Excellence</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" type="text/css" href="css/dialog.css">
+    <link rel="stylesheet" type="text/css" href="slider.css">
+    <script>
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <img src="images/logo.png" alt="Jot Talent Logo" class="logo" style="width: 40px; height: 40px;">
+                <span style="font-size: 1.2rem;">Jot Talent Competitions</span>
+            </div>
+            <div class="nav-links">
+                <a href="login.html" style="font-size: 1rem;">Login</a>
+            </div>
+        </nav>
+    </header>
+    <script src="js/theme.js"></script>
+    <script src="slider-theme.js"></script>
+
+    <main>
+    <div class="hero-slider" id="carousel">
+            <section class="hero" id="list">
+                <div class="hero-content" id="item">
+                    <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Writing Competition" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Unleash Your Writing Talent</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Join the premier online writing competition where creativity meets excellence</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hero-content" id="item">
+                    <img src="https://images.unsplash.com/photo-1471107340929-a87cd0f5b5f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Creative Writing" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Express Your Creativity</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Share your unique voice with writers from around the world</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hero-content" id="item">
+                    <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Literary Excellence" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Achieve Literary Excellence</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Get recognized for your outstanding writing skills and storytelling</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hero-content" id="item">
+                    <img src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Writers Community" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Join Our Community</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Connect with fellow writers and grow your literary network</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="arrows">
+                <button id="prev" aria-label="Previous slide" class="slider-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="next" aria-label="Next slide" class="slider-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="slider-dots" id="slider-dots" aria-label="Slider navigation" role="tablist">
+                <button class="dot active" data-index="0" aria-label="Go to slide 1"></button>
+                <button class="dot" data-index="1" aria-label="Go to slide 2"></button>
+                <button class="dot" data-index="2" aria-label="Go to slide 3"></button>
+                <button class="dot" data-index="3" aria-label="Go to slide 4"></button>
+            </div>
+
+            <div class="slider-progress">
+                <div class="slider-progress-bar" id="progress-bar"></div>
+    </div>
+        
+        <!-- <div id="arrows">
+            <button class="control-button" onclick="document.getElementById('list').scrollLeft -= 300">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="control-button" onclick="document.getElementById('list').scrollLeft += 300">
+                <i class="fas fa-chevron-right"></i>
+            </button> -->
+    </div>
+
+        <section class="about">
+            <div class="container">
+                <h2>About Jot Talent Competitions</h2>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <i class="fas fa-trophy"></i>
+                        <h3>Prestigious Competition</h3>
+                        <p>Compete with talented writers from around the world in our carefully curated writing challenge.</p>
+                    </div>
+                    <div class="about-card">
+                        <i class="fas fa-users"></i>
+                        <h3>Expert Review</h3>
+                        <p>Your submissions are reviewed by experienced professionals who provide detailed feedback.</p>
+                    </div>
+                    <div class="about-card">
+                        <i class="fas fa-medal"></i>
+                        <h3>Rewards</h3>
+                        <p>Winners receive a cash prize, recognition and the opportunity to showcase their talent.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works">
+            <div class="container">
+                <h2>How It Works</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>Sign Up</h3>
+                        <p>Create your free account to get started</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>Join Competition</h3>
+                        <p>Pay the participation fee to unlock submission</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>Submit Your Work</h3>
+                        <p>Upload your best writing piece</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <h3>Get Reviewed</h3>
+                        <p>Receive expert feedback and ranking</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2>Competition Features</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <i class="fas fa-clock"></i>
+                        <h3>Real-time Progress</h3>
+                        <p>Track your submission status and review progress</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-comments"></i>
+                        <h3>Personal Feedback</h3>
+                        <p>Receive detailed, personalized feedback on your work</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-bell"></i>
+                        <h3>Instant Notifications</h3>
+                        <p>Stay updated with announcements and results</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-headset"></i>
+                        <h3>Support System</h3>
+                        <p>Get help whenever you need it through our support</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="container">
+                <h2>Ready to Showcase Your Talent?</h2>
+                <p>Join thousands of writers who have already started their journey with us.</p>
+                <button class="cta-button large" onclick="window.location.href='signup.html'">
+                    <i class="fas fa-user-plus"></i>
+                    Sign Up Now
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="images/logo.png" id="img-logo">
+                    <span>Jot Talent Competitions</span>
+                </div>
+                <div class="footer-links">
+                    <button onclick="about.showModal()">About</button>
+                    <button onclick="contact.showModal()">Contact</button>
+                    <button onclick="terms.showModal()">Terms</button>
+                </div>
+                <div class="theme-selector">
+                    <h3>Choose Your Theme</h3>
+                    <button id="lightThemeButton" class="theme-button">Light Theme</button>
+                    <button id="darkThemeButton" class="theme-button">Dark Theme</button>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Jot Talent Competitions. All rights reserved.</p>
+                <button id="backToTopButton" class="back-to-top">
+                    <i class="fas fa-arrow-up"></i> Back to Top
+                </button>
+            </div>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('backToTopButton').addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+
+    <!--TERMS-->
+<dialog id="terms">
+    <button id="close" onclick="terms.close()">x<button>
+    
+<div class="terms">
+<div class="dialog-header">   
+<img src="images/logo.png">   
+<h2>Jot Talent Competitions Management Ltd</h2>
+</div><br> 
+<h3>TERMS AND CONDITIONS</h3>
+<h2>Effective : From the time that you agree to the terms and conditions</h2>
+<p>
+These Terms and Conditions ("Terms") set out the agreement between you, the user, and <b>Jot Talent Competitions Management Ltd</b><!--("we," "our," or "us")-->.
+By accessing or using our services, including participation in online talent competitions and interaction with our website and platforms, you acknowledge that you have read, understood, and agreed to abide by these Terms.
+If you do not agree with these Terms, you should not use our services.
+</p>
+
+<p>
+<h3>Eligibility</h3>
+Our services are open to individuals who are at least 13 years of age. If you are under 18, you must have the consent of a parent or guardian to participate. When registering or creating an account, you must provide accurate and complete information. You are solely responsible for maintaining the confidentiality of your login details and for all activities that occur under your account. We reserve the right to suspend or terminate accounts that provide false information or engage in activities that violate these Terms.
+</p>
+
+</p>
+<h3>Content Submission</h3>
+When you submit content such as videos, audio recordings, images, or any other creative material, you retain full ownership of your work. However, by submitting your content to us, you grant us a non-exclusive, royalty-free, worldwide license to display, promote, and share it for purposes directly related to the competition and the promotion of our platform. It is your responsibility to ensure that your content is original, does not infringe upon the intellectual property rights of others, and complies with legal and community standards. Any submission that violates these principles may be removed without notice.
+</p>
+
+<p>
+<h3>Competition Rules</h3>
+Each competition organized by us will have specific guidelines, judging criteria, and submission deadlines. These rules will be communicated clearly prior to the start of each competition. Any entries received after the official deadline may not be considered. The outcome of a competition, whether determined by judges, audience votes, or a combination of both, will be considered final and binding. We also reserve the right to cancel, reschedule, or amend competitions in the event of unforeseen circumstances.
+</p>
+
+</p>
+<h3>Payments and Prizes</h3>
+All competitions may require participants to pay an entry fee. Unless explicitly stated otherwise, all payments made are non-refundable thus meaning that any payment made to us cannot be refunded even if it was accidental. Winners will be contacted using the details they provide at the time of registration. Inclusively, prizes awarded are non-transferable.
+</p>
+
+</p>
+<h3>Code of Conduct</h3>
+We expect all users of our platform to conduct themselves respectfully and responsibly. Submissions must not include offensive, illegal, discriminatory, or harmful material. Harassment, impersonation, or any attempts to manipulate competition results, such as fraudulent voting practices, will not be tolerated. We reserve the right to disqualify or ban any participant who violates these standards.
+</p>
+
+<p>
+<h3>Privacy</h3>
+Your privacy is important to us. Any personal information you provide will be collected and used in accordance with our Privacy Policy, which explains in detail how we store, process, and protect your data. By using our services, you consent to the practices described in the Privacy Policy.
+</p>
+
+<p>
+<h3>Limitation of Liability</h3>
+While we strive to provide a secure and reliable platform, we cannot guarantee that our services will always be free of errors, technical issues, or interruptions. We shall not be held responsible for technical failures, content loss, delays, or the actions of other users. To the fullest extent permitted by law, we disclaim liability for any indirect, incidental, or consequential damages arising from your use of our platform.
+</p>
+
+<p>
+<h3>Changes to Terms</h3>
+We reserve the right to amend or update these Terms at any time. Any changes will take effect immediately upon being posted on our website. Continued use of our services after such updates will be regarded as acceptance of the revised Terms.
+</p>
+
+<p>
+<h3>Contact Us</h3>
+If you have any questions, concerns, or require clarification regarding these Terms, you may contact us at Insert Contact Email or Phone.<br>
+</p>
+
+<p>By continuing to use our services, you confirm that you have read and agreed to these Terms and Conditions and agree to be bound by them.</p>
+</div>
+</dialog>
+<!--/TERMS-->
+
+<!--CONTACT-->
+    <dialog id="contact">
+        <button id="close" onclick="contact.close()">x<button>
+        <div class="terms">
+        <h1>CONTACT</h1>
+        <p><h2>Contact Us using the contact information below.</h2>
+            <ul>
+                <h3>📧Email</h3>
+                    compsjot6@gmail.com<br>
+                <h3>📞Telephone</h3>
+                    0785020480
+                    <h4>OR</h4>
+                    0749619467
+            </ul>
+        </p>
+        </div>
+    </dialog>
+<!--/CONTACT-->
+
+<!--ABOUT US-->
+    <dialog id="about">
+        <button id="close" onclick="about.close()">x<button>
+        <div class="terms">
+        <h2>ABOUT US</h2>
+        <p>We are JOT, Jot of talent. We believe in everyone having a talent that needs to be brought into the light for all to see allowing them to potray what makes the special in this world.</p>
+        </div>
+    </dialog>
+<!--/ABOUT US-->
+
+    <script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+        
+</html>

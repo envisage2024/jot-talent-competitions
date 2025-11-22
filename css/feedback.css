@@ -1,0 +1,56 @@
+/* Feedback page styles - aligned with global theme */
+.feedback-list {
+	display: grid;
+	gap: 1rem;
+}
+.feedback-item {
+	background: var(--white);
+	border-radius: var(--radius-lg);
+	padding: 16px;
+	box-shadow: var(--shadow-sm);
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+}
+.feedback-item .meta {
+	font-size: 0.9rem;
+	color: var(--text-light);
+}
+.feedback-form .form-group textarea {
+	min-height: 120px;
+}
+.feedback-empty {
+	text-align: center;
+	color: var(--text-light);
+	padding: 24px 0;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 576px) {
+	.feedback-item {
+		flex-direction: column;
+		padding: 12px;
+		gap: 8px;
+	}
+
+	.feedback-form .form-group textarea {
+		min-height: 100px;
+	}
+}
+
+@media screen and (min-width: 577px) and (max-width: 768px) {
+	.feedback-list {
+		gap: 0.875rem;
+	}
+
+	.feedback-item {
+		padding: 14px;
+	}
+}
+
+@media screen and (min-width: 769px) {
+	.feedback-list {
+		max-width: 800px;
+		margin: 0 auto;
+	}
+}

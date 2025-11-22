@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Jot Talent Competitions</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF7B00;
+            --primary-light: #FF9A33;
+            --primary-dark: #E06A00;
+            --secondary: #4A90E2;
+            --secondary-light: #6BA4F0;
+            --accent: #FFB900;
+            --accent-light: #FFD166;
+            --success: #10b981;
+            --success-light: #36c995;
+            --warning: #f59e0b;
+            --warning-light: #f7b136;
+            --error: #ef4444;
+            --error-light: #f26a6a;
+            --dark: #1f2937;
+            --dark-light: #374151;
+            --darker: #111827;
+            --light: #f9fafb;
+            --lighter: #ffffff;
+            --gray: #6b7280;
+            --gray-light: #9ca3af;
+            --light-gray: #e5e7eb;
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+            --shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s ease;
+            --transition-slow: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fefaf5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: var(--lighter);
+            box-shadow: var(--shadow);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.98);
+            border-bottom: 1px solid rgba(255, 123, 0, 0.1);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .nav-brand img {
+            height: 40px;
+        }
+
+        .logo {
+            width: 160px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .logo:hover:before {
+            animation: shine 1.5s ease;
+        }
+
+        @keyframes shine {
+            0% { left: -50%; }
+            100% { left: 100%; }
+        }
+
+        .nav-links-container {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: var(--transition);
+            transform: translateX(-50%);
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+            background-color: rgba(255, 123, 0, 0.08);
+        }
+
+        .nav-links a:hover:before, .nav-links a.active:before {
+            width: 70%;
+        }
+
+        .nav-links a i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .logout-nav a {
+            color: var(--primary-dark) !important;
+        }
+
+        .logout-nav a:hover {
+            background-color: rgba(255, 123, 0, 0.08) !important;
+        }
+
+        .logout-nav a:before {
+            background: var(--primary-dark);
+        }
+
+        /* Main Content */
+        .dashboard-main {
+            padding: 40px 0;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(120deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .hero-inner h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-inner h1 span {
+            color: var(--accent-light);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-inner .lead {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .hero-visual {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.15;
+            z-index: 1;
+        }
+
+        .bg-shape {
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .bg-shape:before {
+            content: '';
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .bg-shape:after {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background-color: var(--lighter);
+            border-radius: var(--border-radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            transition: var(--transition-slow);
+            border-left: 4px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card:after {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: var(--primary);
+            opacity: 0.03;
+            border-radius: 50%;
+            top: -75px;
+            right: -75px;
+            transition: var(--transition-slow);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .dashboard-card:hover:after {
+            transform: scale(1.2);
+        }
+
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 22px;
+            background: linear-gradient(135deg, rgba(255, 123, 0, 0.1), rgba(255, 123, 0, 0.15));
+            color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .card-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-content p {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .card-action {
+            padding: 8px 0;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            font-size: 14px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-action:hover {
+            gap: 12px;
+        }
+
+        .card-action i {
+            font-size: 12px;
+            transition: var(--transition);
+        }
+
+        /* Dashboard Sections */
+        .dashboard-section {
+            background-color: var(--lighter);
+            border-radius: var(--border-radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 123, 0, 0.1);
+        }
+
+        .dashboard-section:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .dashboard-section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--dark);
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dashboard-section h2 i {
+            color: var(--primary);
+            background: rgba(255, 123, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .quick-action-btn {
+            background-color: var(--lighter);
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            padding: 24px 16px;
+            transition: var(--transition-slow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background: linear-gradient(to bottom, rgba(255, 123, 0, 0.05), transparent);
+            transition: var(--transition);
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+
+        .quick-action-btn:hover:before {
+            height: 100%;
+        }
+
+        .quick-action-btn i {
+            font-size: 32px;
+            color: var(--primary);
+            transition: var(--transition);
+        }
+
+        .quick-action-btn:hover i {
+            transform: scale(1.1);
+        }
+
+        .quick-action-btn span {
+            font-weight: 600;
+            color: var(--dark);
+            transition: var(--transition);
+        }
+
+        .quick-action-btn:hover span {
+            color: var(--primary);
+        }
+
+        /* Activity List */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            border-radius: var(--border-radius);
+            background-color: var(--light);
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .activity-item:hover {
+            background-color: rgba(255, 154, 51, 0.08);
+            border-left-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .activity-item i {
+            font-size: 18px;
+            color: var(--primary);
+            width: 24px;
+            text-align: center;
+        }
+
+        .activity-item span {
+            flex: 1;
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        .activity-item small {
+            color: var(--gray);
+            font-size: 13px;
+            min-width: 90px;
+            text-align: right;
+        }
+
+        /* User greeting animation */
+        #userUsername {
+            display: inline-block;
+            position: relative;
+        }
+
+        #userUsername:after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            bottom: -5px;
+            left: 0;
+            background: linear-gradient(to right, var(--accent-light), var(--primary));
+            border-radius: 2px;
+            transform: scaleX(0);
+            transform-origin: bottom right;
+            transition: transform 0.5s ease;
+        }
+
+        .hero:hover #userUsername:after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .nav-links-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .hero-visual {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .hero {
+                padding: 30px 20px;
+                text-align: center;
+            }
+            
+            .hero-inner h1 {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            .dashboard-card {
+                padding: 20px;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .activity-item small {
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar container">
+            <div class="nav-brand">
+                <a href="dashboard.html">
+                    <div class="logo">JOT TALENT</div>
+                </a>
+            </div>
+            <div class="nav-links-container">
+                <div class="nav-links user-nav">
+                    <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="join.html"><i class="fas fa-plus-circle"></i> Join Competition</a>
+                    <a href="submit.html"><i class="fas fa-upload"></i> Submit</a>
+                    <a href="notifications.html"><i class="fas fa-bell"></i> Notifications</a>
+                    <a href="feedback.html"><i class="fas fa-comments"></i> Feedback</a>
+                    <a href="progress.html"><i class="fas fa-chart-line"></i> Progress</a>
+                    <a href="support.html"><i class="fas fa-headset"></i> Support</a>
+                </div>
+                <div class="nav-links logout-nav">
+                    <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="container">
+            <section class="hero">
+                <div class="hero-inner">
+                    <h1>Welcome back, <span id="userUsername">Writer</span>!</h1>
+                    <p class="lead">Continue your writing journey — submit, get feedback and climb the rankings.</p>
+                </div>
+                <div class="hero-visual">
+                    <div class="bg-shape"></div>
+                </div>
+            </section>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Competition Status</h3>
+                        <p id="competitionStatus">Not Joined</p>
+                        <a href="join.html" class="card-action">Join Now <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Submission Status</h3>
+                        <p id="submissionStatus">No Submission</p>
+                        <a href="submit.html" class="card-action">Submit Work <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Current Ranking</h3>
+                        <p id="currentRanking">Not Ranked</p>
+                        <a href="progress.html" class="card-action">View Details <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                <script src="js/auth-guard.js"></script>
+                <script src="js/login.js"></script>
+                <script src="js/logout.js"></script>
+                <script src="js/debug-auth-instrumentation.js"></script>
+                    <div class="card-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Alerts</h3>
+                        <p id="notificationCount">0 new messages</p>
+                        <a href="notifications.html" class="card-action">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="window.location.href='join.html'">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Join Competition</span>
+                    </button>
+                    <button class="quick-action-btn" onclick="window.location.href='submit.html'">
+                        <i class="fas fa-upload"></i>
+                        <span>Submit Article</span>
+                    </button>
+                    <button class="quick-action-btn" onclick="window.location.href='progress.html'">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Check Progress</span>
+                    </button>
+                    <button class="quick-action-btn" onclick="window.location.href='support.html'">
+                        <i class="fas fa-headset"></i>
+                        <span>Get Support</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                <div class="activity-list" id="activityList">
+                    <div class="activity-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Welcome to Jot Talent Competitions!</span>
+                        <small>Just now</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Try to read the persisted session and show a friendly name in the hero
+            let displayName = 'Writer';
+            try {
+                let user = null;
+                // Prefer to wait briefly for any Firestore-backed profile to be populated.
+                if (window.currentUserReady) {
+                    // Wait up to 1500ms for the profile to arrive, then fallback.
+                    try {
+                        const timeout = new Promise(res => setTimeout(() => res(null), 1500));
+                        const res = await Promise.race([window.currentUserReady, timeout]);
+                        if (res) user = res;
+                    } catch (e) {}
+                }
+                // If not available yet, try to read from in-memory helper
+                if (!user && typeof getCurrentUser === 'function') {
+                    try { user = getCurrentUser(); } catch (e) { user = null; }
+                }
+                // Fallback to storage helper
+                if (!user && typeof getStorageData === 'function') {
+                    try { user = getStorageData('jot_talent_current_user'); } catch (e) { user = null; }
+                }
+                // Fallback to localStorage
+                if (!user) {
+                    const raw = localStorage.getItem('jot_talent_current_user');
+                    if (raw) {
+                        try { user = JSON.parse(raw); } catch (e) { user = null; }
+                    }
+                }
+                if (user) {
+                    // Prefer fullName, then username, then email
+                    if (user.fullName) displayName = user.fullName;
+                    else if (user.username) displayName = user.username;
+                    else if (user.email) displayName = user.email.split('@')[0];
+                }
+            } catch (e) {
+                // ignore and use default
+            }
+            const unameEl = document.getElementById('userUsername');
+            if (unameEl) {
+                // Only set the text if the element is empty or still has the placeholder
+                const current = (unameEl.textContent || '').trim();
+                if (!current || current === 'Writer' || current === 'Username') {
+                    unameEl.textContent = displayName;
+                }
+            }
+
+            // Fetch authoritative profile from Firestore (if possible) and update dashboard fields.
+            async function fetchAndApplyProfile() {
+                try {
+                    // Prefer helper getAuth/getDb if available (defined in js/login.js). Fallback to firebase.*
+                    const auth = (typeof getAuth === 'function') ? await getAuth(5000) : ((window.firebase && firebase.auth) ? firebase.auth() : null);
+                    if (!auth) return;
+
+                    // Resolve currentUser (fast) or wait briefly for onAuthStateChanged
+                    let currentUser = auth.currentUser || null;
+                    if (!currentUser && typeof auth.onAuthStateChanged === 'function') {
+                        currentUser = await new Promise((resolve) => {
+                            const unsub = auth.onAuthStateChanged(u => { try{unsub();}catch(e){}; resolve(u); });
+                            setTimeout(() => { try{unsub();}catch(e){}; resolve(null); }, 4000);
+                        });
+                    }
+                    if (!currentUser) return;
+
+                    const uid = currentUser.uid;
+                    const db = (typeof getDb === 'function') ? await getDb(5000) : ((window.firebase && firebase.firestore) ? firebase.firestore() : null);
+                    if (!db) return;
+
+                    // Read user document
+                    let doc = null;
+                    try { doc = await db.collection('users').doc(uid).get(); } catch (e) { console.warn('dashboard: user doc read failed', e); }
+                    if (!doc || !doc.exists) return;
+                    const data = doc.data() || {};
+                    // Mark that we have authoritative Firestore-backed dashboard data for this session
+                    try { window.__dashboard_has_live_data = true; } catch (e) {}
+
+                    // Update display name (prefer fullName, then username, then email)
+                    try {
+                        const unameEl2 = document.getElementById('userUsername');
+                        if (unameEl2) {
+                            const name = data.fullName || data.username || currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : null);
+                            if (name) unameEl2.textContent = name;
+                        }
+                    } catch (e) {}
+
+                    // Competition status
+                    try {
+                        const compEl = document.getElementById('competitionStatus');
+                        if (compEl) {
+                            let cs = 'Not Joined';
+                            if (data.status === 'member' || data.joined || data.hasJoined) cs = 'Active';
+                            if (data.competitionStatus) cs = data.competitionStatus;
+                            compEl.textContent = cs;
+                            if (cs.toLowerCase().includes('active') || cs.toLowerCase().includes('joined')) compEl.style.color = 'var(--success)';
+                        }
+                    } catch (e) {}
+
+                    // Submission status
+                    try {
+                        const subEl = document.getElementById('submissionStatus');
+                        if (subEl) {
+                            let ss = 'No Submission';
+                            if (data.lastSubmission && data.lastSubmission.status) ss = data.lastSubmission.status;
+                            else if (data.hasSubmitted) ss = 'Submitted';
+                            subEl.textContent = ss;
+                            subEl.style.color = ss.toLowerCase().includes('submit') ? 'var(--success)' : '';
+                        }
+                    } catch (e) {}
+
+                    // Ranking
+                    try {
+                        const rankEl = document.getElementById('currentRanking');
+                        if (rankEl) {
+                            const rankVal = data.rank || data.ranking || data.position;
+                            if (rankVal || rankVal === 0) { rankEl.textContent = '#' + rankVal; rankEl.style.color = 'var(--primary)'; }
+                            else { rankEl.textContent = 'Not Ranked'; rankEl.style.color = ''; }
+                        }
+                    } catch (e) {}
+
+                    // Notifications count (try to query Firestore notifications if available)
+                    try {
+                        const noteEl = document.getElementById('notificationCount');
+                        if (noteEl) {
+                            let count = 0;
+                            try {
+                                const snap = await db.collection('notifications').where('userId','==',uid).where('read','==',false).get();
+                                count = snap ? snap.size : 0;
+                            } catch (e) {
+                                // fallback: read stored value on user doc
+                                count = data.unreadNotifications || 0;
+                            }
+                            noteEl.textContent = count + (count === 1 ? ' new message' : ' new messages');
+                            if (count > 0) noteEl.style.color = 'var(--primary)';
+                        }
+                    } catch (e) {}
+
+                    // Persist fetched profile locally for faster subsequent loads
+                    try {
+                        const profile = Object.assign({}, data, { id: data.id || uid, uid });
+                        if (typeof setCurrentUser === 'function') setCurrentUser(profile);
+                        else try { localStorage.setItem('jot_talent_current_user', JSON.stringify(profile)); } catch (e) {}
+                    } catch (e) {}
+
+                } catch (err) {
+                    console.warn('dashboard: fetchAndApplyProfile failed', err);
+                }
+            }
+
+            // Run the Firestore-backed profile fetch (don't block UI if it takes time)
+            fetchAndApplyProfile().catch(e => console.warn('dashboard: profile fetch error', e));
+
+            // Load dashboard data
+            updateDashboard();
+        });
+
+        function updateDashboard() {
+            // Prefer authoritative Firestore-backed profile updates if available.
+            try {
+                if (typeof fetchAndApplyProfile === 'function') {
+                    // Run in background and let it update the UI when data arrives
+                    fetchAndApplyProfile().catch(e => console.warn('updateDashboard: fetch failed', e));
+                }
+
+                // Also update immediately from any locally persisted profile to avoid flicker.
+                let user = null;
+                try {
+                    if (typeof getCurrentUser === 'function') user = getCurrentUser();
+                    else if (typeof getStorageData === 'function') user = getStorageData('jot_talent_current_user');
+                    else {
+                        const raw = localStorage.getItem('jot_talent_current_user');
+                        if (raw) user = JSON.parse(raw);
+                    }
+                } catch (e) { user = null; }
+
+                if (user) {
+                    try {
+                        const competitionStatusEl = document.getElementById('competitionStatus');
+                        const submissionStatusEl = document.getElementById('submissionStatus');
+                        const currentRankingEl = document.getElementById('currentRanking');
+                        const notificationCountEl = document.getElementById('notificationCount');
+
+                        if (competitionStatusEl) {
+                            const joined = user.joinedCompetition || user.hasJoined || user.hasJoinedCompetition || false;
+                            competitionStatusEl.textContent = joined ? 'Joined' : (user.competitionStatus || 'Not Joined');
+                            competitionStatusEl.style.color = joined ? 'var(--success)' : '';
+                        }
+
+                        if (submissionStatusEl) {
+                            const submitted = user.lastSubmission || user.hasSubmitted || false;
+                            submissionStatusEl.textContent = submitted ? 'Submitted' : 'No Submission';
+                            submissionStatusEl.style.color = submitted ? 'var(--success)' : '';
+                        }
+
+                        if (currentRankingEl) {
+                            const rank = user.ranking || user.rank || user.position;
+                            if (rank || rank === 0) currentRankingEl.textContent = '#' + rank;
+                            else currentRankingEl.textContent = 'Not Ranked';
+                        }
+
+                        if (notificationCountEl) {
+                            const n = Number(user.unreadNotifications || user.unread || 0);
+                            notificationCountEl.textContent = n + (n === 1 ? ' new message' : ' new messages');
+                            if (n > 0) notificationCountEl.style.color = 'var(--primary)';
+                        }
+                    } catch (e) { console.warn('updateDashboard: error applying local profile', e); }
+                }
+            } catch (err) {
+                console.warn('updateDashboard error', err);
+            }
+        }
+
+        // Wire up logout to real implementation if available
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutEl = document.getElementById('logoutLink');
+            if (!logoutEl) return;
+            logoutEl.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Prefer performLogout if provided by js/logout.js, otherwise call global logout if present
+                if (typeof performLogout === 'function') return performLogout();
+                if (typeof logout === 'function') return logout();
+                // Fallback: attempt firebase signOut if available
+                if (window.firebase && firebase.auth) {
+                    try { firebase.auth().signOut(); } catch (e) { console.warn('Logout failed', e); }
+                }
+            });
+        });
+    </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

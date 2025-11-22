@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Competition - Jot Talent Competitions</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Cloud Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <style>
+        :root {
+            --primary: #FF7A00;
+            --primary-light: #FF9A40;
+            --primary-dark: #E06A00;
+            --secondary: #FFB74D;
+            --secondary-light: #FFD18A;
+            --accent: #FF9800;
+            --accent-light: #FFB74D;
+            --success: #10b981;
+            --success-light: #36c995;
+            --warning: #f59e0b;
+            --warning-light: #f7b136;
+            --error: #ef4444;
+            --error-light: #f26a6a;
+            --dark: #1f2937;
+            --dark-light: #374151;
+            --darker: #111827;
+            --light: #f9fafb;
+            --lighter: #ffffff;
+            --gray: #6b7280;
+            --gray-light: #9ca3af;
+            --light-gray: #e5e7eb;
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --shadow: 0 4px 12px rgba(255, 122, 0, 0.1);
+            --shadow-md: 0 6px 20px rgba(255, 122, 0, 0.15);
+            --shadow-lg: 0 10px 25px rgba(255, 122, 0, 0.2);
+            --shadow-hover: 0 12px 24px rgba(255, 122, 0, 0.25);
+            --transition: all 0.3s ease;
+            --transition-slow: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fef8f2;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: var(--lighter);
+            box-shadow: var(--shadow);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid rgba(255, 122, 0, 0.1);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .nav-brand img {
+            height: 40px;
+        }
+
+        .logo {
+            width: 160px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: var(--transition);
+            transform: translateX(-50%);
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+            background-color: rgba(255, 122, 0, 0.08);
+        }
+
+        .nav-links a:hover:before, .nav-links a.active:before {
+            width: 70%;
+        }
+
+        .nav-links a i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .page-main {
+            padding: 40px 0;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .page-header h1 i {
+            color: var(--primary);
+            background: rgba(255, 122, 0, 0.1);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Competition Card */
+        .competition-info {
+            margin-top: 18px;
+        }
+
+        .competition-card {
+            padding: 28px;
+            border-radius: var(--border-radius-lg);
+            background: linear-gradient(180deg, #ffffff 0%, #fff8f2 100%);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .competition-card:after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            opacity: 0.03;
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+            transition: var(--transition-slow);
+        }
+
+        .competition-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-5px);
+        }
+
+        .competition-card:hover:after {
+            transform: scale(1.1);
+        }
+
+        .competition-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
+        }
+
+        .competition-card h2 i {
+            color: var(--primary);
+            background: rgba(255, 122, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .competition-card p {
+            color: var(--gray);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .competition-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+        }
+
+        .competition-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .competition-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .meta-list {
+            font-size: 0.95rem;
+            color: var(--dark-light);
+            margin-bottom: 16px;
+        }
+
+        .meta-list div {
+            margin-bottom: 8px;
+            display: flex;
+        }
+
+        .meta-list strong {
+            min-width: 90px;
+            display: inline-block;
+            color: var(--dark);
+        }
+
+        .tips {
+            background: #fff8f2;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 122, 0, 0.06);
+            margin-top: 16px;
+        }
+
+        .tips strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        ul {
+            margin: 8px 0 8px 18px;
+            color: var(--dark-light);
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        .price-tag {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .auth-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .auth-button[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .small-link {
+            background: none;
+            border: 1px solid rgba(255, 122, 0, 0.2);
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-top: 8px;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .small-link:hover {
+            background: rgba(255, 122, 0, 0.08);
+        }
+
+        .status-badge {
+            margin-top: 12px;
+            color: var(--success);
+            font-weight: 600;
+            padding: 8px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: var(--border-radius);
+            display: inline-block;
+        }
+
+        .note {
+            margin-top: 16px;
+            color: var(--gray);
+            font-size: 0.95rem;
+            padding: 12px;
+            background: rgba(255, 122, 0, 0.03);
+            border-radius: var(--border-radius);
+            border-left: 3px solid var(--primary-light);
+        }
+
+        /* Payment Modal Styles */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .payment-container {
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .payment-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .payment-header h2 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .payment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-group select, .form-group input {
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+        }
+
+        .payment-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .payment-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .payment-processing {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .payment-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        /* Verification Section */
+        .verification-section {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 122, 0, 0.2);
+            border-radius: var(--border-radius);
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .verification-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .verification-section h3 i {
+            color: var(--primary);
+        }
+
+        .verification-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .verification-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .competition-content {
+                flex-direction: column;
+            }
+            
+            .competition-sidebar {
+                width: 100%;
+            }
+            
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .page-header h1 {
+                font-size: 28px;
+            }
+            
+            .verification-form {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .competition-card {
+                padding: 20px;
+            }
+            
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            .page-header h1 {
+                font-size: 24px;
+            }
+            
+            .page-header p {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar container">
+            <div class="nav-brand">
+                <a href="dashboard.html">
+                    <div class="logo">JOT TALENT</div>
+                </a>
+            </div>
+            <div class="nav-links user-nav">
+                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="join.html" class="active"><i class="fas fa-plus-circle"></i> Join Competition</a>
+                <a href="submit.html"><i class="fas fa-upload"></i> Submit</a>
+                <a href="notifications.html"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="feedback.html"><i class="fas fa-comments"></i> Feedback</a>
+                <a href="progress.html"><i class="fas fa-chart-line"></i> Progress</a>
+                <a href="support.html"><i class="fas fa-headset"></i> Support</a>
+                <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Payment Modal -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="payment-container">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div class="payment-header">
+                <h2><i class="fas fa-wallet"></i> Mobile Money Payment</h2>
+                <p>Complete your competition entry payment</p>
+            </div>
+            
+            <form id="payment-form" class="payment-form">
+                <div class="form-group">
+                    <label for="amount-type">Payment Type:</label>
+                    <select id="amount-type">
+                        <option value="10000">Regular (UGX 10,000)</option>
+                        <option value="9000">Early Bird (UGX 9,000)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="amount">Amount (UGX):</label>
+                    <input type="number" id="amount" value="10000" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerName">Full Name:</label>
+                    <input type="text" id="customerName" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerEmail">Email Address:</label>
+                    <input type="email" id="customerEmail" placeholder="Enter your email for verification" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="currency">Currency:</label>
+                    <select id="currency">
+                        <option value="UGX" selected>UGX</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number:</label>
+                    <input type="tel" id="phone" placeholder="Enter your phone number" required>
+                </div>
+                
+                <button type="submit" class="auth-button">
+                    <i class="fas fa-lock"></i> Pay Now
+                </button>
+            </form>
+            
+            <div id="payment-status" class="payment-status"></div>
+        </div>
+    </div>
+
+    <main class="page-main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-trophy"></i> Join Writing Competition</h1>
+                <p>Take part in our prestigious writing competition and showcase your talent</p>
+                <div>
+                    <button id="resetAllPaymentsBtn" class="small-link">Reset simulated payments</button>
+                </div>
+            </div>
+
+            <div class="competition-info" id="competitionsContainer">
+                <!-- First Round: featured competition card -->
+                <section class="competition-card" id="firstRoundCard">
+                    <h2><i class="fas fa-flag-checkered"></i> First Round — Entry</h2>
+                    
+                    <div class="competition-content">
+                        <div class="competition-details">
+                            <p>Join the First Round to compete with other writers for a chance to advance to subsequent rounds. This round focuses on short-form creative writing (1,000–1,500 words). Entries should be original works, previously unpublished.</p>
+                            
+                            <div class="meta-list">
+                                <div><strong>Deadline:</strong> 2 weeks from registration</div>
+                                <div><strong>Word count:</strong> 1,000 — 1,500 words</div>
+                                <div><strong>Eligibility:</strong> Open to all registered participants</div>
+                                <div><strong>Judging:</strong> Blind review by our panel based on creativity, structure, and voice</div>
+                            </div>
+                            
+                            <p>Benefits of entering the First Round include:</p>
+                            <ul>
+                                <li>Official participation certificate</li>
+                                <li>Targeted feedback for shortlisted entries</li>
+                                <li>Opportunity to advance to the final round and win prizes</li>
+                                <li>Exposure to our writing community and judges</li>
+                            </ul>
+                            
+                            <div class="tips">
+                                <strong>Tips:</strong>
+                                <ul>
+                                    <li>Focus on a clear narrative arc and strong opening line.</li>
+                                    <li>Keep language tight and avoid unnecessary filler.</li>
+                                    <li>Proofread for grammar and flow before submitting.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="competition-sidebar">
+                            <div class="price-tag">One-time entry fee</div>
+                            <div class="price">shs.10,000</div>
+                            
+                            <button id="payFirstRoundBtn" class="auth-button">
+                                <i class="fas fa-wallet"></i> Pay Now
+                            </button>
+                            
+                            <button id="joinFirstRoundBtn" class="auth-button" style="display: none;" disabled>
+                                <i class="fas fa-plus-circle"></i> Join Competition
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Verification Section -->
+                    <div id="verificationSection" class="verification-section" style="display: none;">
+                        <h3><i class="fas fa-envelope"></i> Verify Your Email</h3>
+                        <p>We've sent a verification code to your email. Please enter it below to complete your registration and join the competition.</p>
+                        
+                        <div class="verification-form">
+                            <input type="text" id="verificationCode" placeholder="Enter verification code">
+                            <button id="verifyCodeBtn" class="auth-button">
+                                <i class="fas fa-check-circle"></i> Verify
+                            </button>
+                        </div>
+                        
+                        <p id="verificationStatus" style="margin-top: 15px;"></p>
+                    </div>
+                    
+                    <div class="note">
+                        <strong>Note:</strong> Payment and email verification are required to participate in the competition. After successful payment and verification, you'll be able to submit your entry.
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgnkqrg_2clJ77WTonEQFC3gwVrG7HrO4",
+            authDomain: "jot-talent-competitions-72b9f.firebaseapp.com",
+            databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com",
+            projectId: "jot-talent-competitions-72b9f",
+            storageBucket: "jot-talent-competitions-72b9f.firebasestorage.app",
+            messagingSenderId: "25581487736",
+            appId: "1:25581487736:web:a3730b66cd4fb7d9ebcf8d",
+            measurementId: "G-8NRD37H5YD"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const paymentModal = document.getElementById('paymentModal');
+        const closeModal = document.getElementById('closeModal');
+        const payBtn = document.getElementById('payFirstRoundBtn');
+        const joinBtn = document.getElementById('joinFirstRoundBtn');
+        const paymentForm = document.getElementById('payment-form');
+        const paymentStatus = document.getElementById('payment-status');
+        const amountType = document.getElementById('amount-type');
+        const amountInput = document.getElementById('amount');
+        const resetPaymentsBtn = document.getElementById('resetAllPaymentsBtn');
+        const verificationSection = document.getElementById('verificationSection');
+        const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+        const verificationCodeInput = document.getElementById('verificationCode');
+        const verificationStatus = document.getElementById('verificationStatus');
+
+        // Server URL
+        const SERVER_URL = "http://localhost:5000";
+
+        // Set your early bird deadline here (YYYY-MM-DDTHH:MM:SS format)
+        const earlyBirdDeadline = new Date('2025-09-09T19:20:00');
+
+        // Event listeners
+        payBtn.addEventListener('click', () => {
+            paymentModal.style.display = 'flex';
+        });
+
+        closeModal.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+            paymentStatus.textContent = '';
+            paymentStatus.className = 'payment-status';
+        });
+
+        amountType.addEventListener('change', () => {
+            amountInput.value = amountType.value;
+        });
+
+        // Payment form submission
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = amountInput.value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('customerEmail').value;
+            const name = document.getElementById('customerName').value || "Customer";
+            const currency = document.getElementById('currency').value;
+
+            // Validate input
+            if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+                paymentStatus.textContent = 'Please select a valid amount.';
+                paymentStatus.className = 'payment-status payment-error';
+                return;
+            }
+            if (!phone) {
+                paymentStatus.textContent = 'Please enter a phone number.';
+                paymentStatus.className = 'payment-status payment-error';
+                return;
+            }
+            if (!email || !isValidEmail(email)) {
+                paymentStatus.textContent = 'Please enter a valid email address.';
+                paymentStatus.className = 'payment-status payment-error';
+                return;
+            }
+
+            paymentStatus.textContent = 'Processing payment...';
+            paymentStatus.className = 'payment-status payment-processing';
+
+            try {
+                const response = await fetch(`${SERVER_URL}/process-payment`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        method: "MobileMoney",
+                        amount: amount,
+                        phone: phone,
+                        email: email,
+                        name: name,
+                        currency: currency
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    paymentStatus.textContent = 'Payment successful! Please check your email for verification.';
+                    paymentStatus.className = 'payment-status payment-success';
+                    
+                    // Show verification section
+                    verificationSection.style.display = 'block';
+                    
+                    // Store payment success in localStorage
+                    localStorage.setItem('paymentSuccess_firstRound', 'true');
+                    localStorage.setItem('paymentEmail', email);
+                    localStorage.setItem('paymentTimestamp', new Date().getTime().toString());
+                    
+                    // Generate and send verification code
+                    await sendVerificationCode(email);
+                    
+                    // Close modal after 3 seconds
+                    setTimeout(() => {
+                        paymentModal.style.display = 'none';
+                    }, 3000);
+                    
+                } else {
+                    // Check for insufficient balance message
+                    if (result.message && result.message.includes('Insufficient balance')) {
+                        paymentStatus.textContent = `Payment failed: ${result.message}`;
+                    } else {
+                        paymentStatus.textContent = `Payment failed: ${result.message || 'Unknown error'}`;
+                    }
+                    paymentStatus.className = 'payment-status payment-error';
+                }
+            } catch (error) {
+                paymentStatus.textContent = 'Error: ' + error.message;
+                paymentStatus.className = 'payment-status payment-error';
+                console.error('Payment error:', error);
+            }
+        });
+
+        // Send verification code to email
+        async function sendVerificationCode(email) {
+            try {
+                // Generate a random 6-digit code
+                const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                // Store the code in Firestore with email and timestamp
+                await db.collection('verificationCodes').doc(email).set({
+                    code: verificationCode,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    used: false
+                });
+                
+                // In a real application, you would send this code via email
+                // For simulation purposes, we'll just log it and show an alert
+                console.log(`Verification code for ${email}: ${verificationCode}`);
+                alert(`SIMULATION: Verification code sent to ${email}: ${verificationCode}\nIn production, this would be sent via email.`);
+                
+                // Store the email in localStorage for verification
+                localStorage.setItem('verificationEmail', email);
+                
+            } catch (error) {
+                console.error('Error sending verification code:', error);
+                alert('Error sending verification code. Please try again.');
+            }
+        }
+
+        // Verify code entered by user
+        verifyCodeBtn.addEventListener('click', async () => {
+            const code = verificationCodeInput.value.trim();
+            const email = localStorage.getItem('verificationEmail');
+            
+            if (!code || code.length !== 6) {
+                verificationStatus.textContent = 'Please enter a valid 6-digit code.';
+                verificationStatus.style.color = 'var(--error)';
+                return;
+            }
+            
+            try {
+                // Get the verification code from Firestore
+                const doc = await db.collection('verificationCodes').doc(email).get();
+                
+                if (!doc.exists) {
+                    verificationStatus.textContent = 'No verification code found for your email.';
+                    verificationStatus.style.color = 'var(--error)';
+                    return;
+                }
+                
+                const verificationData = doc.data();
+                
+                // Check if code matches and is not expired (10 minutes)
+                const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+                const codeTimestamp = verificationData.timestamp.toDate();
+                
+                if (verificationData.code === code && 
+                    !verificationData.used && 
+                    codeTimestamp > tenMinutesAgo) {
+                    
+                    // Mark code as used
+                    await db.collection('verificationCodes').doc(email).update({
+                        used: true
+                    });
+                    
+                    // Update UI to show success
+                    verificationStatus.textContent = 'Email verified successfully! You can now join the competition.';
+                    verificationStatus.style.color = 'var(--success)';
+                    
+                    // Show join button
+                    payBtn.style.display = 'none';
+                    joinBtn.style.display = 'block';
+                    joinBtn.disabled = false;
+                    
+                    // Store verification success
+                    localStorage.setItem('emailVerified_firstRound', 'true');
+                    
+                } else if (verificationData.used) {
+                    verificationStatus.textContent = 'This verification code has already been used.';
+                    verificationStatus.style.color = 'var(--error)';
+                } else if (codeTimestamp <= tenMinutesAgo) {
+                    verificationStatus.textContent = 'This verification code has expired.';
+                    verificationStatus.style.color = 'var(--error)';
+                } else {
+                    verificationStatus.textContent = 'Invalid verification code. Please try again.';
+                    verificationStatus.style.color = 'var(--error)';
+                }
+            } catch (error) {
+                console.error('Error verifying code:', error);
+                verificationStatus.textContent = 'Error verifying code. Please try again.';
+                verificationStatus.style.color = 'var(--error)';
+            }
+        });
+
+        joinBtn.addEventListener('click', function() {
+            alert('You have successfully joined the competition!');
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'Joined';
+            
+            // Store that user has joined this competition
+            localStorage.setItem('hasJoined_firstRound', 'true');
+            
+            // Record competition registration in Firestore
+            recordCompetitionRegistration();
+        });
+
+        // Record competition registration in Firestore
+        async function recordCompetitionRegistration() {
+            try {
+                const userId = auth.currentUser ? auth.currentUser.uid : 'guest';
+                const email = localStorage.getItem('verificationEmail');
+                
+                await db.collection('competitionRegistrations').doc(userId).set({
+                    userId: userId,
+                    email: email,
+                    competition: 'firstRound',
+                    registrationDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'registered'
+                });
+            } catch (error) {
+                console.error('Error recording competition registration:', error);
+            }
+        }
+
+        resetPaymentsBtn.addEventListener('click', function() {
+            payBtn.style.display = 'block';
+            joinBtn.style.display = 'none';
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'Join Competition';
+            verificationSection.style.display = 'none';
+            localStorage.removeItem('paymentSuccess_firstRound');
+            localStorage.removeItem('hasJoined_firstRound');
+            localStorage.removeItem('paymentTimestamp');
+            localStorage.removeItem('verificationEmail');
+            localStorage.removeItem('emailVerified_firstRound');
+            alert('Payment status has been reset. You can simulate a new payment.');
+        });
+
+        // Check early bird deadline on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const earlyBirdOption = amountType.querySelector('option[value="9000"]');
+            if (now > earlyBirdDeadline) {
+                // Disable Early Bird after deadline
+                earlyBirdOption.disabled = true;
+                amountType.value = "10000";
+                amountInput.value = "10000";
+            }
+            
+            // Check if user has already paid (from localStorage)
+            if (localStorage.getItem('paymentSuccess_firstRound') === 'true') {
+                payBtn.style.display = 'none';
+                
+                // Check if user has already verified their email
+                if (localStorage.getItem('emailVerified_firstRound') === 'true') {
+                    joinBtn.style.display = 'block';
+                    joinBtn.disabled = false;
+                    verificationSection.style.display = 'none';
+                } else {
+                    verificationSection.style.display = 'block';
+                }
+                
+                // Check if user has already joined
+                if (localStorage.getItem('hasJoined_firstRound') === 'true') {
+                    joinBtn.disabled = true;
+                    joinBtn.textContent = 'Joined';
+                }
+            }
+        });
+
+        // Helper function to validate email
+        function isValidEmail(email) {
+            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        }
+    </script>
+</body>
+</html>

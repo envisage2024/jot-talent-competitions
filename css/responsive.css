@@ -1,0 +1,64 @@
+/* Responsive helpers for JOT Talent Competitions
+   This file adds common breakpoints and small utility rules to improve layout
+   across the site. It is intentionally conservative — prefer page-specific
+   stylesheets for heavy changes.
+*/
+
+/* Base responsive tweaks */
+@media (max-width: 1200px) {
+  .container { padding: 0 18px; }
+}
+
+@media (max-width: 992px) {
+  .container { max-width: 940px; }
+  .navbar .nav-links { gap: 6px; }
+  .logo { width: 140px; }
+}
+
+@media (max-width: 768px) {
+  /* Mobile layout adjustments */
+  .container { padding: 0 14px; }
+  .navbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .nav-links { justify-content: center; flex-wrap: wrap; }
+  .nav-links a { padding: 8px 10px; font-size: 14px; }
+  .logo { width: 120px; height: 36px; font-size: 16px; }
+
+  /* Page main spacing */
+  .page-main { padding: 20px 0; }
+  .support-content { padding: 1rem; }
+
+  /* Cards and panels should stack */
+  .competition-content, .ticket-card, .competition-card { flex-direction: column; }
+
+  /* Forms: increase touch targets */
+  .form-group input, .form-group select, .form-group textarea { padding: 0.9rem 1rem; }
+  .submit-button { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 576px) {
+  .container { padding: 0 10px; }
+  .page-header h1 { font-size: 22px; }
+  .page-header p { font-size: 14px; }
+
+  /* FAQ adjustments */
+  .faq-question { padding: 12px; }
+  .faq-answer { max-height: 1000px; }
+
+  /* Tickets list and cards */
+  .ticket-card { padding: 12px; }
+
+  /* Make tab buttons full width on small screens */
+  .support-tabs .tab-button { width: 100%; }
+}
+
+/* Utility responsive helpers */
+@media (max-width: 420px) {
+  .nav-links a i { display: none; }
+  .nav-links a { padding: 8px 10px; }
+  .logo { width: 110px; }
+}
+
+/* Small adjustments for retina/small widths */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Voting - Jot Talent Competitions</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/theme.css" />
+    <script>
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        }
+      </script>
+</head>
+<body>
+    <script src="js/auth-guard.js"></script>
+    <script src="js/login.js"></script>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="index.html">
+                    <img src="images/logo.png" id="img-logo" alt="Jot Talent Competitions Logo">
+                    <span>Jot Talent Competitions</span>
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="competitions.html">Competitions</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="login.html" class="primary-button">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+    <script>
+        (function() {
+            const logo = document.getElementById('img-logo');
+            if (!logo) return;
+            logo.style.cursor = 'pointer';
+            logo.addEventListener('click', async function(e) {
+                e.preventDefault();
+                try {
+                    let user = null;
+                    if (window.currentUserReady) {
+                        try {
+                            const timeout = new Promise(res => setTimeout(() => res(null), 1200));
+                            const res = await Promise.race([window.currentUserReady, timeout]);
+                            if (res) user = res;
+                        } catch (e) {}
+                    }
+                    if (!user && typeof getCurrentUser === 'function') user = getCurrentUser();
+                    if (!user && typeof getStorageData === 'function') user = getStorageData('jot_talent_current_user');
+                    if (!user) {
+                        const raw = localStorage.getItem('jot_talent_current_user'); if (raw) user = JSON.parse(raw);
+                    }
+                    if (user) window.location.href = 'dashboard.html'; else window.location.href = 'index.html';
+                } catch (e) { window.location.href = 'index.html'; }
+            });
+        })();
+    </script>
+    <script src="js/theme.js"></script>
+    <main class="page-main">
+        <div class="container">
+            <section class="hero hero-compact">
+                <div class="container">
+                    <div class="hero-inner">
+                        <h1><i class="fas fa-users"></i> Public Voting</h1>
+                        <p class="lead">Review the finalists and cast your vote for the winner — login to participate.</p>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="bg-shape"></div>
+                        <div class="mockup"></div>
+                    </div>
+                </div>
+            </section>
+            <div id="finalistsList" class="finalists-grid">
+                <!-- Finalists will be dynamically rendered here -->
+            </div>
+        </div>
+    </main>
+    <script>
+        // Utility function to get all submissions (prefer central helper from script.js)
+        function getAllSubmissions() {
+            if (typeof window.getAllSubmissions === 'function') return window.getAllSubmissions();
+            if (typeof window.getStorageData === 'function') return window.getStorageData('jot_talent_submissions') || [];
+            return [];
+        }
+
+        // Check whether round 3 (final/public voting) is active.
+        async function isRound3Active() {
+            try {
+                // Prefer Firestore meta/rounds document when available
+                if (window.firebase && firebase.firestore) {
+                    const doc = await firebase.firestore().collection('meta').doc('rounds').get();
+                    if (doc && doc.exists) {
+                        const data = doc.data();
+                        if (typeof data.round3Activated !== 'undefined') return !!data.round3Activated;
+                    }
+                }
+            } catch (e) {
+                // ignore firestore read errors and fall back to localStorage
+            }
+            // Fallback to localStorage quick-flag
+            const ls = localStorage.getItem('round3Activated');
+            return ls === 'true' || ls === '1' || ls === 'on';
+        }
+
+        // Render finalists dynamically
+        async function renderFinalists() {
+            // Prefer Firestore-backed profile briefly before rendering (affects vote button behavior)
+            try { if (window.waitForCurrentUser) await window.waitForCurrentUser(1200); } catch (e) {}
+            const finalistsList = document.getElementById('finalistsList');
+            const submissions = getAllSubmissions();
+            // Only show submissions that are for the final/public round
+            const finalists = submissions.filter(s => s.competitionRound === 'round3');
+            const active = await isRound3Active();
+            if (!active) {
+                finalistsList.innerHTML = `
+                    <div class="final-round-closed" style="padding:18px;background:#fff8f0;border-radius:12px;border:1px solid #ffdcb3;margin-bottom:18px;">
+                        <strong>Voting is not open yet.</strong>
+                        <div style="margin-top:6px;color:#666">The final round is currently closed. Check back later or contact the organizers for updates.</div>
+                    </div>
+                ` + (finalists.length ? finalists.map(sub => `
+                    <div class="finalist-block">
+                        <div class="finalist-header">
+                            <div>
+                                <h3 class="finalist-title">${sub.title}</h3>
+                                <p class="finalist-category">${sub.category}</p>
+                            </div>
+                            <span class="finalist-wordcount">${sub.wordCount} words</span>
+                        </div>
+                        <div class="finalist-details">${sub.content.substring(0, 150)}...</div>
+                        <div class="public-vote">
+                            <button class="primary-button" disabled>Vote</button>
+                            <span class="vote-count">${sub.votes || 0} votes</span>
+                        </div>
+                    </div>
+                `).join('') : '<div style="color:#666">No finalists available yet.</div>');
+                return;
+            }
+
+            // Active: render normally with enabled vote buttons
+            finalistsList.innerHTML = finalists.length ? finalists.map(sub => `
+                <div class="finalist-block">
+                    <div class="finalist-header">
+                        <div>
+                            <h3 class="finalist-title">${sub.title}</h3>
+                            <p class="finalist-category">${sub.category}</p>
+                        </div>
+                        <span class="finalist-wordcount">${sub.wordCount} words</span>
+                    </div>
+                    <div class="finalist-details">${sub.content.substring(0, 150)}...</div>
+                    <div class="public-vote">
+                        <button class="primary-button" onclick="castPublicVote('${sub.id}')">Vote</button>
+                        <span class="vote-count">${sub.votes || 0} votes</span>
+                    </div>
+                </div>
+            `).join('') : '<div style="color:#666">No finalists available yet.</div>';
+        }
+
+        // Cast a vote for a finalist (respect final-round activation)
+        async function castPublicVote(id) {
+            // Prevent voting when final round is not active
+            const active = await isRound3Active();
+            if (!active) { showNotification('Voting for the final round is not active.', 'error'); return; }
+
+            const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+            if (!user) {
+                showNotification('Please login to cast your vote.', 'error');
+                setTimeout(() => { window.location.href = 'login.html'; }, 700);
+                return;
+            }
+            try {
+                const submissions = getAllSubmissions();
+                const idx = submissions.findIndex(sub => sub.id === id);
+                if (idx < 0) return;
+                const submission = submissions[idx];
+                // Prevent voting for own submission
+                if (submission.ownerId === user.id || submission.uid === user.id) {
+                    showNotification('You cannot vote for your own submission.', 'error');
+                    return;
+                }
+                submission.voters = submission.voters || [];
+                if (submission.voters.includes(user.id)) {
+                    showNotification('You have already voted for this submission.', 'error');
+                    return;
+                }
+                submission.votes = (submission.votes || 0) + 1;
+                submission.voters.push(user.id);
+                if (typeof setStorageData === 'function') await setStorageData('jot_talent_submissions', submissions);
+                showNotification('Your vote has been cast!', 'success');
+                renderFinalists();
+            } catch (e) {
+                console.error('Voting failed', e);
+                showNotification('Could not cast vote. Try again later.', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try { if (window.waitForCurrentUser) await window.waitForCurrentUser(1200); } catch (e) {}
+            renderFinalists();
+        });
+    </script>
+    <style>
+        #submission-modal.active {
+            display: block;
+        }
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.35);
+            z-index: 1;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 38px 32px 32px 32px;
+            min-width: 340px;
+            max-width: 600px;
+            width: 90vw;
+            z-index: 2;
+        }
+        .modal-close {
+            position: absolute;
+            top: 18px; right: 18px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #888;
+            cursor: pointer;
+            z-index: 3;
+        }
+        #modal-body {
+            margin-top: 18px;
+        }
+        #modal-body h2 {
+            font-size: 1.35rem;
+            margin-bottom: 8px;
+            color: #2d2d2d;
+        }
+        #modal-body .modal-meta {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        #modal-body .modal-content-block {
+            font-size: 1.08rem;
+            color: #333;
+            background: #f8f8fa;
+            border-left: 4px solid #e0e0e0;
+            margin: 0;
+            padding: 16px 18px;
+            border-radius: 8px;
+            white-space: pre-line;
+        }
+        .finalists-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 32px;
+            margin-top: 24px;
+        }
+        .finalist-block {
+            background: var(--card-bg, #fff);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 24px 24px 24px;
+            transition: box-shadow 0.2s;
+            border: 2px solid #e0e0e0;
+            position: relative;
+        }
+        .finalist-block.voted-block {
+            border: 2.5px solid #ffd700;
+            box-shadow: 0 0 0 4px #fffbe6;
+        }
+        .finalist-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .finalist-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #2d2d2d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .finalist-category {
+            font-size: 1rem;
+            color: #666;
+        }
+        .finalist-details {
+            margin-bottom: 12px;
+            color: #888;
+        }
+        .finalist-wordcount {
+            font-size: 0.98rem;
+        }
+        .finalist-content blockquote {
+            font-size: 1.08rem;
+            color: #333;
+            background: #f8f8fa;
+            border-left: 4px solid #e0e0e0;
+            margin: 0;
+            padding: 16px 18px;
+            border-radius: 8px;
+        }
+        .public-vote {
+            margin-top: 18px;
+            text-align: right;
+        }
+        .primary-button[disabled] {
+            background: #e0e0e0 !important;
+            color: #aaa !important;
+            cursor: not-allowed;
+            border: none;
+        }
+    </style>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>

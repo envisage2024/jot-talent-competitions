@@ -1,0 +1,35 @@
+/* Dialogs: polished and consistent with global theme */
+dialog {
+    width: 60%;
+    max-width: 900px;
+    border: none;
+    border-radius: 12px;
+    height: auto;
+    max-height: 80vh;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.35) var(--light-gray);
+    box-shadow: var(--shadow-lg);
+    background: var(--white);
+    color: var(--text-dark);
+    padding: 18px 20px;
+}
+
+dialog::backdrop {
+    background: rgba(0,0,0,0.35);
+}
+
+.dialog-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    color: var(--dark-gray);
+    cursor: pointer;
+}

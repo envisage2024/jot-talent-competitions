@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jot Talent Competitions - Writing Excellence</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+    .tier-card {
+        opacity: 0;
+        transform: scale(0.7) translateY(120px) rotate(-10deg);
+        transition: opacity 0.8s cubic-bezier(.68,-0.55,.27,1.55), transform 0.8s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    .tier-card.visible {
+        opacity: 1;
+        transform: scale(1) translateY(0) rotate(0deg);
+    }
+        :root {
+            --primary: #FF7A00;
+            --primary-light: #FF9A40;
+            --primary-dark: #E06A00;
+            --secondary: #FFB74D;
+            --secondary-light: #FFD18A;
+            --accent: #FF9800;
+            --accent-light: #FFB74D;
+            --success: #48BB78;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 10px 20px rgba(255, 122, 0, 0.1), 0 6px 6px rgba(255, 122, 0, 0.05);
+            --hover-shadow: 0 14px 28px rgba(255, 122, 0, 0.15), 0 10px 10px rgba(255, 122, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fef8f2 0%, #f5eee6 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        body.darkmode{
+--primary: #0085FF;         /* Inverted from #FF7A00 → strong blue */
+--primary-light: #0056BF;   /* Darker (inverted #FF9A40) */
+--primary-dark: #1FF5FF;    /* Lighter (inverted #E06A00) */
+--secondary: #0048B2;       /* Inverted orange → rich blue */
+--secondary-light: #002B75; /* Darker (triple adjustment) */
+--accent: #0067FF;          /* Inverted orange accent */
+--accent-light: #0048B2;    /* Darker blue glow */
+--success: #B74487;         /* Inverted green → purple-pink */
+--warning: #0BA0F5;         /* Inverted orange-yellow → cyan */
+--error: #44BBEF;           /* Inverted red → cyan-ish */
+--light: #101010;           /* Inverted #f8f9fa, 3× darker */
+--dark: #DEDEDE;            /* Inverted #212529, 3× lighter */
+--gray: #939BA0;            /* Inverted #6c757d */
+--light-gray: #1A1A1A;      /* Inverted #e9ecef, darkened */
+--card-shadow: 0 10px 20px rgba(0, 133, 255, 0.1), 
+               0 6px 6px rgba(0, 133, 255, 0.05);
+--hover-shadow: 0 14px 28px rgba(0, 133, 255, 0.15), 
+                0 10px 10px rgba(0, 133, 255, 0.1);
+
+
+
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 15px rgba(255, 122, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand img {
+            height: 45px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-brand:hover img {
+            transform: rotate(10deg);
+        }
+
+        .nav-brand span {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--gray);
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 122, 0, 0.1);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Hero Slider */
+        .hero-slider {
+            position: relative;
+            overflow: hidden;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        #list {
+            display: flex;
+            width: 400%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .hero-content {
+            position: relative;
+            width: 25%;
+            height: 100%;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Removed the orange filter */
+            filter: brightness(0.9);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Changed from orange gradient to a subtle dark overlay */
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+        }
+
+        .hero-text-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .hero-text-content h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .cta-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(255, 122, 0, 0.3);
+        }
+
+        .cta-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(255, 122, 0, 0.4);
+        }
+
+        .cta-button.large {
+            padding: 18px 35px;
+            font-size: 1.2rem;
+        }
+
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+
+        .slider-arrow:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        #prev {
+            left: 30px;
+        }
+
+        #next {
+            right: 30px;
+        }
+
+        .slider-dots {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+
+        .dot:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 80px 0;
+        }
+
+        section h2 {
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            margin-bottom: 50px;
+            color: var(--dark);
+            position: relative;
+        }
+
+        section h2:after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            margin: 15px auto 0;
+            border-radius: 2px;
+        }
+
+        /* About Section */
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .about-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--primary);
+        }
+
+        .about-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .about-card i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .about-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .about-card p {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* How It Works */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .step {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            transition: var(--transition);
+            border-top: 4px solid var(--primary);
+        }
+
+        .step:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .step h3 {
+            font-size: 1.4rem;
+            margin: 15px 0;
+            color: var(--dark);
+        }
+
+        .step p {
+            color: var(--gray);
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .feature {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--primary);
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .feature i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .feature h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .feature p {
+            color: var(--gray);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            text-align: center;
+            padding: 100px 0;
+        }
+
+        .cta-section h2 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .cta-section h2:after {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer - Redesigned */
+        .footer {
+            background: linear-gradient(to right, #2c3e50, #1a2530);
+            color: white;
+            padding: 60px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .footer-brand img {
+            width: 50px;
+            height: 50px;
+            filter: brightness(0) invert(1);
+        }
+
+        .footer-brand span {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .footer-brand p {
+            color: #ccc;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .footer-links h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: white;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-links h3:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .footer-links button {
+            background: none;
+            border: none;
+            color: #ccc;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 5px 0;
+            position: relative;
+            width: fit-content;
+        }
+
+        .footer-links button:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: var(--transition);
+        }
+
+        .footer-links button:hover {
+            color: var(--primary);
+        }
+
+        .footer-links button:hover:after {
+            width: 100%;
+        }
+
+        .footer-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .footer-contact h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: white;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-contact h3:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ccc;
+        }
+
+        .contact-item i {
+            color: var(--primary);
+            width: 20px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .theme-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .theme-selector h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: white;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .theme-selector h3:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .theme-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .theme-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-button:hover {
+            background: var(--primary);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-bottom p {
+            color: #ccc;
+        }
+
+        .back-to-top {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-to-top:hover {
+            background: var(--primary-dark);
+            transform: translateY(-5px);
+        }
+
+        /* Dialog Styling */
+        dialog {
+            border: none;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            scale: 0;
+            display: block;
+            opacity: 0;
+            transition: all .5s ease;
+            z-index: -10;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            background: white;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            translate: -50% -50%;
+        }
+        dialog[open]{
+            scale: 1;
+            opacity: 1;
+            z-index: 10;
+        }
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        dialog h2 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dialog-header button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .terms-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .terms-content h3 {
+            margin: 20px 0 10px;
+            color: var(--primary-dark);
+        }
+
+        .terms-content p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        /* Animations */
+        .hero-content-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero-text-content h1 {
+                font-size: 2.8rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-slider {
+                height: 70vh;
+                min-height: 500px;
+            }
+            
+            .hero-text-content h1 {
+                font-size: 2.2rem;
+            }
+
+            /* Tiers Section Styles (same as join.html) */
+            .tiers-section {
+                margin: 0 auto 100px auto;
+                max-width: 3200px;
+                text-align: center;
+                background: linear-gradient(90deg, #fffbe6 0%, #fff8f2 100%);
+                border-radius: 80px;
+                box-shadow: 0 48px 192px rgba(255, 122, 0, 0.28);
+                padding: 320px 320px 240px 320px;
+                position: relative;
+                overflow: hidden;
+            }
+            .tiers-callout {
+                font-size: 5rem;
+                font-weight: 900;
+                color: var(--primary-dark, #FF7A00);
+                margin-bottom: 60px;
+                background: linear-gradient(90deg, #fff3e0 0%, #ffe0b2 100%);
+                border-radius: 36px;
+                padding: 48px 0;
+                box-shadow: 0 16px 64px rgba(255, 122, 0, 0.18);
+                letter-spacing: 2px;
+                animation: popIn 1s cubic-bezier(.68,-0.55,.27,1.55) backwards;
+            }
+            .tiers-title {
+                font-size: 200px;
+                font-weight: 900;
+                margin-bottom: 160px;
+                letter-spacing: 8px;
+                color: var(--primary-dark, #FF7A00);
+                text-shadow: 0 16px 64px #FFD70099;
+            }
+            .tiers-cards {
+                display: flex;
+                justify-content: center;
+                gap: 96px;
+                flex-wrap: wrap;
+            }
+            .tier-card {
+                background: #fff;
+                border-radius: 18px;
+                box-shadow: 0 6px 24px rgba(255, 122, 0, 0.12);
+                padding: 220px 320px;
+                min-width: 1000px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transition: transform 0.5s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.5s;
+                cursor: pointer;
+                position: relative;
+                box-shadow: 0 32px 128px rgba(255, 122, 0, 0.32);
+                animation: billboardPopSmooth 1.6s cubic-bezier(.22,1,.36,1) backwards;
+            }
+            .tier-card:hover {
+                transform: scale(1.08) rotate(-2deg);
+                box-shadow: 0 12px 32px rgba(255, 122, 0, 0.18);
+            }
+            .tier-icon {
+                font-size: 360px;
+                margin-bottom: 96px;
+                filter: drop-shadow(0 2px 8px #FFD70044);
+            }
+            .tier-label {
+                font-size: 140px;
+                font-weight: 900;
+                margin-bottom: 64px;
+                letter-spacing: 2px;
+            }
+            .tier-amount {
+                font-size: 120px;
+                font-weight: 900;
+                color: var(--primary, #FF7A00);
+                text-shadow: 0 8px 32px #FF7A0044;
+            }
+            .tier-card.gold {
+                border: 2px solid #FFD700;
+            }
+            .tier-card.silver {
+                border: 2px solid #C0C0C0;
+            }
+            .tier-card.bronze {
+                border: 2px solid #CD7F32;
+            }
+            @keyframes popIn {
+                0% { opacity: 0; transform: scale(0.7) translateY(120px) rotate(-10deg); }
+                60% { opacity: 1; transform: scale(1.15) translateY(-20px) rotate(2deg); }
+                80% { opacity: 1; transform: scale(1.05) translateY(0) rotate(-2deg); }
+                100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+
+            @keyframes billboardPop {
+                0% { opacity: 0; transform: scale(0.5) translateY(200px) rotate(-20deg); }
+                60% { opacity: 1; transform: scale(1.2) translateY(-40px) rotate(8deg); }
+                80% { opacity: 1; transform: scale(1.05) translateY(0) rotate(-4deg); }
+                100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+            }
+            }
+            .animate-pop {
+                animation: popIn 0.7s cubic-bezier(.68,-0.55,.27,1.55) backwards;
+            }
+            }
+
+@keyframes billboardPopSmooth {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(300px) rotate(-30deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.15) translateY(-40px) rotate(10deg);
+        filter: brightness(1.2) drop-shadow(0 0 40px #FFD70088);
+    }
+    70% {
+        transform: scale(0.95) translateY(10px) rotate(-8deg);
+        filter: brightness(1.1) drop-shadow(0 0 20px #FFD70044);
+    }
+    85% {
+        transform: scale(1.05) translateY(-5px) rotate(4deg);
+        filter: brightness(1.15) drop-shadow(0 0 30px #FFD70066);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0) rotate(0deg);
+        filter: none;
+    }
+}
+
+            /* Compact Tiers Section Styles for Index */
+            .tiers-section {
+                margin: 0 auto 32px auto;
+                max-width: 600px;
+                text-align: center;
+                background: linear-gradient(90deg, #fffbe6 0%, #fff8f2 100%);
+                border-radius: 14px;
+                box-shadow: 0 2px 12px rgba(255, 122, 0, 0.08);
+                padding: 18px 8px 12px 8px;
+                position: relative;
+                overflow: hidden;
+            }
+            .tiers-section-compact {
+                max-width: 480px;
+                padding: 12px 4px 8px 4px;
+                margin-bottom: 24px;
+            }
+            .tiers-title {
+                font-size: 1.3rem;
+                font-weight: 700;
+                margin-bottom: 12px;
+                letter-spacing: 0.5px;
+                color: var(--primary-dark, #FF7A00);
+                text-shadow: 0 1px 4px #FFD70022;
+            }
+            .tiers-cards {
+                display: flex;
+                justify-content: center;
+                gap: 18px;
+                flex-wrap: wrap;
+            }
+            .tier-card {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(255, 122, 0, 0.08);
+                padding: 10px 14px;
+                min-width: 80px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transition: transform 0.3s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.3s;
+                cursor: pointer;
+                position: relative;
+                animation: popIn 0.7s cubic-bezier(.68,-0.55,.27,1.55) backwards;
+            }
+            .tier-card:hover {
+                transform: scale(1.08) rotate(-2deg);
+                box-shadow: 0 6px 18px rgba(255, 122, 0, 0.12);
+            }
+            .tier-icon {
+                font-size: 28px;
+                margin-bottom: 6px;
+                filter: drop-shadow(0 1px 4px #FFD70044);
+            }
+            .tier-label {
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: 2px;
+                letter-spacing: 0.5px;
+            }
+            .tier-amount {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: var(--primary, #FF7A00);
+                text-shadow: 0 1px 4px #FF7A0022;
+            }
+            .tier-card.gold {
+                border: 2px solid #FFD700;
+            }
+            .tier-card.silver {
+                border: 2px solid #C0C0C0;
+            }
+            .tier-card.bronze {
+                border: 2px solid #CD7F32;
+            }
+            @keyframes popIn {
+                0% { opacity: 0; transform: scale(0.7) translateY(20px); }
+                80% { opacity: 1; transform: scale(1.1) translateY(-4px); }
+                100% { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            .animate-pop {
+                animation: popIn 0.7s cubic-bezier(.68,-0.55,.27,1.55) backwards;
+            }
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            section {
+                padding: 60px 0;
+            }
+            
+            section h2 {
+                font-size: 2.2rem;
+            }
+            
+            .slider-arrow {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            #prev {
+                left: 15px;
+            }
+            
+            #next {
+                right: 15px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .hero-slider {
+                height: 60vh;
+                min-height: 400px;
+            }
+            
+            .hero-text-content h1 {
+                font-size: 1.8rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .cta-button {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+            
+            section h2 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar container">
+            <div class="nav-brand">
+                <img src="images/logo.png" alt="Jot Talent Logo" class="logo" style="width: 40px; height: 40px;">
+                <span style="font-size: 1.2rem;">Jot Talent Competitions</span>
+            </div>
+            <div class="nav-links">
+                <a href="login.html" data-login-splash style="font-size: 1rem;">Login</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+    <script>
+    // Scroll-triggered animation for prize cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.tier-card');
+        const observer = new window.IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.3 });
+        cards.forEach(card => observer.observe(card));
+    });
+    </script>
+    <div class="hero-slider" id="carousel">
+            <section class="hero" id="list">
+                <div class="hero-content" id="item">
+                    <img src="images/pen.png" alt="Writing Competition" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Unleash Your Writing Talent</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Join the premier online writing competition where creativity meets excellence</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hero-content" id="item">
+                    <img src="images/pen-and-book.png" alt="Creative Writing" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Express Your Creativity</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Share your unique voice with writers from around the world</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hero-content" id="item">
+                    <img src="images/books.png" alt="Literary Excellence" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Achieve Literary Excellence</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Get recognized for your outstanding writing skills and storytelling</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hero-content" id="item">
+                    <img src="images/hand.png" alt="Writers Community" class="hero-image">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-text-content">
+                        <h1 class="hero-content-animate" style="transition-delay:0s;">Join Our Community</h1>
+                        <p class="hero-subtitle hero-content-animate" style="transition-delay:0.3s;">Connect with fellow writers and grow your literary network</p>
+                        <button class="cta-button hero-content-animate" style="transition-delay:0.6s;" onclick="window.location.href='signup.html'">
+                            <i class="fas fa-pen-fancy"></i>
+                            Start Your Journey
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="arrows">
+                <button id="prev" aria-label="Previous slide" class="slider-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="next" aria-label="Next slide" class="slider-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="slider-dots" id="slider-dots" aria-label="Slider navigation" role="tablist">
+                <button class="dot active" data-index="0" aria-label="Go to slide 1"></button>
+                <button class="dot" data-index="1" aria-label="Go to slide 2"></button>
+                <button class="dot" data-index="2" aria-label="Go to slide 3"></button>
+                <button class="dot" data-index="3" aria-label="Go to slide 4"></button>
+            </div>  
+    </div>
+
+        <section class="about">
+            <!-- Eye-catching Payment Tiers Section -->
+            <div class="tiers-section">
+                <div class="tiers-callout"><b>Sign up today and stand a chance to win these amazing prizes!</b></div>
+                <h2 class="tiers-title">Win Big! <span style="color:var(--primary)">Prizes</span> for Top 3</h2>
+                <div class="tiers-cards">
+                    <div class="tier-card gold animate-pop">
+                        <div class="tier-icon"><i class="fas fa-medal" style="color:#FFD700;"></i></div>
+                        <div class="tier-label">Gold</div>
+                        <div class="tier-amount">UGX 500,000</div>
+                    </div>
+                    <div class="tier-card silver animate-pop" style="animation-delay:0.2s;">
+                        <div class="tier-icon"><i class="fas fa-medal" style="color:#C0C0C0;"></i></div>
+                        <div class="tier-label">Silver</div>
+                        <div class="tier-amount">UGX 300,000</div>
+                    </div>
+                    <div class="tier-card bronze animate-pop" style="animation-delay:0.4s;">
+                        <div class="tier-icon"><i class="fas fa-medal" style="color:#CD7F32;"></i></div>
+                        <div class="tier-label">Bronze</div>
+                        <div class="tier-amount">UGX 200,000</div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <h2>About Jot Talent Competitions</h2>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <i class="fas fa-trophy"></i>
+                        <h3>Prestigious Competition</h3>
+                        <p>Compete with talented writers from around the world in our carefully curated writing challenge.</p>
+                    </div>
+                    <div class="about-card">
+                        <i class="fas fa-users"></i>
+                        <h3>Expert Review</h3>
+                        <p>Your submissions are reviewed by experienced professionals who provide detailed feedback.</p>
+                    </div>
+                    <div class="about-card">
+                        <i class="fas fa-medal"></i>
+                        <h3>Rewards</h3>
+                        <p>Winners receive a cash prize, recognition and the opportunity to showcase their talent.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works">
+            <div class="container">
+                <h2>How It Works</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>Sign Up</h3>
+                        <p>Create your free account to get started</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>Join Competition</h3>
+                        <p>Pay the participation fee to unlock submission</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>Submit Your Work</h3>
+                        <p>Upload your best writing piece</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <h3>Get Reviewed</h3>
+                        <p>Receive expert feedback and ranking</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2>Competition Features</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <i class="fas fa-clock"></i>
+                        <h3>Real-time Progress</h3>
+                        <p>Track your submission status and review progress</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-comments"></i>
+                        <h3>Personal Feedback</h3>
+                        <p>Receive detailed, personalized feedback on your work</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-bell"></i>
+                        <h3>Instant Notifications</h3>
+                        <p>Stay updated with announcements and results</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-headset"></i>
+                        <h3>Support System</h3>
+                        <p>Get help whenever you need it through our support</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="container">
+                <h2>Ready to Showcase Your Talent?</h2>
+                <p>Join thousands of writers who have already started their journey with us.</p>
+                <button class="cta-button large" onclick="window.location.href='signup.html'">
+                    <i class="fas fa-user-plus"></i>
+                    Sign Up Now
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="images/logo.png" id="img-logo" alt="Jot Talent Logo">
+                    <span>Jot Talent Competitions</span>
+                    <p>Discover and showcase your writing talent through our prestigious competitions. Join our community of passionate writers today.</p>
+                </div>
+
+                <script>
+                    (function() {
+                        const logo = document.getElementById('img-logo');
+                        if (!logo) return;
+                        logo.style.cursor = 'pointer';
+                        logo.addEventListener('click', async function() {
+                            try {
+                                let user = null;
+                                if (window.currentUserReady) {
+                                    try {
+                                        const timeout = new Promise(res => setTimeout(() => res(null), 1200));
+                                        const res = await Promise.race([window.currentUserReady, timeout]);
+                                        if (res) user = res;
+                                    } catch (e) {}
+                                }
+                                if (!user && typeof getCurrentUser === 'function') user = getCurrentUser();
+                                if (!user && typeof getStorageData === 'function') user = getStorageData('jot_talent_current_user');
+                                if (!user) {
+                                    const raw = localStorage.getItem('jot_talent_current_user'); if (raw) user = JSON.parse(raw);
+                                }
+                                if (user) window.location.href = 'dashboard.html'; else window.location.href = 'index.html';
+                            } catch (e) { window.location.href = 'index.html'; }
+                        });
+                    })();
+                </script>
+                
+                <div class="footer-links">
+                <!-- Auth helpers: lightweight init and login splash redirect -->
+                <script src="js/auth-init.js"></script>
+                <script src="js/theme.js"></script>
+                <script src="js/login-redirect.js"></script>
+                    <h3>Quick Links</h3>
+                    <button onclick="about.showModal()">About Us</button>
+                    <button onclick="contact.showModal()">Contact</button>
+                    <button onclick="terms.showModal()">Terms & Conditions</button>
+                    <button onclick="faq.showModal()">FAQ</button>
+                </div>
+                
+                <div class="footer-contact">
+                    <h3>Contact Us</h3>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>compsjot6@gmail.com</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>0749619467</span>
+                            <span>0791025761</span>
+                            <span>0785020480</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Kampala, Uganda</span>
+                        </div>
+                    </div>
+                    
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/JotComps" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://tiktok.com/@jot.comps" aria-label="Tiktok"><i class="fab fa-tiktok"></i></a>
+                        <a href="https://www.instagram.com/jot.comps" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.youtube.com/@JotComps" aria-label="Youtube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="theme-selector">
+                    <h3>Theme Preference</h3>
+                    <div class="theme-buttons">
+                        <button id="lightThemeButton" class="theme-button">Light</button>
+                        <button id="darkThemeButton" class="theme-button">Dark</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Jot Talent Competitions. All rights reserved.</p>
+                <button id="backToTopButton" class="back-to-top" aria-label="Back to top">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Dialog Modals -->
+    <dialog id="about">
+        <div class="dialog-header">
+            <h2>About Jot Talent Competitions</h2>
+            <button onclick="about.close()">×</button>
+        </div>
+        <div class="terms-content">
+            <p>At Jot Talent Competitions Management Ltd, we believe that every spark of talent has the power to ignite greatness. We exist to uncover those sparks, nurture them, and give them the stage they deserve. We are passionate talent enthusiasts, relentless promoters of creativity, and champions of dreams waiting to be realized.</p>
+            
+            <p>Our platform is more than a showcase—it’s a launchpad for ambition. Whether you’re a singer, dancer, writer, artist, or digital creator, Jot Talent connects you to opportunities, recognition, and a community that celebrates your passion. We’re here to break barriers, spotlight hidden potential, and turn raw talent into extraordinary achievement.</p>
+            
+            <p>We believe talent should never go unnoticed. Every performance, every creation, every idea matters—and we are committed to helping you reach the world with it. Through competitions, mentorship, and exposure, we empower individuals to step into their greatness and inspire others along the way.</p>
+            
+            <p>At Jot Talent, we don’t just host talent; we celebrate courage, dedication, and the relentless pursuit of dreams. Join us, and let your talent shine, because the world is waiting to see what only you can do.</p>
+        </div>
+    </dialog>
+
+    <dialog id="contact">
+        <div class="dialog-header">
+            <h2>Contact Us</h2>
+            <button onclick="contact.close()">×</button>
+        </div>
+        <div class="terms-content">
+            <p>As Jot, we'd love to hear from you!😁 Whether you have questions about our competitions, need technical support, an aspiring talent, a fan, a partner looking to collaborate or want to suggest improvements, our team is here to help🧑‍💻👍. Reach out to us through any of the channels below:</p>
+            
+            <h3><i class="fas fa-phone"></i> Phones and WhatApp(Jot Comps):</h3>
+             <p>0749619467<br>
+                0791025761<br>
+                0785020480
+            </p>
+            
+            <h3><i class="fas fa-envelope"></i> Email</h3>
+            <p>compsjot6@gmail.com</p>
+            
+            <h3><i class="fa-sharp-duotone fa-solid fa-photo-film-music"></i> Social Media</h3>
+            <h5><u>Click on the orange Links to visit the site;</u></h5>
+            <p><h4>Instagram:</h4><br>
+                <a href="https://www.instagram.com/jot.comps">@Jot Comps</a>
+            </p><br>
+            <p><h4>Tiktok:</h4><br>
+                <a href="https://tiktok.com/@jot.comps">@jot.comps</a>
+            </p><br>
+            <p><h4>Facebook:</h4><br>
+                <a href="https://www.facebook.com/JotComp">Jot Comps</a>
+            </p><br>
+            <p><h4>Youtube:</h4><br>
+                <a href="https://www.youtube.com/@JotComps">Jot Comps</a>
+            </p><br>
+            
+            <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
+            <p>Jot Talent Competitions Management Ltd.<br>
+            Kampala,<br>
+            Uganda<br></p>
+            
+            <p>Our customer service team is available Monday through Friday, 9 AM to 5 PM EST.</p>
+        </div>
+    </dialog>
+
+    <dialog id="terms">
+        <div class="dialog-header">
+            <h2>Terms and Conditions</h2>
+            <button onclick="terms.close()">×</button>
+        </div>
+        <div class="terms-content">
+            <h3>Jot Talent Competitions Management Ltd</h3>
+            <p><strong>Effective:</strong> From the time that you agree to the terms and conditions</p>
+            
+            <p>These Terms and Conditions ("Terms") set out the agreement between you, the user, and <strong>Jot Talent Competitions Management Ltd</strong>.</p>
+            <p>By accessing or using our services, including participation in online talent competitions and interaction with our website and platforms, you acknowledge that you have read, understood, and agreed to abide by these Terms. If you do not agree with these Terms, you should not use our services.</p>
+            
+            <h3>Eligibility</h3>
+            <p>Our services are open to individuals who are at least 13 years of age. If you are under 18, you must have the consent of a parent or guardian to participate. When registering or creating an account, you must provide accurate and complete information. You are solely responsible for maintaining the confidentiality of your login details and for all activities that occur under your account. We reserve the right to suspend or terminate accounts that provide false information or engage in activities that violate these Terms.</p>
+            
+            <h3>Content Submission</h3>
+            <p>When you submit content such as videos, audio recordings, images, or any other creative material, you retain full ownership of your work. However, by submitting your content to us, you grant us a non-exclusive, royalty-free, worldwide license to display, promote and share it for purposes directly related to the competition and the promotion of our platform. It is your responsibility to ensure that your content is original, does not infringe upon the intellectual property rights of others, and complies with legal and community standards. Any submission that violates these principles may be removed without notice.</p>
+            
+            <h3>Competition Rules</h3>
+            <p>Each competition organized by us will have specific guidelines, judging criteria, and submission deadlines. These rules will be communicated clearly prior to the start of each competition. Any entries received after the official deadline may not be considered. The outcome of a competition, whether determined by judges, audience votes, or a combination of both, will be considered final and binding. We also reserve the right to cancel, reschedule, or amend competitions in the event of unforeseen circumstances.</p>
+            
+            <h3>Payments and Prizes</h3>
+            <p>Some competitions may require participants to pay an entry fee. Unless explicitly stated otherwise, all payments made are non-refundable. Winners will be contacted using the details they provide at the time of registration. Prizes awarded are non-transferable and may be subject to taxation, which remains the responsibility of the recipient.</p>
+            
+            <h3>Code of Conduct</h3>
+            <p>We expect all users of our platform to conduct themselves respectfully and responsibly. Submissions must not include offensive, illegal, discriminatory, or harmful material. Harassment, impersonation, or any attempts to manipulate competition results, such as fraudulent voting practices, will not be tolerated. We reserve the right to disqualify or ban any participant who violates these standards.</p>
+            
+            <h3>Privacy</h3>
+            <p>Your privacy is important to us. Any personal information you provide will be collected and used in accordance with our Privacy Policy, which explains in detail how we store, process, and protect your data. By using our services, you consent to the practices described in the Privacy Policy.</p>
+            
+            <h3>Limitation of Liability</h3>
+            <p>While we strive to provide a secure and reliable platform, we cannot guarantee that our services will always be free of errors, technical issues, or interruptions. We shall not be held responsible for technical failures, content loss, delays, or the actions of other users. To the fullest extent permitted by law, we disclaim liability for any indirect, incidental, or consequential damages arising from your use of our platform.</p>
+            
+            <h3>Changes to Terms</h3>
+            <p>We reserve the right to amend or update these Terms at any time. Any changes will take effect immediately upon being posted on our website. Continued use of our services after such updates will be regarded as acceptance of the revised Terms.</p>
+            
+            <h3>Contact Us</h3>
+            <p>If you have any questions, concerns, or require clarification regarding these Terms, you may contact us at info@jottalent.com.</p>
+            
+            <p>By continuing to use our services, you confirm that you have read and agreed to these Terms and Conditions and agree to be bound by them.</p>
+        </div>
+    </dialog>
+
+    <dialog id="faq">
+        <div class="dialog-header">
+            <h2>Frequently Asked Questions</h2>
+            <button onclick="faq.close()">×</button>
+        </div>
+        <div class="terms-content">
+            <h3>How do I enter a competition?</h3>
+            <p>To enter a competition, first create an account on our platform. Then navigate to the Competitions page, select the competition you're interested in, and follow the submission instructions. You'll need to complete the entry form and upload your submission before the deadline.</p>
+            
+            <h3>What are the judging criteria?</h3>
+            <p>Judging criteria vary by competition but generally include creativity, originality, technical skill, adherence to the theme or guidelines, and overall impact. Specific criteria for each competition are detailed on the competition information page.</p>
+            
+            <h3>When will results be announced?</h3>
+            <p>Results are typically announced within 4-6 weeks after the submission deadline. All participants will be notified via email when results are available, and winners will be announced on our website and social media channels.</p>
+            
+            <h3>Can I submit previously published work?</h3>
+            <p>This depends on the specific competition. Some competitions accept previously published work, while others require original, unpublished material. Please check the rules for each competition before submitting.</p>
+            
+            <h3>How are prizes distributed?</h3>
+            <p>Prize money is typically distributed via electronic transfer within 30 days of the winner announcement. Other prizes may have different distribution methods which will be detailed in the winner notification.</p>
+            
+            <h3>Do you offer feedback on submissions?</h3>
+            <p>We provide detailed feedback on all submissions for competitions that include this feature. When feedback is offered, it will be accessible through your account dashboard after results are announced.</p>
+        </div>
+    </dialog>
+
+    <script>
+        document.getElementById('backToTopButton').addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Simple slider functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const list = document.getElementById('list');
+            const items = document.querySelectorAll('.hero-content');
+            const dots = document.querySelectorAll('.dot');
+            const prevBtn = document.getElementById('prev');
+            const nextBtn = document.getElementById('next');
+            
+            let currentIndex = 0;
+            
+            function updateSlider() {
+                list.style.transform = `translateX(-${currentIndex * 25}%)`;
+                
+                // Update dots
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+            }
+            
+            // Next slide
+            nextBtn.addEventListener('click', function() {
+                currentIndex = (currentIndex + 1) % items.length;
+                updateSlider();
+            });
+            
+            // Previous slide
+            prevBtn.addEventListener('click', function() {
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+                updateSlider();
+            });
+            
+            // Dot navigation
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', function() {
+                    currentIndex = index;
+                    updateSlider();
+                });
+            });
+            
+            // Auto slide
+            setInterval(function() {
+                currentIndex = (currentIndex + 1) % items.length;
+                updateSlider();
+            }, 5000);
+            
+            // Theme switching functionality
+            const lightThemeButton = document.getElementById('lightThemeButton');
+            const darkThemeButton = document.getElementById('darkThemeButton');
+            
+            lightThemeButton.addEventListener('click', function() {
+                document.body.style.background = 'linear-gradient(135deg, #fef8f2 0%, #f5eee6 100%)';
+                document.body.style.color = '#212529';
+            });
+            
+            darkThemeButton.addEventListener('click', function() {
+                document.body.style.background = 'linear-gradient(135deg, #2c3e50 0%, #1a2530 100%)';
+                document.body.style.color = '#f8f9fa';
+            });
+        });
+    </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script> </body>
+</html>
