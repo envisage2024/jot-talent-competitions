@@ -50,7 +50,10 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
     'http://localhost:3000',
     'http://localhost:5500',
-    'http://127.0.0.1:8000'
+    'http://127.0.0.1:8000',
+    'https://jot-talent-competitions.onrender.com',
+    'https://jotcomps.com',
+    'https://www.jotcomps.com'
 ];
 
 console.log(`🚀 Starting Payment Server`);
