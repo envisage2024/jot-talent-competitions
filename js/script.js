@@ -128,7 +128,21 @@ function downloadCSV(csvContent, filename) {
 function getStorageData(key) {
     try {
         const v = CACHE[key];
-        return Array.isArray(v) ? v : (v ? v : []);
+        if (typeof v !== 'undefined') {
+            return Array.isArray(v) ? v : (v ? v : []);
+        }
+        // fallback to localStorage if in-memory cache is empty (preserve session across pages)
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                CACHE[key] = parsed;
+                return Array.isArray(parsed) ? parsed : (parsed ? parsed : []);
+            }
+        } catch (e) {
+            // ignore parse/localStorage errors
+        }
+        return [];
     } catch (error) {
         console.error(`Error reading ${key} from cache:`, error);
         return [];
@@ -139,6 +153,17 @@ function setStorageData(key, data) {
     try {
         // update in-memory cache immediately
         CACHE[key] = data;
+
+        // persist to localStorage so separate pages can read session state
+        try {
+            if (data === null || typeof data === 'undefined') {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, JSON.stringify(data));
+            }
+        } catch (e) {
+            // ignore localStorage quota/errors
+        }
 
         // Mirror certain keys to Firestore asynchronously if available
         try {
