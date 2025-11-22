@@ -65,7 +65,9 @@ const walletId = process.env.IOTEC_WALLET_ID;
 // Configuration
 const PORT = process.env.PORT || 10000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
+
+// Build allowed origins from environment or defaults
+const DEFAULT_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:5500',
     'http://127.0.0.1:8000',
@@ -75,6 +77,10 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim(
     'https://envisage2024.github.io'
 ];
 
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o)
+    : DEFAULT_ORIGINS;
+
 console.log(`🚀 Starting Payment Server`);
 console.log(`   Environment: ${NODE_ENV}`);
 console.log(`   Port: ${PORT}`);
@@ -82,30 +88,66 @@ console.log(`   CORS Origins:`, ALLOWED_ORIGINS);
 
 const app = express();
 
-// Enhanced CORS configuration for production
+// Enhanced CORS configuration with explicit origin checking
 const corsOptions = {
     origin: function (origin, callback) {
-        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-            callback(null, true);
-        } else if (NODE_ENV === 'development') {
-            // Allow all in development
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+            return callback(null, true);
         }
+
+        // Exact match check
+        if (ALLOWED_ORIGINS.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Development mode: allow all
+        if (NODE_ENV === 'development') {
+            console.log(`[CORS DEV] Allowing ${origin}`);
+            return callback(null, true);
+        }
+
+        // Production: reject
+        console.error(`[CORS REJECTED] Origin ${origin} not in whitelist: ${ALLOWED_ORIGINS.join(', ')}`);
+        return callback(new Error(`CORS policy: origin ${origin} not allowed`));
     },
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    maxAge: 86400
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Content-Length', 'X-JSON-Response-Length'],
+    maxAge: 86400,
+    optionsSuccessStatus: 200  // For legacy browsers
 };
 
+// Apply CORS to all routes
 app.use(cors(corsOptions));
+
+// Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Ensure CORS preflight
+// Handle preflight requests explicitly for all routes
 app.options('*', cors(corsOptions));
+
+// Additional CORS headers middleware (belt and suspenders)
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    
+    if (!origin || ALLOWED_ORIGINS.includes(origin) || NODE_ENV === 'development') {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+        res.header('Access-Control-Max-Age', '86400');
+    }
+    
+    // Handle OPTIONS requests
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    
+    next();
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
