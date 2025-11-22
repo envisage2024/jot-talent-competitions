@@ -645,10 +645,11 @@
                     <input type="tel" id="phone" placeholder="Enter your phone number" required>
                 </div>
 
-                <!-- Balance Check Section -->
+                <!-- Balance Verification Section -->
                 <div class="form-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 122, 0, 0.1);">
-                    <button type="button" id="checkBalanceBtn" class="auth-button" style="background: #17a2b8; margin-bottom: 10px;">
-                        <i class="fas fa-wallet"></i> Check Balance
+                    <label style="margin-bottom: 10px; font-size: 0.95rem; color: var(--dark);"><i class="fas fa-info-circle"></i> Mobile Money Balance Verification</label>
+                    <button type="button" id="checkBalanceBtn" class="auth-button" style="background: #17a2b8; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-mobile-alt"></i> Check My Balance
                     </button>
                     <div id="balance-status" style="font-size: 0.95rem; text-align: center;"></div>
                 </div>
@@ -667,9 +668,6 @@
             <div class="page-header">
                 <h1><i class="fas fa-trophy"></i> Join Writing Competition</h1>
                 <p>Take part in our prestigious writing competition and showcase your talent</p>
-                <div>
-                    <button id="resetAllPaymentsBtn" class="small-link">Reset simulated payments</button>
-                </div>
             </div>
 
             <div class="competition-info" id="competitionsContainer">
@@ -770,7 +768,6 @@
         const paymentStatus = document.getElementById('payment-status');
         const amountType = document.getElementById('amount-type');
         const amountInput = document.getElementById('amount');
-        const resetPaymentsBtn = document.getElementById('resetAllPaymentsBtn');
         const verificationSection = document.getElementById('verificationSection');
         const verifyCodeBtn = document.getElementById('verifyCodeBtn');
         const verificationCodeInput = document.getElementById('verificationCode');
@@ -837,20 +834,20 @@
             amountInput.value = amountType.value;
         });
 
-        // Check Balance functionality
+        // Check Balance functionality with real iotech verification
         let userBalance = null;
         checkBalanceBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             const phone = document.getElementById('phone').value;
 
             if (!phone) {
-                balanceStatus.innerHTML = '<span style="color: var(--error);">Please enter a phone number first</span>';
+                balanceStatus.innerHTML = '<span style="color: var(--error);"><i class="fas fa-exclamation-circle"></i> Please enter a phone number first</span>';
                 return;
             }
 
             checkBalanceBtn.disabled = true;
-            checkBalanceBtn.textContent = 'Verifying...';
-            balanceStatus.innerHTML = '<span style="color: var(--warning);">🔍 Verifying your account...</span>';
+            checkBalanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            balanceStatus.innerHTML = '<span style="color: var(--warning);"><i class="fas fa-hourglass-half"></i> Verifying your mobile money account...</span>';
 
             try {
                 const response = await fetch(`${SERVER_URL}/check-balance`, {
@@ -864,17 +861,24 @@
                 if (result.success) {
                     const requiredAmount = Number(amountInput.value);
                     
-                    // Account verified - show status
-                    if (result.accountStatus === 'ACTIVE' && result.availableBalance !== null) {
+                    // Account verified - show balance status
+                    if (result.availableBalance !== null) {
                         userBalance = result.availableBalance;
                         const hasSufficientBalance = userBalance >= requiredAmount;
 
                         balanceStatus.innerHTML = `
-                            <div style="padding: 12px; border-radius: var(--border-radius); background: ${hasSufficientBalance ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; color: ${hasSufficientBalance ? 'var(--success)' : 'var(--warning)'}; margin-bottom: 10px;">
-                                <strong>✅ Account Verified</strong><br>
-                                <strong>Estimated Balance:</strong> ${userBalance} ${result.currency || 'UGX'}<br>
-                                <strong>Required:</strong> ${requiredAmount} ${result.currency || 'UGX'}<br>
-                                <strong>Status:</strong> ${hasSufficientBalance ? '✅ You can proceed' : '⚠️ Confirm you have sufficient funds'}
+                            <div style="padding: 15px; border-radius: var(--border-radius); background: ${hasSufficientBalance ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border: 1px solid ${hasSufficientBalance ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: ${hasSufficientBalance ? 'var(--success)' : 'var(--warning)'}; margin-bottom: 8px;">
+                                    <i class="fas fa-${hasSufficientBalance ? 'check-circle' : 'exclamation-triangle'}"></i> Account Verified
+                                </div>
+                                <div style="color: var(--dark); font-size: 0.9rem; line-height: 1.6;">
+                                    <strong>Phone:</strong> ${phone}<br>
+                                    <strong>Your Balance:</strong> ${userBalance.toLocaleString()} ${result.currency || 'UGX'}<br>
+                                    <strong>Amount Required:</strong> ${requiredAmount.toLocaleString()} ${result.currency || 'UGX'}<br>
+                                    <strong style="color: ${hasSufficientBalance ? 'var(--success)' : 'var(--warning);'};">
+                                        ${hasSufficientBalance ? '✅ Sufficient funds available' : '⚠️ Please ensure you have sufficient funds'}
+                                    </strong>
+                                </div>
                             </div>
                         `;
                         payNowBtn.disabled = false;
@@ -882,13 +886,18 @@
                         payNowBtn.title = 'Click to proceed with payment';
                     } 
                     // Verification pending but can proceed
-                    else if (result.canProceed || result.availableBalance === null) {
+                    else {
                         balanceStatus.innerHTML = `
-                            <div style="padding: 12px; border-radius: var(--border-radius); background: rgba(245, 158, 11, 0.1); color: var(--warning); margin-bottom: 10px;">
-                                <strong>📱 Account Verification Pending</strong><br>
-                                ${result.message || 'Account verification in progress.'}<br>
-                                <strong>Required Amount:</strong> ${requiredAmount} ${result.currency || 'UGX'}<br>
-                                <em style="font-size: 0.9rem;">${result.warning || 'Your balance will be verified during payment processing.'}</em>
+                            <div style="padding: 15px; border-radius: var(--border-radius); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: var(--warning); margin-bottom: 8px;">
+                                    <i class="fas fa-mobile-alt"></i> Account Verification Pending
+                                </div>
+                                <div style="color: var(--dark); font-size: 0.9rem; line-height: 1.6;">
+                                    <strong>Phone:</strong> ${phone}<br>
+                                    <strong>Required Amount:</strong> ${requiredAmount.toLocaleString()} ${result.currency || 'UGX'}<br>
+                                    <em>${result.message || 'Your account verification is in progress.'}</em><br>
+                                    <small style="color: var(--gray);">Balance will be verified during payment processing.</small>
+                                </div>
                             </div>
                         `;
                         payNowBtn.disabled = false;
@@ -896,16 +905,16 @@
                         payNowBtn.title = 'Click to proceed with payment';
                     }
                 } else {
-                    balanceStatus.innerHTML = `<span style="color: var(--error);">❌ ${result.message || 'Unable to verify account'}</span>`;
+                    balanceStatus.innerHTML = `<span style="color: var(--error);"><i class="fas fa-times-circle"></i> ${result.message || 'Unable to verify account'}</span>`;
                     payNowBtn.disabled = false;
                 }
             } catch (error) {
-                balanceStatus.innerHTML = `<span style="color: var(--warning);">⚠️ Verification service unavailable. You can still proceed with payment.</span>`;
+                balanceStatus.innerHTML = `<span style="color: var(--warning);"><i class="fas fa-exclamation-circle"></i> Verification service temporarily unavailable. You can still proceed with payment.</span>`;
                 payNowBtn.disabled = false;
                 console.error('Balance check error:', error);
             } finally {
                 checkBalanceBtn.disabled = false;
-                checkBalanceBtn.textContent = '� Verify Account';
+                checkBalanceBtn.innerHTML = '<i class="fas fa-mobile-alt"></i> Check My Balance';
             }
         });
 
@@ -1112,20 +1121,6 @@
             }
         }
 
-        resetPaymentsBtn.addEventListener('click', function() {
-            payBtn.style.display = 'block';
-            joinBtn.style.display = 'none';
-            joinBtn.disabled = true;
-            joinBtn.textContent = 'Join Competition';
-            verificationSection.style.display = 'none';
-            localStorage.removeItem('paymentSuccess_firstRound');
-            localStorage.removeItem('hasJoined_firstRound');
-            localStorage.removeItem('paymentTimestamp');
-            localStorage.removeItem('verificationEmail');
-            localStorage.removeItem('emailVerified_firstRound');
-            alert('Payment status has been reset. You can simulate a new payment.');
-        });
-
         // Check early bird deadline on page load
         window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
@@ -1166,3 +1161,4 @@
     </script>
 </body>
 </html>
+
