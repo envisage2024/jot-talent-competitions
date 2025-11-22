@@ -773,8 +773,8 @@
             const hostname = window.location.hostname;
             
             // Production deployment - Render
-            if (hostname.includes('onrender.com') || hostname.includes('jot-talent')) {
-                return 'https://jot-payment-api.onrender.com';
+            if (hostname.includes('onrender.com') || hostname.includes('jot-talent') || hostname.includes('jot-comps')) {
+                return 'https://jot-talent-competitions.onrender.com';
             }
             
             // Local development
