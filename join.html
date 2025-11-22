@@ -838,7 +838,7 @@
         let userBalance = null;
         checkBalanceBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const phone = document.getElementById('phone').value;
+            const phone = document.getElementById('phone').value.trim();
 
             if (!phone) {
                 balanceStatus.innerHTML = '<span style="color: var(--error);"><i class="fas fa-exclamation-circle"></i> Please enter a phone number first</span>';
@@ -847,9 +847,11 @@
 
             checkBalanceBtn.disabled = true;
             checkBalanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-            balanceStatus.innerHTML = '<span style="color: var(--warning);"><i class="fas fa-hourglass-half"></i> Verifying your mobile money account...</span>';
+            balanceStatus.innerHTML = '<span style="color: var(--warning);"><i class="fas fa-hourglass-half"></i> Verifying your mobile money account via ioTech...</span>';
 
             try {
+                console.log('🔍 Checking balance for phone:', phone);
+                
                 const response = await fetch(`${SERVER_URL}/check-balance`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -857,27 +859,40 @@
                 });
 
                 const result = await response.json();
+                console.log('✅ Balance Check Response:', result);
 
                 if (result.success) {
                     const requiredAmount = Number(amountInput.value);
                     
                     // Account verified - show balance status
-                    if (result.availableBalance !== null) {
+                    if (result.availableBalance !== null && result.availableBalance !== undefined) {
                         userBalance = result.availableBalance;
                         const hasSufficientBalance = userBalance >= requiredAmount;
 
+                        console.log(`💰 Balance Found: ${userBalance} ${result.currency}`);
+                        console.log(`💳 Required: ${requiredAmount}`);
+                        console.log(`✓ Sufficient: ${hasSufficientBalance}`);
+
                         balanceStatus.innerHTML = `
-                            <div style="padding: 15px; border-radius: var(--border-radius); background: ${hasSufficientBalance ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border: 1px solid ${hasSufficientBalance ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}; margin-bottom: 10px;">
-                                <div style="font-weight: 600; color: ${hasSufficientBalance ? 'var(--success)' : 'var(--warning)'}; margin-bottom: 8px;">
-                                    <i class="fas fa-${hasSufficientBalance ? 'check-circle' : 'exclamation-triangle'}"></i> Account Verified
+                            <div style="padding: 15px; border-radius: var(--border-radius); background: ${hasSufficientBalance ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border: 2px solid ${hasSufficientBalance ? 'rgba(16, 185, 129, 0.5)' : 'rgba(245, 158, 11, 0.5)'}; margin-bottom: 10px;">
+                                <div style="font-weight: 700; color: ${hasSufficientBalance ? 'var(--success)' : 'var(--warning)'}; margin-bottom: 12px; font-size: 1rem;">
+                                    <i class="fas fa-${hasSufficientBalance ? 'check-circle' : 'exclamation-triangle'}"></i> Account Verified via ioTech
                                 </div>
-                                <div style="color: var(--dark); font-size: 0.9rem; line-height: 1.6;">
-                                    <strong>Phone:</strong> ${phone}<br>
-                                    <strong>Your Balance:</strong> ${userBalance.toLocaleString()} ${result.currency || 'UGX'}<br>
-                                    <strong>Amount Required:</strong> ${requiredAmount.toLocaleString()} ${result.currency || 'UGX'}<br>
-                                    <strong style="color: ${hasSufficientBalance ? 'var(--success)' : 'var(--warning);'};">
-                                        ${hasSufficientBalance ? '✅ Sufficient funds available' : '⚠️ Please ensure you have sufficient funds'}
-                                    </strong>
+                                <div style="color: var(--dark); font-size: 0.95rem; line-height: 1.8;">
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="color: var(--dark-light);">📱 Phone Number:</strong> <span style="color: var(--primary); font-weight: 600;">${phone}</span>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="color: var(--dark-light);">💰 Current Balance:</strong> <span style="color: var(--primary); font-weight: 700; font-size: 1.1rem;">${userBalance.toLocaleString()} ${result.currency || 'UGX'}</span>
+                                    </div>
+                                    <div style="margin-bottom: 12px;">
+                                        <strong style="color: var(--dark-light);">💳 Amount Required:</strong> <span style="color: var(--primary); font-weight: 600;">${requiredAmount.toLocaleString()} ${result.currency || 'UGX'}</span>
+                                    </div>
+                                    <div style="padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.1);">
+                                        <strong style="color: ${hasSufficientBalance ? 'var(--success)' : 'var(--warning)'};">
+                                            ${hasSufficientBalance ? '<i class="fas fa-check"></i> ✅ Sufficient funds available - Ready to pay!' : '<i class="fas fa-info-circle"></i> ⚠️ Insufficient funds - Please add money to your mobile money account'}
+                                        </strong>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -887,16 +902,24 @@
                     } 
                     // Verification pending but can proceed
                     else {
+                        console.log('⏳ Balance check pending');
+                        
                         balanceStatus.innerHTML = `
-                            <div style="padding: 15px; border-radius: var(--border-radius); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); margin-bottom: 10px;">
-                                <div style="font-weight: 600; color: var(--warning); margin-bottom: 8px;">
+                            <div style="padding: 15px; border-radius: var(--border-radius); background: rgba(245, 158, 11, 0.1); border: 2px solid rgba(245, 158, 11, 0.5); margin-bottom: 10px;">
+                                <div style="font-weight: 700; color: var(--warning); margin-bottom: 12px; font-size: 1rem;">
                                     <i class="fas fa-mobile-alt"></i> Account Verification Pending
                                 </div>
-                                <div style="color: var(--dark); font-size: 0.9rem; line-height: 1.6;">
-                                    <strong>Phone:</strong> ${phone}<br>
-                                    <strong>Required Amount:</strong> ${requiredAmount.toLocaleString()} ${result.currency || 'UGX'}<br>
-                                    <em>${result.message || 'Your account verification is in progress.'}</em><br>
-                                    <small style="color: var(--gray);">Balance will be verified during payment processing.</small>
+                                <div style="color: var(--dark); font-size: 0.95rem; line-height: 1.8;">
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="color: var(--dark-light);">📱 Phone Number:</strong> <span style="color: var(--primary); font-weight: 600;">${phone}</span>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="color: var(--dark-light);">💳 Amount Required:</strong> <span style="color: var(--primary); font-weight: 600;">${requiredAmount.toLocaleString()} ${result.currency || 'UGX'}</span>
+                                    </div>
+                                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.1);">
+                                        <em style="color: var(--gray); display: block; margin-bottom: 6px;">${result.message || 'Your account verification is in progress with ioTech...'}</em>
+                                        <small style="color: var(--gray-light);">⏳ Balance will be verified during payment processing.</small>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -905,20 +928,23 @@
                         payNowBtn.title = 'Click to proceed with payment';
                     }
                 } else {
-                    balanceStatus.innerHTML = `<span style="color: var(--error);"><i class="fas fa-times-circle"></i> ${result.message || 'Unable to verify account'}</span>`;
+                    console.log('❌ Balance check failed:', result.message);
+                    
+                    balanceStatus.innerHTML = `<div style="padding: 12px; border-radius: var(--border-radius); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);"><i class="fas fa-times-circle"></i> <strong>Error:</strong> ${result.message || 'Unable to verify account'}</div>`;
                     payNowBtn.disabled = false;
                 }
             } catch (error) {
-                balanceStatus.innerHTML = `<span style="color: var(--warning);"><i class="fas fa-exclamation-circle"></i> Verification service temporarily unavailable. You can still proceed with payment.</span>`;
-                payNowBtn.disabled = false;
                 console.error('Balance check error:', error);
+                
+                balanceStatus.innerHTML = `<div style="padding: 12px; border-radius: var(--border-radius); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);"><i class="fas fa-exclamation-circle"></i> Verification service temporarily unavailable. You can still proceed with payment.</div>`;
+                payNowBtn.disabled = false;
             } finally {
                 checkBalanceBtn.disabled = false;
                 checkBalanceBtn.innerHTML = '<i class="fas fa-mobile-alt"></i> Check My Balance';
             }
         });
 
-        // Payment form submission
+        // Payment form submission with real ioTech verification
         paymentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = amountInput.value;
@@ -929,25 +955,46 @@
 
             // Validate input
             if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-                paymentStatus.textContent = 'Please select a valid amount.';
+                paymentStatus.innerHTML = '<i class="fas fa-times-circle"></i> Please select a valid amount.';
                 paymentStatus.className = 'payment-status payment-error';
                 return;
             }
             if (!phone) {
-                paymentStatus.textContent = 'Please enter a phone number.';
+                paymentStatus.innerHTML = '<i class="fas fa-times-circle"></i> Please enter a phone number.';
                 paymentStatus.className = 'payment-status payment-error';
                 return;
             }
             if (!email || !isValidEmail(email)) {
-                paymentStatus.textContent = 'Please enter a valid email address.';
+                paymentStatus.innerHTML = '<i class="fas fa-times-circle"></i> Please enter a valid email address.';
                 paymentStatus.className = 'payment-status payment-error';
                 return;
             }
 
-            paymentStatus.textContent = 'Processing payment...';
+            paymentStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing payment...';
             paymentStatus.className = 'payment-status payment-processing';
+            paymentForm.style.opacity = '0.6';
+            paymentForm.style.pointerEvents = 'none';
 
             try {
+                // Step 1: Check balance via ioTech before payment
+                console.log('🔍 Checking balance before payment...');
+                const balanceCheckResponse = await fetch(`${SERVER_URL}/check-balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: phone })
+                });
+
+                const balanceCheckResult = await balanceCheckResponse.json();
+                const requiredAmount = Number(amount);
+                
+                // Log balance information
+                if (balanceCheckResult.success && balanceCheckResult.availableBalance !== null) {
+                    console.log(`💰 User Balance: ${balanceCheckResult.availableBalance} ${balanceCheckResult.currency}`);
+                    console.log(`💳 Required Amount: ${requiredAmount}`);
+                }
+
+                // Step 2: Process payment via ioTech
+                console.log('💳 Initiating payment transaction...');
                 const response = await fetch(`${SERVER_URL}/process-payment`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -962,9 +1009,25 @@
                 });
 
                 const result = await response.json();
+                console.log('📊 Payment Response:', result);
 
-                if (result.success) {
-                    paymentStatus.textContent = 'Payment successful! Please check your email for verification.';
+                // Step 3: Verify payment was actually successful
+                if (result.success && result.paymentStatus === 'SUCCESS') {
+                    // Payment actually succeeded
+                    console.log('✅ Payment Successful! Transaction ID:', result.transactionId);
+                    
+                    paymentStatus.innerHTML = `
+                        <div style="text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 24px; color: var(--success); margin-bottom: 10px; display: block;"></i>
+                            <strong style="display: block; margin-bottom: 8px;">✅ Payment Successful!</strong>
+                            <div style="font-size: 0.9rem; line-height: 1.6;">
+                                <strong>Transaction ID:</strong> ${result.transactionId || 'N/A'}<br>
+                                <strong>Amount Paid:</strong> ${requiredAmount.toLocaleString()} ${currency}<br>
+                                <strong>Phone:</strong> ${phone}<br>
+                                <em>Please check your email for verification code.</em>
+                            </div>
+                        </div>
+                    `;
                     paymentStatus.className = 'payment-status payment-success';
                     
                     // Show verification section
@@ -974,28 +1037,143 @@
                     localStorage.setItem('paymentSuccess_firstRound', 'true');
                     localStorage.setItem('paymentEmail', email);
                     localStorage.setItem('paymentTimestamp', new Date().getTime().toString());
+                    localStorage.setItem('transactionId', result.transactionId || '');
                     
                     // Generate and send verification code
                     await sendVerificationCode(email);
                     
-                    // Close modal after 3 seconds
+                    // Close modal after 4 seconds
                     setTimeout(() => {
                         paymentModal.style.display = 'none';
-                    }, 3000);
+                        paymentForm.style.opacity = '1';
+                        paymentForm.style.pointerEvents = 'auto';
+                    }, 4000);
+                    
+                } else if (result.success && result.paymentStatus === 'PENDING') {
+                    // Payment is pending
+                    console.log('⏳ Payment Pending. Transaction ID:', result.transactionId);
+                    
+                    paymentStatus.innerHTML = `
+                        <div style="text-align: center;">
+                            <i class="fas fa-hourglass-half" style="font-size: 24px; color: var(--warning); margin-bottom: 10px; display: block;"></i>
+                            <strong style="display: block; margin-bottom: 8px;">⏳ Payment Pending</strong>
+                            <div style="font-size: 0.9rem; line-height: 1.6;">
+                                <strong>Transaction ID:</strong> ${result.transactionId || 'N/A'}<br>
+                                <strong>Amount:</strong> ${requiredAmount.toLocaleString()} ${currency}<br>
+                                <strong>Phone:</strong> ${phone}<br>
+                                <em>Your payment is being processed. Please wait...</em>
+                            </div>
+                        </div>
+                    `;
+                    paymentStatus.className = 'payment-status payment-processing';
+                    
+                    // Poll for payment status
+                    let pollCount = 0;
+                    const pollInterval = setInterval(async () => {
+                        pollCount++;
+                        if (pollCount > 12) { // Stop after 60 seconds
+                            clearInterval(pollInterval);
+                            paymentStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Payment verification timed out. Please contact support.';
+                            paymentStatus.className = 'payment-status payment-error';
+                            paymentForm.style.opacity = '1';
+                            paymentForm.style.pointerEvents = 'auto';
+                            return;
+                        }
+                        
+                        try {
+                            const statusResponse = await fetch(`${SERVER_URL}/check-payment-status`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ transactionId: result.transactionId })
+                            });
+                            
+                            const statusResult = await statusResponse.json();
+                            
+                            if (statusResult.paymentStatus === 'SUCCESS') {
+                                clearInterval(pollInterval);
+                                console.log('✅ Payment Confirmed!');
+                                
+                                paymentStatus.innerHTML = `
+                                    <div style="text-align: center;">
+                                        <i class="fas fa-check-circle" style="font-size: 24px; color: var(--success); margin-bottom: 10px; display: block;"></i>
+                                        <strong style="display: block; margin-bottom: 8px;">✅ Payment Successful!</strong>
+                                        <div style="font-size: 0.9rem; line-height: 1.6;">
+                                            <strong>Transaction ID:</strong> ${result.transactionId}<br>
+                                            <strong>Amount Paid:</strong> ${requiredAmount.toLocaleString()} ${currency}<br>
+                                            <strong>Phone:</strong> ${phone}<br>
+                                            <em>Please check your email for verification code.</em>
+                                        </div>
+                                    </div>
+                                `;
+                                paymentStatus.className = 'payment-status payment-success';
+                                
+                                verificationSection.style.display = 'block';
+                                localStorage.setItem('paymentSuccess_firstRound', 'true');
+                                localStorage.setItem('paymentEmail', email);
+                                localStorage.setItem('transactionId', result.transactionId);
+                                
+                                await sendVerificationCode(email);
+                                
+                                setTimeout(() => {
+                                    paymentModal.style.display = 'none';
+                                    paymentForm.style.opacity = '1';
+                                    paymentForm.style.pointerEvents = 'auto';
+                                }, 3000);
+                            }
+                        } catch (err) {
+                            console.error('Error checking payment status:', err);
+                        }
+                    }, 5000);
                     
                 } else {
-                    // Check for insufficient balance message
-                    if (result.message && result.message.includes('Insufficient balance')) {
-                        paymentStatus.textContent = `Payment failed: ${result.message}`;
+                    // Payment failed
+                    console.log('❌ Payment Failed:', result.message);
+                    
+                    let errorMessage = result.message || 'Unknown error';
+                    let errorDetails = '';
+                    
+                    if (errorMessage.includes('Insufficient balance')) {
+                        errorDetails = `Your account has insufficient funds. Required: ${requiredAmount.toLocaleString()} ${currency}`;
+                    } else if (errorMessage.includes('Invalid phone')) {
+                        errorDetails = 'The phone number provided is invalid or not registered with a mobile money provider.';
+                    } else if (errorMessage.includes('timeout')) {
+                        errorDetails = 'The payment request timed out. Please try again.';
                     } else {
-                        paymentStatus.textContent = `Payment failed: ${result.message || 'Unknown error'}`;
+                        errorDetails = errorMessage;
                     }
+                    
+                    paymentStatus.innerHTML = `
+                        <div style="text-align: center;">
+                            <i class="fas fa-times-circle" style="font-size: 24px; color: var(--error); margin-bottom: 10px; display: block;"></i>
+                            <strong style="display: block; margin-bottom: 8px;">❌ Payment Unsuccessful</strong>
+                            <div style="font-size: 0.9rem; line-height: 1.6;">
+                                <strong>Reason:</strong> ${errorDetails}<br>
+                                <strong>Amount:</strong> ${requiredAmount.toLocaleString()} ${currency}<br>
+                                <strong>Phone:</strong> ${phone}<br>
+                                <em>Please try again or contact support.</em>
+                            </div>
+                        </div>
+                    `;
                     paymentStatus.className = 'payment-status payment-error';
+                    paymentForm.style.opacity = '1';
+                    paymentForm.style.pointerEvents = 'auto';
                 }
             } catch (error) {
-                paymentStatus.textContent = 'Error: ' + error.message;
-                paymentStatus.className = 'payment-status payment-error';
                 console.error('Payment error:', error);
+                
+                paymentStatus.innerHTML = `
+                    <div style="text-align: center;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: var(--error); margin-bottom: 10px; display: block;"></i>
+                        <strong style="display: block; margin-bottom: 8px;">❌ Payment Error</strong>
+                        <div style="font-size: 0.9rem; line-height: 1.6;">
+                            <strong>Error:</strong> ${error.message}<br>
+                            <em>Please try again or contact support.</em>
+                        </div>
+                    </div>
+                `;
+                paymentStatus.className = 'payment-status payment-error';
+                paymentForm.style.opacity = '1';
+                paymentForm.style.pointerEvents = 'auto';
             }
         });
 
