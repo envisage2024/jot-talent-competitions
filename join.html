@@ -777,13 +777,18 @@
                 return 'https://jot-talent-competitions.onrender.com';
             }
             
+            // GitHub Pages deployment
+            if (hostname.includes('github.io') || hostname.includes('envisage2024')) {
+                return 'https://jot-talent-competitions.onrender.com';
+            }
+            
             // Local development
             if (hostname === 'localhost' || hostname === '127.0.0.1') {
                 return 'http://localhost:5000';
             }
             
-            // Fallback to current origin
-            return window.location.origin;
+            // Fallback to Render production
+            return 'https://jot-talent-competitions.onrender.com';
         })();
         
         console.log('💾 Payment Server URL:', SERVER_URL);
