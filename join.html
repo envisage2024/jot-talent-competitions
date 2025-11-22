@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -768,8 +768,25 @@
         const verificationCodeInput = document.getElementById('verificationCode');
         const verificationStatus = document.getElementById('verificationStatus');
 
-        // Server URL
-        const SERVER_URL = "http://localhost:5000";
+        // Server URL - Detect environment automatically
+        const SERVER_URL = (function() {
+            const hostname = window.location.hostname;
+            
+            // Production deployment - Render
+            if (hostname.includes('onrender.com') || hostname.includes('jot-talent')) {
+                return 'https://jot-payment-api.onrender.com';
+            }
+            
+            // Local development
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:5000';
+            }
+            
+            // Fallback to current origin
+            return window.location.origin;
+        })();
+        
+        console.log('💾 Payment Server URL:', SERVER_URL);
 
         // Set your early bird deadline here (YYYY-MM-DDTHH:MM:SS format)
         const earlyBirdDeadline = new Date('2025-09-09T19:20:00');

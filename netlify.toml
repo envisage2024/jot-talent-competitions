@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build || echo 'no build step'"
+  functions = "netlify/functions"
+  publish = "./"
+
+[[redirects]]
+  from = "/process-payment"
+  to = "/.netlify/functions/process-payment"
+  status = 200
+  methods = ["POST","OPTIONS"]
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/health"
+  status = 200
+  methods = ["GET","OPTIONS"]

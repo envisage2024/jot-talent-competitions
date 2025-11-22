@@ -1,0 +1,28 @@
+# Render Configuration
+# This file tells Render how to build and run your app
+
+services:
+  - type: web
+    name: jot-payment-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: IOTEC_CLIENT_ID
+        value: pay-caed774a-d7d0-4a74-b751-5b77be5b3911
+      - key: IOTEC_CLIENT_SECRET
+        value: IO-BdUCLRbm7xxYyz35WqpSu2QcPqrP3Eigg
+      - key: IOTEC_WALLET_ID
+        value: a563af4c-3137-4085-a888-93bdf3fb29b4
+      - key: FIREBASE_PROJECT_ID
+        value: jot-talent-competitions-72b9f
+      - key: FIREBASE_DATABASE_URL
+        value: https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:3000,https://jot-payment-api.onrender.com

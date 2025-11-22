@@ -467,10 +467,15 @@
         (function(){
             try {
                 var adminRaw = localStorage.getItem('jot_talent_current_admin');
-                var loginOrigin = null; try { loginOrigin = sessionStorage.getItem('jot_talent_admin_login_origin'); } catch(e){}
-                if (!adminRaw || !loginOrigin) { window.location.href = 'admin-login.html'; return; }
-                try { var adminObj = JSON.parse(adminRaw); if (!adminObj || !adminObj.email) { window.location.href = 'admin-login.html'; } } catch(e) { window.location.href = 'admin-login.html'; }
-            } catch(e){}
+                // Historically we used a sessionStorage marker to indicate a recent admin login,
+                // but sessionStorage can be lost between tabs and reloads. Prefer a valid
+                // `jot_talent_current_admin` stored in localStorage as the primary check.
+                if (!adminRaw) { window.location.href = 'admin-login.html'; return; }
+                try {
+                    var adminObj = JSON.parse(adminRaw);
+                    if (!adminObj || !adminObj.email) { window.location.href = 'admin-login.html'; return; }
+                } catch(e) { window.location.href = 'admin-login.html'; return; }
+            } catch(e){ console.warn('admin guard error', e); }
         })();
     </script>
 </head>
