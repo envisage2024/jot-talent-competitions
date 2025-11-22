@@ -77,9 +77,12 @@ const DEFAULT_ORIGINS = [
     'https://envisage2024.github.io'
 ];
 
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o)
-    : DEFAULT_ORIGINS;
+const ALLOWED_ORIGINS = [
+  'https://envisage2024.github.io',
+  'https://jotcomps.com',
+  'https://www.jotcomps.com'
+  // add more if needed
+];
 
 console.log(`🚀 Starting Payment Server`);
 console.log(`   Environment: ${NODE_ENV}`);
@@ -90,33 +93,16 @@ const app = express();
 
 // Enhanced CORS configuration with explicit origin checking
 const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) {
-            return callback(null, true);
-        }
-
-        // Exact match check
-        if (ALLOWED_ORIGINS.includes(origin)) {
-            return callback(null, true);
-        }
-
-        // Development mode: allow all
-        if (NODE_ENV === 'development') {
-            console.log(`[CORS DEV] Allowing ${origin}`);
-            return callback(null, true);
-        }
-
-        // Production: reject
-        console.error(`[CORS REJECTED] Origin ${origin} not in whitelist: ${ALLOWED_ORIGINS.join(', ')}`);
-        return callback(new Error(`CORS policy: origin ${origin} not allowed`));
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    exposedHeaders: ['Content-Length', 'X-JSON-Response-Length'],
-    maxAge: 86400,
-    optionsSuccessStatus: 200  // For legacy browsers
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      console.log(`[CORS DEV] Allowing ${origin}`);
+      return callback(null, true);
+    }
+    console.error(`[CORS REJECTED] Origin ${origin} not in whitelist: ${ALLOWED_ORIGINS.join(', ')}`);
+    return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+  },
+  credentials: true
 };
 
 // Apply CORS to all routes
