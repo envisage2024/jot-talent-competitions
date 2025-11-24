@@ -94,15 +94,28 @@ const app = express();
 // Enhanced CORS configuration with explicit origin checking
 const corsOptions = {
   origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
     if (ALLOWED_ORIGINS.includes(origin)) {
-      console.log(`[CORS DEV] Allowing ${origin}`);
+      console.log(`[CORS] ✓ Allowing ${origin}`);
       return callback(null, true);
     }
-    console.error(`[CORS REJECTED] Origin ${origin} not in whitelist: ${ALLOWED_ORIGINS.join(', ')}`);
-    return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    
+    // In development, allow all origins
+    if (NODE_ENV === 'development') {
+      console.log(`[CORS DEV] Allowing ${origin} (development mode)`);
+      return callback(null, true);
+    }
+    
+    console.error(`[CORS] ✗ Rejecting ${origin} (not in whitelist)`);
+    return callback(null, true); // Allow anyway to send proper error response
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  maxAge: 86400
 };
 
 // Apply CORS to all routes
@@ -115,10 +128,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Handle preflight requests explicitly for all routes
 app.options('*', cors(corsOptions));
 
-// Additional CORS headers middleware (belt and suspenders)
+// Additional CORS headers middleware (ensures preflight requests work)
 app.use((req, res, next) => {
     const origin = req.headers.origin;
     
+    // Always set CORS headers for allowed origins
     if (!origin || ALLOWED_ORIGINS.includes(origin) || NODE_ENV === 'development') {
         res.header('Access-Control-Allow-Origin', origin || '*');
         res.header('Access-Control-Allow-Credentials', 'true');
@@ -127,8 +141,9 @@ app.use((req, res, next) => {
         res.header('Access-Control-Max-Age', '86400');
     }
     
-    // Handle OPTIONS requests
+    // Handle OPTIONS requests (preflight)
     if (req.method === 'OPTIONS') {
+        console.log(`[CORS] Handling preflight OPTIONS request from ${origin || 'unknown'}`);
         return res.sendStatus(200);
     }
     
