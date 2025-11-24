@@ -818,6 +818,16 @@
             paymentStatus.className = 'payment-status payment-processing';
 
             try {
+                console.log('📤 Sending payment request to:', `${SERVER_URL}/process-payment`);
+                console.log('📋 Payment data:', {
+                    method: "MobileMoney",
+                    amount: amount,
+                    phone: phone,
+                    email: email,
+                    name: name,
+                    currency: currency
+                });
+
                 const response = await fetch(`${SERVER_URL}/process-payment`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -831,7 +841,28 @@
                     })
                 });
 
-                const result = await response.json();
+                console.log('📨 Response status:', response.status);
+                console.log('📨 Response headers:', response.headers.get('content-type'));
+
+                let result;
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    // Response is not JSON (likely HTML error page)
+                    const text = await response.text();
+                    console.error('❌ Backend Response (Status ' + response.status + '):', text.substring(0, 500));
+                    
+                    if (text.trim().startsWith('<')) {
+                        paymentStatus.textContent = `Error: Server returned HTML instead of JSON (Status ${response.status}). Please check if the backend server is running and accessible at ${SERVER_URL}`;
+                    } else {
+                        paymentStatus.textContent = `Error: Invalid response from server. Response: ${text.substring(0, 100)}`;
+                    }
+                    paymentStatus.className = 'payment-status payment-error';
+                    console.error('Payment processing error: Invalid response format');
+                    return;
+                }
 
                 if (result.success) {
                     paymentStatus.textContent = 'Payment successful! Your transaction ID: ' + (result.transactionId || '');
@@ -859,7 +890,7 @@
             } catch (error) {
                 paymentStatus.textContent = 'Error: ' + error.message;
                 paymentStatus.className = 'payment-status payment-error';
-                console.error('Payment error:', error);
+                console.error('❌ Payment error:', error);
             }
         });
 
