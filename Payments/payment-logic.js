@@ -143,8 +143,12 @@ async function processPaymentWithRetry(paymentData, retryCount = 0) {
       };
     }
     
+    // Log the request details for debugging
+    console.log('📤 Sending payment request to:', `${SERVER_URL}/process-payment`);
+    console.log('📋 Payment data:', paymentData);
+    
     // Send payment to server
-      const response = await fetch(`${SERVER_URL}/process-payment`, {
+    const response = await fetch(`${SERVER_URL}/process-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -153,21 +157,20 @@ async function processPaymentWithRetry(paymentData, retryCount = 0) {
         timeout: PAYMENT_CONFIG.timeout
       });
 
-      let data;
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      // Try to read as text and detect HTML error
+      const text = await response.text();
+      console.error('❌ Backend Response (Status ' + response.status + '):', text.substring(0, 500));
+      if (text.trim().startsWith('<')) {
+        throw new Error('Payment API returned HTML instead of JSON. Server Status: ' + response.status + '. Please check the server URL and status.');
       } else {
-        // Try to read as text and detect HTML error
-        const text = await response.text();
-        if (text.trim().startsWith('<')) {
-          throw new Error('Payment API returned HTML instead of JSON. Please check the server URL and status.');
-        } else {
-          throw new Error('Payment API did not return valid JSON.');
-        }
+        throw new Error('Payment API did not return valid JSON. Response: ' + text.substring(0, 200));
       }
-
-      if (!response.ok) {
+    }      if (!response.ok) {
         throw new Error(data && data.message ? data.message : 'Payment processing failed');
       }
 
