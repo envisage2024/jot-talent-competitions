@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Payment - Jot Talent Competitions</title>
@@ -596,7 +598,12 @@
             resultDetails.classList.remove('show');
 
             try {
-                const endpoint = `/payment-status?${type === 'email' ? 'email' : 'transactionId'}=${encodeURIComponent(searchValue)}`;
+                let endpoint;
+                if (type === 'email') {
+                    endpoint = `/payment-status?email=${encodeURIComponent(searchValue)}`;
+                } else {
+                    endpoint = `/payment-status/${encodeURIComponent(searchValue)}`;
+                }
                 console.log('Fetching from:', SERVER_URL + endpoint);
                 const response = await fetch(`${SERVER_URL}${endpoint}`);
 

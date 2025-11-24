@@ -453,12 +453,51 @@ app.post('/check-balance', async (req, res) => {
 });
 
 // Get payment status
-app.get('/payment-status/:transactionId', async (req, res) => {
+app.get('/payment-status/:transactionId?', async (req, res) => {
     try {
-        const { transactionId } = req.params;
+        // Support both path parameter and query parameter formats
+        let transactionId = req.params.transactionId;
+        const email = req.query.email;
+        
+        // If email query param provided, search by email
+        if (email && !transactionId) {
+            console.log(`🔍 Searching payments by email: ${email}`);
+            
+            if (!adminInitAvailable || !db) {
+                return res.status(503).json({ 
+                    message: 'Payment database unavailable',
+                    success: false 
+                });
+            }
+            
+            try {
+                // Query Firestore for payments by email
+                const paymentsSnapshot = await db.collection('payments')
+                    .where('email', '==', email)
+                    .orderBy('createdAt', 'desc')
+                    .limit(1)
+                    .get();
+                
+                if (paymentsSnapshot.empty) {
+                    return res.status(404).json({ 
+                        message: `No payments found for email: ${email}`,
+                        success: false 
+                    });
+                }
+                
+                const paymentData = paymentsSnapshot.docs[0].data();
+                return res.json(paymentData);
+            } catch (firestoreError) {
+                console.error('❌ Firestore query error:', firestoreError.message);
+                return res.status(500).json({ 
+                    message: 'Error searching payments',
+                    error: NODE_ENV === 'development' ? firestoreError.message : undefined
+                });
+            }
+        }
 
         if (!transactionId) {
-            return res.status(400).json({ message: 'Transaction ID required' });
+            return res.status(400).json({ message: 'Transaction ID or email required' });
         }
 
         console.log(`🔍 Checking payment status: ${transactionId}`);
