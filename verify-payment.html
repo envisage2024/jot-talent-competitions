@@ -9,6 +9,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <style>
         :root {
             --primary: #FF7A00;
@@ -517,6 +521,24 @@
     </main>
 
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgnkqrg_2clJ77WTonEQFC3gwVrG7HrO4",
+            authDomain: "jot-talent-competitions-72b9f.firebaseapp.com",
+            databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com",
+            projectId: "jot-talent-competitions-72b9f",
+            storageBucket: "jot-talent-competitions-72b9f.firebasestorage.app",
+            messagingSenderId: "25581487736",
+            appId: "1:25581487736:web:a3730b66cd4fb7d9ebcf8d",
+            measurementId: "G-8NRD37H5YD"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        console.log('🔥 Firebase initialized for payment verification');
+
         // Server URL - Detect environment automatically
         const SERVER_URL = (function() {
             const hostname = window.location.hostname;
@@ -534,7 +556,7 @@
             
             // Local development
             if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                return 'http://localhost:5000';
+                return 'http://localhost:10000';
             }
             
             // Fallback
@@ -594,49 +616,55 @@
 
             // Disable button and show loading
             verifyBtn.disabled = true;
-            showStatus('Checking payment status...', 'info');
+            showStatus('🔍 Checking payment status...', 'info');
             resultDetails.classList.remove('show');
 
             try {
-                let endpoint;
-                if (type === 'email') {
-                    endpoint = `/payment-status?email=${encodeURIComponent(searchValue)}`;
-                } else {
-                    endpoint = `/payment-status/${encodeURIComponent(searchValue)}`;
-                }
-                console.log('Fetching from:', SERVER_URL + endpoint);
-                const response = await fetch(`${SERVER_URL}${endpoint}`);
+                let paymentData = null;
 
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        if (type === 'transactionId') {
-                            showStatus(`❌ Transaction not found: "${searchValue}". Make sure you're using the exact transaction ID from your payment confirmation. Server: ${SERVER_URL}`, 'error');
-                        } else {
-                            showStatus('❌ No payments found for this email address. Please check and try again.', 'error');
-                        }
-                    } else {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (type === 'transactionId') {
+                    // Search by Transaction ID
+                    console.log(`🔍 Searching Firestore for transaction: ${searchValue}`);
+                    const paymentDoc = await db.collection('payments').doc(searchValue).get();
+                    
+                    if (!paymentDoc.exists) {
+                        console.warn(`⚠️ Transaction not found in Firestore: ${searchValue}`);
+                        showStatus(`❌ Transaction not found: "${searchValue}". Make sure you're using the exact transaction ID from your payment confirmation.`, 'error');
+                        verifyBtn.disabled = false;
+                        return;
                     }
-                    verifyBtn.disabled = false;
-                    return;
-                }
-
-                const data = await response.json();
-
-                if (data.success === false) {
-                    showStatus(`❌ ${data.message || 'Payment verification failed'}`, 'error');
-                    verifyBtn.disabled = false;
-                    return;
+                    
+                    paymentData = paymentDoc.data();
+                    console.log('✅ Payment found:', paymentData);
+                } else {
+                    // Search by Email
+                    console.log(`🔍 Searching Firestore for email: ${searchValue}`);
+                    const paymentsSnapshot = await db.collection('payments')
+                        .where('email', '==', searchValue)
+                        .orderBy('createdAt', 'desc')
+                        .limit(1)
+                        .get();
+                    
+                    if (paymentsSnapshot.empty) {
+                        console.warn(`⚠️ No payments found for email: ${searchValue}`);
+                        showStatus(`❌ No payments found for this email address: "${searchValue}". Please check and try again.`, 'error');
+                        verifyBtn.disabled = false;
+                        return;
+                    }
+                    
+                    paymentData = paymentsSnapshot.docs[0].data();
+                    console.log('✅ Payment found for email:', paymentData);
                 }
 
                 // Display payment details
-                displayPaymentDetails(data);
-                showStatus(`✅ Payment found and verified successfully!`, 'success');
+                if (paymentData) {
+                    displayPaymentDetails(paymentData);
+                    showStatus(`✅ Payment found and verified successfully!`, 'success');
+                }
 
             } catch (error) {
-                console.error('Verification error:', error);
-                showStatus(`❌ Error: ${error.message}. Check browser console for details.`, 'error');
-                verifyBtn.disabled = false;
+                console.error('❌ Verification error:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
             }
 
             verifyBtn.disabled = false;
