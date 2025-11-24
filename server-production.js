@@ -1,892 +1,942 @@
-require('dotenv').config();
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
 
-// Validate required environment variables BEFORE loading modules
-const requiredEnvVars = ['IOTEC_CLIENT_ID', 'IOTEC_CLIENT_SECRET', 'IOTEC_WALLET_ID'];
-const missingVars = requiredEnvVars.filter(v => !process.env[v]);
-if (missingVars.length > 0) {
-    console.warn(`⚠ Missing environment variables: ${missingVars.join(', ')}`);
-}
-
-const express = require('express');
-const cors = require('cors');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const admin = require('firebase-admin');
-
-// Initialize Firebase Admin
-let db = null;
-let adminInitAvailable = true;
-try {
-    // Try to load from serviceAccountKey.json first
-    let serviceAccount;
-    try {
-        serviceAccount = require('./serviceAccountKey.json');
-    } catch (e) {
-        // Fall back to environment variables for CI/CD deployments
-        // Validate Firebase env vars exist before using
-        if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL) {
-            throw new Error('Firebase credentials not configured via environment variables');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Competition - Jot Talent Competitions</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Cloud Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <style>
+        :root {
+            --primary: #FF7A00;
+            --primary-light: #FF9A40;
+            --primary-dark: #E06A00;
+            --secondary: #FFB74D;
+            --secondary-light: #FFD18A;
+            --accent: #FF9800;
+            --accent-light: #FFB74D;
+            --success: #10b981;
+            --success-light: #36c995;
+            --warning: #f59e0b;
+            --warning-light: #f7b136;
+            --error: #ef4444;
+            --error-light: #f26a6a;
+            --dark: #1f2937;
+            --dark-light: #374151;
+            --darker: #111827;
+            --light: #f9fafb;
+            --lighter: #ffffff;
+            --gray: #6b7280;
+            --gray-light: #9ca3af;
+            --light-gray: #e5e7eb;
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --shadow: 0 4px 12px rgba(255, 122, 0, 0.1);
+            --shadow-md: 0 6px 20px rgba(255, 122, 0, 0.15);
+            --shadow-lg: 0 10px 25px rgba(255, 122, 0, 0.2);
+            --shadow-hover: 0 12px 24px rgba(255, 122, 0, 0.25);
+            --transition: all 0.3s ease;
+            --transition-slow: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        
-        serviceAccount = {
-            type: "service_account",
-            project_id: process.env.FIREBASE_PROJECT_ID,
-            private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || "",
-            private_key: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined,
-            client_email: process.env.FIREBASE_CLIENT_EMAIL,
-            client_id: process.env.FIREBASE_CLIENT_ID || "",
-            auth_uri: "https://accounts.google.com/o/oauth2/auth",
-            token_uri: "https://oauth2.googleapis.com/token",
-            auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fef8f2;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: var(--lighter);
+            box-shadow: var(--shadow);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid rgba(255, 122, 0, 0.1);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .nav-brand img {
+            height: 40px;
+        }
+
+        .logo {
+            width: 160px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: var(--transition);
+            transform: translateX(-50%);
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+            background-color: rgba(255, 122, 0, 0.08);
+        }
+
+        .nav-links a:hover:before, .nav-links a.active:before {
+            width: 70%;
+        }
+
+        .nav-links a i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .page-main {
+            padding: 40px 0;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .page-header h1 i {
+            color: var(--primary);
+            background: rgba(255, 122, 0, 0.1);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Competition Card */
+        .competition-info {
+            margin-top: 18px;
+        }
+
+        .competition-card {
+            padding: 28px;
+            border-radius: var(--border-radius-lg);
+            background: linear-gradient(180deg, #ffffff 0%, #fff8f2 100%);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .competition-card:after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            opacity: 0.03;
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+            transition: var(--transition-slow);
+        }
+
+        .competition-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-5px);
+        }
+
+        .competition-card:hover:after {
+            transform: scale(1.1);
+        }
+
+        .competition-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
+        }
+
+        .competition-card h2 i {
+            color: var(--primary);
+            background: rgba(255, 122, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .competition-card p {
+            color: var(--gray);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .competition-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+        }
+
+        .competition-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .competition-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .meta-list {
+            font-size: 0.95rem;
+            color: var(--dark-light);
+            margin-bottom: 16px;
+        }
+
+        .meta-list div {
+            margin-bottom: 8px;
+            display: flex;
+        }
+
+        .meta-list strong {
+            min-width: 90px;
+            display: inline-block;
+            color: var(--dark);
+        }
+
+        .tips {
+            background: #fff8f2;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 122, 0, 0.06);
+            margin-top: 16px;
+        }
+
+        .tips strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        ul {
+            margin: 8px 0 8px 18px;
+            color: var(--dark-light);
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        .price-tag {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .auth-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .auth-button[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .small-link {
+            background: none;
+            border: 1px solid rgba(255, 122, 0, 0.2);
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-top: 8px;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .small-link:hover {
+            background: rgba(255, 122, 0, 0.08);
+        }
+
+        .status-badge {
+            margin-top: 12px;
+            color: var(--success);
+            font-weight: 600;
+            padding: 8px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: var(--border-radius);
+            display: inline-block;
+        }
+
+        .note {
+            margin-top: 16px;
+            color: var(--gray);
+            font-size: 0.95rem;
+            padding: 12px;
+            background: rgba(255, 122, 0, 0.03);
+            border-radius: var(--border-radius);
+            border-left: 3px solid var(--primary-light);
+        }
+
+        /* Payment Modal Styles */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .payment-container {
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .payment-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .payment-header h2 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .payment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-group select, .form-group input {
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+        }
+
+        .payment-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .payment-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .payment-processing {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .payment-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        /* Verification Section */
+        .verification-section {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 122, 0, 0.2);
+            border-radius: var(--border-radius);
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .verification-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .verification-section h3 i {
+            color: var(--primary);
+        }
+
+        .verification-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .verification-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .competition-content {
+                flex-direction: column;
+            }
+            
+            .competition-sidebar {
+                width: 100%;
+            }
+            
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .page-header h1 {
+                font-size: 28px;
+            }
+            
+            .verification-form {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .competition-card {
+                padding: 20px;
+            }
+            
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            .page-header h1 {
+                font-size: 24px;
+            }
+            
+            .page-header p {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar container">
+            <div class="nav-brand">
+                <a href="dashboard.html">
+                    <div class="logo">JOT TALENT</div>
+                </a>
+            </div>
+            <div class="nav-links user-nav">
+                <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="join.html" class="active"><i class="fas fa-plus-circle"></i> Join Competition</a>
+                <a href="verify-payment.html"><i class="fas fa-check-circle"></i> Verify Payment</a>
+                <a href="submit.html"><i class="fas fa-upload"></i> Submit</a>
+                <a href="notifications.html"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="feedback.html"><i class="fas fa-comments"></i> Feedback</a>
+                <a href="progress.html"><i class="fas fa-chart-line"></i> Progress</a>
+                <a href="support.html"><i class="fas fa-headset"></i> Support</a>
+                <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Payment Modal -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="payment-container">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div class="payment-header">
+                <h2><i class="fas fa-wallet"></i> Mobile Money Payment</h2>
+                <p>Complete your competition entry payment</p>
+            </div>
+            
+            <form id="payment-form" class="payment-form">
+                <div class="form-group">
+                    <label for="amount-type">Payment Type:</label>
+                    <select id="amount-type">
+                        <option value="10000">Regular (UGX 10,000)</option>
+                        <option value="9000">Early Bird (UGX 9,000)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="amount">Amount (UGX):</label>
+                    <input type="number" id="amount" value="10000" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerName">Full Name:</label>
+                    <input type="text" id="customerName" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerEmail">Email Address:</label>
+                    <input type="email" id="customerEmail" placeholder="Enter your email for verification" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="currency">Currency:</label>
+                    <select id="currency">
+                        <option value="UGX" selected>UGX</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number:</label>
+                    <input type="tel" id="phone" placeholder="Enter your phone number" required>
+                </div>
+                
+                <button type="submit" class="auth-button">
+                    <i class="fas fa-lock"></i> Pay Now
+                </button>
+            </form>
+            
+            <div id="payment-status" class="payment-status"></div>
+        </div>
+    </div>
+
+    <main class="page-main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-trophy"></i> Join Writing Competition</h1>
+                <p>Take part in our prestigious writing competition and showcase your talent</p>
+                <div>
+                    <button id="resetAllPaymentsBtn" class="small-link">Reset simulated payments</button>
+                </div>
+            </div>
+
+            <div class="competition-info" id="competitionsContainer">
+                <!-- First Round: featured competition card -->
+                <section class="competition-card" id="firstRoundCard">
+                    <h2><i class="fas fa-flag-checkered"></i> First Round — Entry</h2>
+                    
+                    <div class="competition-content">
+                        <div class="competition-details">
+                            <p>Join the First Round to compete with other writers for a chance to advance to subsequent rounds. This round focuses on short-form creative writing (1,000–1,500 words). Entries should be original works, previously unpublished.</p>
+                            
+                            <div class="meta-list">
+                                <div><strong>Deadline:</strong> 2 weeks from registration</div>
+                                <div><strong>Word count:</strong> 1,000 — 1,500 words</div>
+                                <div><strong>Eligibility:</strong> Open to all registered participants</div>
+                                <div><strong>Judging:</strong> Blind review by our panel based on creativity, structure, and voice</div>
+                            </div>
+                            
+                            <p>Benefits of entering the First Round include:</p>
+                            <ul>
+                                <li>Official participation certificate</li>
+                                <li>Targeted feedback for shortlisted entries</li>
+                                <li>Opportunity to advance to the final round and win prizes</li>
+                                <li>Exposure to our writing community and judges</li>
+                            </ul>
+                            
+                            <div class="tips">
+                                <strong>Tips:</strong>
+                                <ul>
+                                    <li>Focus on a clear narrative arc and strong opening line.</li>
+                                    <li>Keep language tight and avoid unnecessary filler.</li>
+                                    <li>Proofread for grammar and flow before submitting.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="competition-sidebar">
+                            <div class="price-tag">One-time entry fee</div>
+                            <div class="price">shs.10,000</div>
+                            
+                            <button id="payFirstRoundBtn" class="auth-button">
+                                <i class="fas fa-wallet"></i> Pay Now
+                            </button>
+                            
+                            <button id="joinFirstRoundBtn" class="auth-button" style="display: none;" disabled>
+                                <i class="fas fa-plus-circle"></i> Join Competition
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="note">
+                        <strong>Note:</strong> After successful payment, you'll receive a transaction ID. Use it on the "Verify Payment" page to confirm your entry and join the competition.
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgnkqrg_2clJ77WTonEQFC3gwVrG7HrO4",
+            authDomain: "jot-talent-competitions-72b9f.firebaseapp.com",
+            databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com",
+            projectId: "jot-talent-competitions-72b9f",
+            storageBucket: "jot-talent-competitions-72b9f.firebasestorage.app",
+            messagingSenderId: "25581487736",
+            appId: "1:25581487736:web:a3730b66cd4fb7d9ebcf8d",
+            measurementId: "G-8NRD37H5YD"
         };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const paymentModal = document.getElementById('paymentModal');
+        const closeModal = document.getElementById('closeModal');
+        const payBtn = document.getElementById('payFirstRoundBtn');
+        const joinBtn = document.getElementById('joinFirstRoundBtn');
+        const paymentForm = document.getElementById('payment-form');
+        const paymentStatus = document.getElementById('payment-status');
+        const amountType = document.getElementById('amount-type');
+        const amountInput = document.getElementById('amount');
+        const resetPaymentsBtn = document.getElementById('resetAllPaymentsBtn');
+
+        // Server URL - Detect environment automatically
+        const SERVER_URL = (function() {
+            const hostname = window.location.hostname;
+            
+            // Local development
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:5000';
+            }
+            
+            // Production deployment on Render
+            // Use the Render backend URL explicitly
+            return 'https://jot-payment-api.onrender.com';
+        })();
         
-        // Validate private_key exists for Firebase init
-        if (!serviceAccount.private_key) {
-            throw new Error('FIREBASE_PRIVATE_KEY environment variable not set');
-        }
-    }
+        console.log('💾 Payment Server URL:', SERVER_URL);
 
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: process.env.FIREBASE_DATABASE_URL || "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com"
-    });
-    db = admin.firestore();
-    console.log('✓ Firebase Admin initialized');
-} catch (err) {
-    adminInitAvailable = false;
-    console.warn('⚠ Firebase Admin initialization skipped:', err.message);
-    console.warn('⚠ Admin-only endpoints will not be available');
-}
+        // Set your early bird deadline here (YYYY-MM-DDTHH:MM:SS format)
+        const earlyBirdDeadline = new Date('2025-09-09T19:20:00');
 
-// Your ioTec credentials from environment variables
-const clientId = process.env.IOTEC_CLIENT_ID;
-const clientSecret = process.env.IOTEC_CLIENT_SECRET;
-const walletId = process.env.IOTEC_WALLET_ID;
-
-// Configuration
-const PORT = process.env.PORT || 10000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-
-// Build allowed origins from environment or defaults
-const DEFAULT_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:8000',
-    'https://jot-talent-competitions.onrender.com',
-    'https://jotcomps.com',
-    'https://www.jotcomps.com',
-    'https://envisage2024.github.io'
-];
-
-const ALLOWED_ORIGINS = DEFAULT_ORIGINS;
-
-console.log(`🚀 Starting Payment Server`);
-console.log(`   Environment: ${NODE_ENV}`);
-console.log(`   Port: ${PORT}`);
-console.log(`   CORS Origins:`, ALLOWED_ORIGINS);
-
-const app = express();
-
-// Simple and effective CORS configuration
-const corsOptions = {
-  origin: true, // Allow all origins - let middleware handle it
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  maxAge: 86400
-};
-
-// Apply CORS to all routes
-app.use(cors(corsOptions));
-
-// Body parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Handle preflight requests explicitly for all routes
-app.options('*', cors(corsOptions));
-
-// Additional CORS headers middleware - ensure headers are always set
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    
-    // ALWAYS set CORS headers
-    res.header('Access-Control-Allow-Origin', origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-    res.header('Access-Control-Max-Age', '86400');
-    
-    // Handle OPTIONS requests (preflight)
-    if (req.method === 'OPTIONS') {
-        console.log(`[CORS] ✅ Preflight request from: ${origin}`);
-        return res.sendStatus(200);
-    }
-    
-    next();
-});
-
-// Request logging middleware
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    next();
-});
-
-// ==================== PUBLIC ENDPOINTS ====================
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'OK',
-        message: 'Payment server is running',
-        timestamp: new Date().toISOString(),
-        version: '2.0.0',
-        environment: NODE_ENV,
-        firebaseAvailable: adminInitAvailable
-    });
-});
-
-// Get access token from ioTec
-async function getAccessToken() {
-    if (!clientId || !clientSecret) {
-        throw new Error('ioTec credentials not configured. Please set IOTEC_CLIENT_ID and IOTEC_CLIENT_SECRET');
-    }
-
-    const tokenUrl = 'https://id.iotec.io/connect/token';
-    const params = new URLSearchParams();
-    params.append('client_id', clientId);
-    params.append('client_secret', clientSecret);
-    params.append('grant_type', 'client_credentials');
-
-    try {
-        const response = await fetch(tokenUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params
+        // Event listeners
+        payBtn.addEventListener('click', () => {
+            paymentModal.style.display = 'flex';
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`ioTec Token Error ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
-        return data.access_token;
-    } catch (error) {
-        console.error('❌ Error getting ioTec access token:', error.message);
-        throw error;
-    }
-}
-
-// Payment endpoint - Process payment
-app.options('/process-payment', cors(corsOptions));
-app.post('/process-payment', async (req, res) => {
-    try {
-        const { amount, method, phone, email, name, currency = 'UGX', competitionId } = req.body;
-
-        // Validation
-        if (!amount || !method) {
-            return res.status(400).json({ success: false, message: 'Amount and payment method are required.' });
-        }
-
-        if (method === 'MobileMoney' && !phone) {
-            return res.status(400).json({ success: false, message: 'Phone number is required for Mobile Money payments.' });
-        }
-
-        if (!email) {
-            return res.status(400).json({ success: false, message: 'Email is required.' });
-        }
-
-        console.log(`💳 Processing ${method} payment: ${amount} ${currency}`);
-
-        // Get access token
-        let accessToken;
-        try {
-            accessToken = await getAccessToken();
-        } catch (tokenError) {
-            return res.status(503).json({
-                success: false,
-                message: 'Payment gateway temporarily unavailable. Please try again later.',
-                error: NODE_ENV === 'development' ? tokenError.message : undefined
-            });
-        }
-
-        // Generate transaction ID
-        const transactionId = 'TXN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
-        // Prepare payment payload
-        const collectPayload = {
-            walletId: walletId,
-            amount: Number(amount),
-            currency: currency,
-            externalId: transactionId,
-            payer: phone,
-            payerNote: 'Jot Talent Competition Entry Fee',
-            payeeNote: `Payment for ${competitionId || 'competition'} entry. Email: ${email}`
-        };
-
-        console.log('📤 Sending to ioTec:', JSON.stringify(collectPayload, null, 2));
-
-        // Make payment request
-        const response = await fetch('https://pay.iotec.io/api/collections/collect', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
-            },
-            body: JSON.stringify(collectPayload),
-            timeout: 30000
+        closeModal.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+            paymentStatus.textContent = '';
+            paymentStatus.className = 'payment-status';
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error(`❌ ioTec Error ${response.status}:`, errorData);
+        amountType.addEventListener('change', () => {
+            amountInput.value = amountType.value;
+        });
 
-            // Check for specific error messages
-            if (errorData.message?.includes('Insufficient balance')) {
-                return res.status(402).json({
-                    success: false,
-                    message: 'Payment failed: Insufficient balance on account'
-                });
+        // Payment form submission
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = amountInput.value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('customerEmail').value;
+            const name = document.getElementById('customerName').value || "Customer";
+            const currency = document.getElementById('currency').value;
+
+            // Validate input
+            if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+                paymentStatus.textContent = 'Please select a valid amount.';
+                paymentStatus.className = 'payment-status payment-error';
+                return;
+            }
+            if (!phone) {
+                paymentStatus.textContent = 'Please enter a phone number.';
+                paymentStatus.className = 'payment-status payment-error';
+                return;
+            }
+            if (!email || !isValidEmail(email)) {
+                paymentStatus.textContent = 'Please enter a valid email address.';
+                paymentStatus.className = 'payment-status payment-error';
+                return;
             }
 
-            return res.status(response.status).json({
-                success: false,
-                message: errorData.message || 'Mobile Money collection failed',
-                transactionId: transactionId
-            });
-        }
+            paymentStatus.textContent = 'Processing payment...';
+            paymentStatus.className = 'payment-status payment-processing';
 
-        const data = await response.json();
-        console.log('✅ ioTec Response:', data);
-
-        // Store payment data in Firestore if available
-        if (adminInitAvailable && db) {
             try {
-                const paymentData = {
-                    transactionId: transactionId,
-                    ioTecTransactionId: data.id || data.transactionId,
-                    amount: Number(amount),
-                    currency: currency,
-                    method: method,
+                console.log('📤 Sending payment request to:', `${SERVER_URL}/process-payment`);
+                console.log('📋 Payment data:', {
+                    method: "MobileMoney",
+                    amount: amount,
                     phone: phone,
                     email: email,
-                    name: name || 'Customer',
-                    competitionId: competitionId || 'firstRound',
-                    status: data.status || 'PENDING',
-                    statusMessage: data.statusMessage || 'Payment initiated',
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-                };
-
-                await db.collection('payments').doc(transactionId).set(paymentData);
-                console.log('✓ Payment stored in Firestore:', transactionId);
-            } catch (firestoreError) {
-                console.error('⚠ Error storing in Firestore:', firestoreError.message);
-                // Continue anyway - payment was processed
-            }
-        }
-
-        // Return success
-        res.json({
-            success: true,
-            message: 'Payment processed successfully',
-            transactionId: transactionId,
-            ioTecTransactionId: data.id || data.transactionId,
-            status: data.status || 'PENDING'
-        });
-
-    } catch (error) {
-        console.error('❌ Payment processing error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// Check user balance via ioTec - Using account verification method
-app.options('/check-balance', cors(corsOptions));
-app.post('/check-balance', async (req, res) => {
-    try {
-        const { phone } = req.body;
-
-        if (!phone) {
-            return res.status(400).json({ success: false, message: 'Phone number is required' });
-        }
-
-        console.log(`💰 Verifying account for phone: ${phone}`);
-
-        // Get access token
-        let accessToken;
-        try {
-            accessToken = await getAccessToken();
-        } catch (tokenError) {
-            return res.status(503).json({
-                success: false,
-                message: 'Payment gateway temporarily unavailable',
-                error: NODE_ENV === 'development' ? tokenError.message : undefined
-            });
-        }
-
-        // ioTec Balance Inquiry - Official API
-        // This endpoint queries the customer's balance on the mobile money provider
-        try {
-            console.log('📡 Calling ioTec balance inquiry API...');
-            
-            const balancePayload = {
-                phone: phone,
-                walletId: walletId,
-                clientId: clientId
-            };
-
-            console.log('📤 Sending balance inquiry for:', phone);
-
-            const response = await fetch('https://pay.iotec.io/api/inquiries/balance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify(balancePayload),
-                timeout: 15000
-            });
-
-            console.log(`📥 ioTec balance inquiry response: ${response.status}`);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Balance inquiry successful:', data);
-
-                return res.json({
-                    success: true,
-                    phone: phone,
-                    availableBalance: data.balance || data.availableBalance || 0,
-                    currency: data.currency || 'UGX',
-                    accountStatus: 'ACTIVE',
-                    message: `Current balance: ${data.balance || data.availableBalance || 0} ${data.currency || 'UGX'}`,
-                    provider: data.provider || 'Mobile Money'
+                    name: name,
+                    currency: currency
                 });
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                console.warn(`⚠ Balance inquiry returned ${response.status}:`, errorData);
+
+                const response = await fetch(`${SERVER_URL}/process-payment`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        method: "MobileMoney",
+                        amount: amount,
+                        phone: phone,
+                        email: email,
+                        name: name,
+                        currency: currency
+                    })
+                });
+
+                console.log('📨 Response status:', response.status);
+                console.log('📨 Response headers:', response.headers.get('content-type'));
+
+                let result;
+                const contentType = response.headers.get('content-type');
                 
-                // If not found or error, return fallback
-                return res.json({
-                    success: true,
-                    phone: phone,
-                    availableBalance: null,
-                    currency: 'UGX',
-                    message: 'Account verification in progress. You can proceed with payment.',
-                    canProceed: true,
-                    note: 'Balance will be verified during payment processing.'
-                });
-            }
-
-        } catch (err) {
-            console.error('❌ Balance inquiry error:', err.message);
-            console.warn('⚠️ Falling back due to error:', err.message);
-        }
-
-        // If all endpoint attempts fail, return a verification-pending response
-        // User can still proceed with payment
-        console.warn('⚠️ Could not verify balance via ioTec endpoints. Returning fallback response.');
-        
-        return res.json({
-            success: true,
-            phone: phone,
-            availableBalance: null,
-            currency: 'UGX',
-            message: 'Account verification pending. You can proceed with payment.',
-            warning: 'Real-time balance verification is temporarily unavailable, but your transaction will be validated during payment processing.',
-            canProceed: true
-        });
-
-    } catch (error) {
-        console.error('❌ Balance check error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// Get payment status
-// Check payment status by transaction ID or email
-app.get('/payment-status', async (req, res) => {
-    try {
-        const { transactionId, email } = req.query;
-
-        if (!transactionId && !email) {
-            return res.status(400).json({ 
-                success: false,
-                message: 'Transaction ID or email is required' 
-            });
-        }
-
-        console.log(`🔍 Checking payment status: ${transactionId || 'email=' + email}`);
-
-        // If searching by email, find the most recent payment for that email
-        if (email && !transactionId) {
-            if (adminInitAvailable && db) {
-                try {
-                    const paymentsSnapshot = await db.collection('payments')
-                        .where('email', '==', email)
-                        .orderBy('createdAt', 'desc')
-                        .limit(1)
-                        .get();
-
-                    if (!paymentsSnapshot.empty) {
-                        const paymentData = paymentsSnapshot.docs[0].data();
-                        console.log('✓ Payment found by email:', email);
-                        return res.json({
-                            success: true,
-                            ...paymentData
-                        });
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    // Response is not JSON (likely HTML error page)
+                    const text = await response.text();
+                    console.error('❌ Backend Response (Status ' + response.status + '):', text.substring(0, 500));
+                    
+                    if (text.trim().startsWith('<')) {
+                        paymentStatus.textContent = `Error: Server returned HTML instead of JSON (Status ${response.status}). Please check if the backend server is running and accessible at ${SERVER_URL}`;
+                    } else {
+                        paymentStatus.textContent = `Error: Invalid response from server. Response: ${text.substring(0, 100)}`;
                     }
-                } catch (firestoreError) {
-                    console.error('⚠ Firestore search failed:', firestoreError.message);
+                    paymentStatus.className = 'payment-status payment-error';
+                    console.error('Payment processing error: Invalid response format');
+                    return;
                 }
-            }
-            return res.status(404).json({ 
-                success: false,
-                message: 'No payment found for this email address' 
-            });
-        }
 
-        // Search by transaction ID
-        const searchId = transactionId;
-
-        // Check Firestore first if available
-        if (adminInitAvailable && db) {
-            try {
-                const paymentDoc = await db.collection('payments').doc(searchId).get();
-                if (paymentDoc.exists) {
-                    const paymentData = paymentDoc.data();
-                    console.log('✓ Payment found in Firestore:', searchId);
-                    return res.json({
-                        success: true,
-                        ...paymentData
-                    });
+                if (result.success) {
+                    paymentStatus.textContent = 'Payment successful! Your transaction ID: ' + (result.transactionId || '');
+                    paymentStatus.className = 'payment-status payment-success';
+                    
+                    // Store payment success in localStorage
+                    localStorage.setItem('paymentSuccess_firstRound', 'true');
+                    localStorage.setItem('paymentTimestamp', new Date().getTime().toString());
+                    localStorage.setItem('transactionId', result.transactionId || '');
+                    
+                    // Close modal after 3 seconds
+                    setTimeout(() => {
+                        paymentModal.style.display = 'none';
+                    }, 3000);
+                    
+                } else {
+                    // Check for insufficient balance message
+                    if (result.message && result.message.includes('Insufficient balance')) {
+                        paymentStatus.textContent = `Payment failed: ${result.message}`;
+                    } else {
+                        paymentStatus.textContent = `Payment failed: ${result.message || 'Unknown error'}`;
+                    }
+                    paymentStatus.className = 'payment-status payment-error';
                 }
-            } catch (firestoreError) {
-                console.error('⚠ Firestore check failed:', firestoreError.message);
-            }
-        }
-
-        // Query ioTec
-        let accessToken;
-        try {
-            accessToken = await getAccessToken();
-        } catch (tokenError) {
-            return res.status(503).json({
-                success: false,
-                message: 'Payment gateway temporarily unavailable',
-                error: NODE_ENV === 'development' ? tokenError.message : undefined
-            });
-        }
-
-        const response = await fetch(`https://pay.iotec.io/api/collections/${searchId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+            } catch (error) {
+                paymentStatus.textContent = 'Error: ' + error.message;
+                paymentStatus.className = 'payment-status payment-error';
+                console.error('❌ Payment error:', error);
             }
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error(`❌ ioTec Status Query Error:`, errorData);
+        // Send verification code to email
 
-            return res.status(404).json({ 
-                success: false,
-                message: 'Payment not found' 
-            });
-        }
+        joinBtn.addEventListener('click', function() {
+            alert('You have successfully joined the competition!');
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'Joined';
+            
+            // Store that user has joined this competition
+            localStorage.setItem('hasJoined_firstRound', 'true');
+            
+            // Record competition registration in Firestore
+            recordCompetitionRegistration();
+        });
 
-        const data = await response.json();
-        console.log('✓ Payment status retrieved from ioTec:', data.status);
 
-        // Update Firestore
-        if (adminInitAvailable && db) {
-            try {
-                await db.collection('payments').doc(searchId).update({
-                    status: data.status || 'UNKNOWN',
-                    statusMessage: data.statusMessage || '',
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (firestoreError) {
-                console.error('⚠ Could not update Firestore status:', firestoreError.message);
+        resetPaymentsBtn.addEventListener('click', function() {
+            payBtn.style.display = 'block';
+            joinBtn.style.display = 'none';
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'Join Competition';
+            localStorage.removeItem('paymentSuccess_firstRound');
+            localStorage.removeItem('hasJoined_firstRound');
+            localStorage.removeItem('paymentTimestamp');
+            alert('Payment status has been reset. You can simulate a new payment.');
+        });
+
+        // Check early bird deadline on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const earlyBirdOption = amountType.querySelector('option[value="9000"]');
+            if (now > earlyBirdDeadline) {
+                // Disable Early Bird after deadline
+                earlyBirdOption.disabled = true;
+                amountType.value = "10000";
+                amountInput.value = "10000";
             }
-        }
-
-        res.json({
-            success: true,
-            transactionId: searchId,
-            status: data.status,
-            statusMessage: data.statusMessage,
-            ...data
+            
+            // User should now use verify-payment.html to check status
         });
 
-    } catch (error) {
-        console.error('❌ Error checking payment status:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// Keep old endpoint for backwards compatibility
-app.get('/payment-status/:transactionId', async (req, res) => {
-    try {
-        const { transactionId } = req.params;
-        
-        // Redirect to query parameter version
-        const query = new URLSearchParams({ transactionId });
-        res.redirect(`/payment-status?${query.toString()}`);
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-});
-
-// Send verification code
-app.options('/send-verification-code', cors(corsOptions));
-app.post('/send-verification-code', async (req, res) => {
-    try {
-        const { email } = req.body;
-
-        if (!email) {
-            return res.status(400).json({ success: false, message: 'Email is required' });
+        // Helper function to validate email
+        function isValidEmail(email) {
+            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
         }
-
-        if (!adminInitAvailable || !db) {
-            return res.status(503).json({ success: false, message: 'Verification service unavailable' });
-        }
-
-        // Generate 6-digit code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // Store in Firestore
-        await db.collection('verificationCodes').doc(email).set({
-            code: verificationCode,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            used: false,
-            attempts: 0
-        });
-
-        // TODO: In production, send via email service (SendGrid, AWS SES, etc.)
-        console.log(`📧 Verification code for ${email}: ${verificationCode}`);
-
-        res.json({
-            success: true,
-            message: 'Verification code sent',
-            // Only return code in development for testing
-            code: NODE_ENV === 'development' ? verificationCode : undefined
-        });
-
-    } catch (error) {
-        console.error('❌ Error sending verification code:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to send verification code',
-            error: NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// Verify email code
-app.options('/verify-email', cors(corsOptions));
-app.post('/verify-email', async (req, res) => {
-    try {
-        const { email, verificationCode, transactionId } = req.body;
-
-        if (!email || !verificationCode) {
-            return res.status(400).json({ success: false, message: 'Email and code required' });
-        }
-
-        if (!adminInitAvailable || !db) {
-            return res.status(503).json({ success: false, message: 'Verification service unavailable' });
-        }
-
-        // Retrieve and verify code
-        const verificationDoc = await db.collection('verificationCodes').doc(email).get();
-
-        if (!verificationDoc.exists) {
-            return res.status(400).json({ success: false, message: 'No verification code found for this email' });
-        }
-
-        const verificationData = verificationDoc.data();
-
-        // Check if code matches
-        if (verificationData.code !== verificationCode.trim()) {
-            // Increment attempts
-            await db.collection('verificationCodes').doc(email).update({
-                attempts: (verificationData.attempts || 0) + 1
-            });
-
-            // Lock after 5 attempts
-            if ((verificationData.attempts || 0) >= 5) {
-                await db.collection('verificationCodes').doc(email).update({ locked: true });
-                return res.status(429).json({ success: false, message: 'Too many attempts. Please request a new code.' });
-            }
-
-            return res.status(400).json({ success: false, message: 'Invalid verification code' });
-        }
-
-        // Check if already used
-        if (verificationData.used) {
-            return res.status(400).json({ success: false, message: 'This code has already been used' });
-        }
-
-        // Check if expired (10 minutes)
-        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-        const codeTimestamp = verificationData.timestamp.toDate();
-
-        if (codeTimestamp < tenMinutesAgo) {
-            return res.status(400).json({ success: false, message: 'This code has expired' });
-        }
-
-        // Mark as used
-        await db.collection('verificationCodes').doc(email).update({
-            used: true,
-            usedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-
-        // Update payment if transactionId provided
-        if (transactionId) {
-            try {
-                await db.collection('payments').doc(transactionId).update({
-                    emailVerified: true,
-                    verifiedAt: admin.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (e) {
-                console.warn('Could not update payment record:', e.message);
-            }
-        }
-
-        // Record user registration
-        await db.collection('users').doc(email).set({
-            email: email,
-            verified: true,
-            verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-            competitions: admin.firestore.FieldValue.arrayUnion('firstRound')
-        }, { merge: true });
-
-        res.json({
-            success: true,
-            message: 'Email verified successfully'
-        });
-
-    } catch (error) {
-        console.error('❌ Verification error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Verification failed',
-            error: NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// ==================== ADMIN ENDPOINTS ====================
-
-// Helper: Verify Firebase ID Token
-async function verifyIdToken(req, res, next) {
-    if (!adminInitAvailable) {
-        return res.status(503).json({ message: 'Admin functionality unavailable' });
-    }
-
-    try {
-        const authHeader = req.headers.authorization || '';
-        if (!authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ message: 'Missing or invalid Authorization header' });
-        }
-
-        const idToken = authHeader.split('Bearer ')[1];
-        const decoded = await admin.auth().verifyIdToken(idToken);
-
-        const adminEmail = process.env.ADMIN_EMAIL || '';
-        if (decoded.admin === true || (adminEmail && decoded.email === adminEmail)) {
-            req.auth = decoded;
-            return next();
-        }
-
-        return res.status(403).json({ message: 'Insufficient permissions' });
-    } catch (err) {
-        console.error('Token verification failed:', err.message);
-        return res.status(401).json({ message: 'Unauthorized', error: err.message });
-    }
-}
-
-// Get all payments (admin)
-app.get('/admin/payments', verifyIdToken, async (req, res) => {
-    try {
-        console.log(`📊 Admin viewing payments (requested by: ${req.auth.email})`);
-
-        const paymentsSnapshot = await db.collection('payments')
-            .orderBy('createdAt', 'desc')
-            .limit(100)
-            .get();
-
-        const payments = paymentsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-
-        res.json({ success: true, count: payments.length, payments });
-    } catch (error) {
-        console.error('❌ Error fetching payments:', error);
-        res.status(500).json({ success: false, message: 'Failed to fetch payments' });
-    }
-});
-
-// Create judge (admin)
-app.post('/admin/create-judge', verifyIdToken, async (req, res) => {
-    try {
-        console.log(`👤 Creating judge (requested by: ${req.auth.email})`);
-        const { email, password, name, bio } = req.body;
-
-        if (!email || !password || !name) {
-            return res.status(400).json({ message: 'Email, password, and name required' });
-        }
-
-        const userRecord = await admin.auth().createUser({
-            email: email,
-            password: password,
-            displayName: name
-        });
-
-        await admin.auth().setCustomUserClaims(userRecord.uid, { judge: true });
-
-        const crypto = require('crypto');
-        const passwordHash = crypto.createHash('sha256').update(String(password)).digest('hex');
-
-        await db.collection('judges').doc(userRecord.uid).set({
-            name: name,
-            email: email,
-            bio: bio || '',
-            role: 'judge',
-            passwordHash: passwordHash,
-            reviewedCount: 0,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-
-        res.json({ success: true, uid: userRecord.uid });
-    } catch (error) {
-        console.error('❌ Create judge error:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to create judge', error: error.message });
-    }
-});
-
-// Update judge (admin)
-app.post('/admin/update-judge', verifyIdToken, async (req, res) => {
-    try {
-        const { uid, email, name, bio, reviewedCount, password } = req.body;
-
-        if (!uid) return res.status(400).json({ message: 'UID required' });
-
-        const updateAuth = {};
-        if (email) updateAuth.email = email;
-        if (name) updateAuth.displayName = name;
-        if (password) updateAuth.password = password;
-
-        if (Object.keys(updateAuth).length) {
-            await admin.auth().updateUser(uid, updateAuth);
-        }
-
-        const updateDoc = {};
-        if (name) updateDoc.name = name;
-        if (email) updateDoc.email = email;
-        if (typeof bio !== 'undefined') updateDoc.bio = bio;
-        if (typeof reviewedCount !== 'undefined') updateDoc.reviewedCount = Number(reviewedCount) || 0;
-
-        if (password) {
-            const crypto = require('crypto');
-            updateDoc.passwordHash = crypto.createHash('sha256').update(String(password)).digest('hex');
-        }
-
-        if (Object.keys(updateDoc).length) {
-            await db.collection('judges').doc(uid).set(updateDoc, { merge: true });
-        }
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error('❌ Update judge error:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to update judge' });
-    }
-});
-
-// Delete judge (admin)
-app.post('/admin/delete-judge', verifyIdToken, async (req, res) => {
-    try {
-        const { uid } = req.body;
-        if (!uid) return res.status(400).json({ message: 'UID required' });
-
-        await admin.auth().deleteUser(uid);
-        await db.collection('judges').doc(uid).delete();
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error('❌ Delete judge error:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to delete judge' });
-    }
-});
-
-// ==================== ERROR HANDLING ====================
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Endpoint not found',
-        path: req.path,
-        method: req.method
-    });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-    console.error('❌ Unhandled error:', err);
-    res.status(err.status || 500).json({
-        success: false,
-        message: err.message || 'Internal server error',
-        error: NODE_ENV === 'development' ? err : undefined
-    });
-});
-
-// ==================== START SERVER ====================
-
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-╔════════════════════════════════════════════════════════╗
-║         JOT TALENT PAYMENT SERVER STARTED              ║
-╠════════════════════════════════════════════════════════╣
-║ 🌐 URL: http://0.0.0.0:${PORT}
-║ 📊 Health Check: http://localhost:${PORT}/health
-║ 🔗 API Base: http://localhost:${PORT}
-║ 📝 Environment: ${NODE_ENV}
-║ 🔐 Firebase: ${adminInitAvailable ? '✅ Ready' : '⚠️  Unavailable'}
-╚════════════════════════════════════════════════════════╝
-    `);
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-    console.log('\n🛑 Shutting down gracefully...');
-    server.close(() => {
-        console.log('✓ Server closed');
-        process.exit(0);
-    });
-});
-
-process.on('SIGTERM', () => {
-    console.log('\n🛑 Shutting down gracefully...');
-    server.close(() => {
-        console.log('✓ Server closed');
-        process.exit(0);
-    });
-});
-
-module.exports = app;
+    </script>
+</body>
+</html>
