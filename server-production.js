@@ -77,12 +77,7 @@ const DEFAULT_ORIGINS = [
     'https://envisage2024.github.io'
 ];
 
-const ALLOWED_ORIGINS = [
-  'https://envisage2024.github.io',
-  'https://jotcomps.com',
-  'https://www.jotcomps.com'
-  // add more if needed
-];
+const ALLOWED_ORIGINS = DEFAULT_ORIGINS;
 
 console.log(`🚀 Starting Payment Server`);
 console.log(`   Environment: ${NODE_ENV}`);
@@ -91,27 +86,9 @@ console.log(`   CORS Origins:`, ALLOWED_ORIGINS);
 
 const app = express();
 
-// Enhanced CORS configuration with explicit origin checking
+// Simple and effective CORS configuration
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin is in allowed list
-    if (ALLOWED_ORIGINS.includes(origin)) {
-      console.log(`[CORS] ✓ Allowing ${origin}`);
-      return callback(null, true);
-    }
-    
-    // In development, allow all origins
-    if (NODE_ENV === 'development') {
-      console.log(`[CORS DEV] Allowing ${origin} (development mode)`);
-      return callback(null, true);
-    }
-    
-    console.error(`[CORS] ✗ Rejecting ${origin} (not in whitelist)`);
-    return callback(null, true); // Allow anyway to send proper error response
-  },
+  origin: true, // Allow all origins - let middleware handle it
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -128,22 +105,20 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Handle preflight requests explicitly for all routes
 app.options('*', cors(corsOptions));
 
-// Additional CORS headers middleware (ensures preflight requests work)
+// Additional CORS headers middleware - ensure headers are always set
 app.use((req, res, next) => {
     const origin = req.headers.origin;
     
-    // Always set CORS headers for allowed origins
-    if (!origin || ALLOWED_ORIGINS.includes(origin) || NODE_ENV === 'development') {
-        res.header('Access-Control-Allow-Origin', origin || '*');
-        res.header('Access-Control-Allow-Credentials', 'true');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-        res.header('Access-Control-Max-Age', '86400');
-    }
+    // ALWAYS set CORS headers
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+    res.header('Access-Control-Max-Age', '86400');
     
     // Handle OPTIONS requests (preflight)
     if (req.method === 'OPTIONS') {
-        console.log(`[CORS] Handling preflight OPTIONS request from ${origin || 'unknown'}`);
+        console.log(`[CORS] ✅ Preflight request from: ${origin}`);
         return res.sendStatus(200);
     }
     
