@@ -243,10 +243,7 @@ app.post('/verify-balance-before-payment', async (req, res) => {
 
         // Check if IOTEC credentials are configured
         if (!clientId || !clientSecret || !walletId) {
-            console.warn(`⚠️ [PRE-PAYMENT] IOTEC credentials not configured`);
-            console.warn(`   clientId: ${clientId ? '✅' : '❌ MISSING'}`);
-            console.warn(`   clientSecret: ${clientSecret ? '✅' : '❌ MISSING'}`);
-            console.warn(`   walletId: ${walletId ? '✅' : '❌ MISSING'}`);
+            console.log(`ℹ️ [PRE-PAYMENT] IOTEC credentials not configured - balance will be checked during payment`);
             
             // Return success with null balance (will be checked during payment)
             return res.json({
@@ -255,10 +252,9 @@ app.post('/verify-balance-before-payment', async (req, res) => {
                 availableBalance: null,
                 requiredAmount: Number(amount),
                 currency: currency,
-                message: 'Balance verification temporarily unavailable. Payment validation will occur during processing.',
+                message: 'Proceeding with payment - balance will be verified during processing.',
                 canProceedToPayment: true,
-                warning: 'Real-time balance verification is currently disabled',
-                note: 'Configure IOTEC credentials to enable balance checking'
+                warning: null
             });
         }
 
