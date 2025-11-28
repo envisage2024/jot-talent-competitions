@@ -800,6 +800,75 @@
             amountInput.value = amountType.value;
         });
 
+        // ==================== BALANCE CHECK FUNCTION ====================
+        /**
+         * Check user's mobile money wallet balance before payment
+         * @param {string} phone - User's phone number
+         * @param {number} amount - Payment amount required
+         * @param {string} currency - Currency (UGX, USD, etc.)
+         * @returns {Object} - { success: boolean, hasSufficientBalance: boolean, message: string, details: object }
+         */
+        async function checkWalletBalance(phone, amount, currency = 'UGX') {
+            try {
+                console.log(`💰 Checking wallet balance for ${phone}: Need ${amount} ${currency}`);
+                
+                const response = await fetch(`${SERVER_URL}/verify-balance-before-payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: Number(amount),
+                        phone: phone,
+                        currency: currency
+                    })
+                });
+
+                console.log('📋 Balance check response status:', response.status);
+
+                if (!response.ok) {
+                    // If endpoint not found or error, allow payment to proceed
+                    // (balance will be checked during payment)
+                    console.warn('⚠️ Balance check endpoint unavailable, allowing payment to proceed');
+                    return {
+                        success: true,
+                        hasSufficientBalance: null, // Unknown - will be checked during payment
+                        message: 'Balance verification unavailable - proceeding with payment',
+                        canProceedToPayment: true
+                    };
+                }
+
+                const result = await response.json();
+                console.log('✅ Balance check result:', result);
+
+                // Return the result directly from the backend
+                return {
+                    success: result.success || false,
+                    hasSufficientBalance: result.hasSufficientBalance,
+                    availableBalance: result.availableBalance,
+                    requiredAmount: result.requiredAmount,
+                    shortfall: result.shortfall,
+                    message: result.message || 'Balance check completed',
+                    canProceedToPayment: result.canProceedToPayment !== false,
+                    warning: result.warning
+                };
+
+            } catch (error) {
+                console.error('❌ Balance check error:', error);
+                
+                // If balance check fails, allow payment to proceed
+                // (payment will still validate on backend)
+                return {
+                    success: false,
+                    hasSufficientBalance: null, // Unknown
+                    message: 'Unable to verify balance - proceeding with payment',
+                    canProceedToPayment: true,
+                    warning: 'Balance verification temporarily unavailable'
+                };
+            }
+        }
+
         // Payment form submission
         paymentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -826,6 +895,61 @@
                 return;
             }
 
+            // ==================== CHECK BALANCE BEFORE PAYMENT ====================
+            paymentStatus.textContent = 'Checking your wallet balance...';
+            paymentStatus.className = 'payment-status payment-processing';
+
+            try {
+                const balanceCheck = await checkWalletBalance(phone, amount, currency);
+                console.log('📊 Balance check result:', balanceCheck);
+
+                // If insufficient balance, show error and stop
+                if (balanceCheck.hasSufficientBalance === false) {
+                    const shortfall = balanceCheck.shortfall || (balanceCheck.requiredAmount - balanceCheck.availableBalance);
+                    paymentStatus.innerHTML = `
+                        <div style="color: #ef4444; text-align: left;">
+                            <strong>❌ Insufficient Balance</strong>
+                            <p>Available: ${balanceCheck.availableBalance} ${currency}</p>
+                            <p>Required: ${balanceCheck.requiredAmount} ${currency}</p>
+                            <p><strong>You need ${shortfall} more ${currency}</strong></p>
+                            <p style="font-size: 0.9em; margin-top: 8px;">Please add funds to your wallet and try again.</p>
+                        </div>
+                    `;
+                    paymentStatus.className = 'payment-status payment-error';
+                    console.warn('❌ Payment blocked - insufficient balance');
+                    return; // STOP - Don't proceed with payment
+                }
+
+                // If balance check unavailable but allowed to try
+                if (balanceCheck.hasSufficientBalance === null) {
+                    paymentStatus.innerHTML = `
+                        <div style="color: #f59e0b; text-align: left;">
+                            <strong>⚠️ ${balanceCheck.warning || 'Balance Check Pending'}</strong>
+                            <p>${balanceCheck.message}</p>
+                            <p style="font-size: 0.9em; margin-top: 8px;">Balance will be verified during payment processing...</p>
+                        </div>
+                    `;
+                    paymentStatus.className = 'payment-status payment-processing';
+                    console.warn('⚠️ Balance check unavailable, proceeding with payment');
+                }
+
+                // If sufficient balance (or check skipped), proceed with payment
+                console.log('✅ Balance check passed - proceeding with payment');
+                
+            } catch (error) {
+                // If balance check throws error, still allow payment to proceed
+                console.error('❌ Balance check exception:', error);
+                paymentStatus.innerHTML = `
+                    <div style="color: #f59e0b; text-align: left;">
+                        <strong>⚠️ Balance Verification Error</strong>
+                        <p>Could not verify balance, but proceeding with payment.</p>
+                        <p style="font-size: 0.9em; margin-top: 8px;">Balance will be checked during processing...</p>
+                    </div>
+                `;
+                paymentStatus.className = 'payment-status payment-processing';
+            }
+
+            // ==================== PROCEED WITH PAYMENT ====================
             paymentStatus.textContent = 'Processing payment...';
             paymentStatus.className = 'payment-status payment-processing';
 
