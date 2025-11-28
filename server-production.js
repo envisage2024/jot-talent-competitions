@@ -241,6 +241,27 @@ app.post('/verify-balance-before-payment', async (req, res) => {
 
         console.log(`💰 [PRE-PAYMENT] Verifying balance for ${phone}: Need ${amount} ${currency}`);
 
+        // Check if IOTEC credentials are configured
+        if (!clientId || !clientSecret || !walletId) {
+            console.warn(`⚠️ [PRE-PAYMENT] IOTEC credentials not configured`);
+            console.warn(`   clientId: ${clientId ? '✅' : '❌ MISSING'}`);
+            console.warn(`   clientSecret: ${clientSecret ? '✅' : '❌ MISSING'}`);
+            console.warn(`   walletId: ${walletId ? '✅' : '❌ MISSING'}`);
+            
+            // Return success with null balance (will be checked during payment)
+            return res.json({
+                success: true,
+                hasSufficientBalance: null,
+                availableBalance: null,
+                requiredAmount: Number(amount),
+                currency: currency,
+                message: 'Balance verification temporarily unavailable. Payment validation will occur during processing.',
+                canProceedToPayment: true,
+                warning: 'Real-time balance verification is currently disabled',
+                note: 'Configure IOTEC credentials to enable balance checking'
+            });
+        }
+
         // Get access token
         let accessToken;
         try {
@@ -249,12 +270,18 @@ app.post('/verify-balance-before-payment', async (req, res) => {
             console.log(`✅ [PRE-PAYMENT] Got access token successfully`);
         } catch (tokenError) {
             console.error(`❌ [PRE-PAYMENT] Failed to get access token:`, tokenError.message);
-            return res.status(503).json({
-                success: false,
-                hasSufficientBalance: false,
-                message: 'Payment gateway temporarily unavailable',
-                canRetry: true,
-                error: NODE_ENV === 'development' ? tokenError.message : undefined
+            console.log(`⚠️ [PRE-PAYMENT] Falling back to allowing payment to proceed`);
+            
+            // Don't block payment if token fails
+            return res.json({
+                success: true,
+                hasSufficientBalance: null,
+                availableBalance: null,
+                requiredAmount: Number(amount),
+                currency: currency,
+                message: 'Balance verification temporarily unavailable. Payment validation will occur during processing.',
+                canProceedToPayment: true,
+                warning: 'Could not verify balance with IOTEC'
             });
         }
 

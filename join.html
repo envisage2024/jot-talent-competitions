@@ -864,10 +864,11 @@
 
                 const result = await response.json();
                 console.log('✅ Balance check result:', result);
-
-                // Return the result directly from the backend
+                
+                // Even if result is null balance, it's OK to proceed
+                // The result will tell us if it's a real failure or just unavailable
                 return {
-                    success: result.success || false,
+                    success: result.success !== false,
                     hasSufficientBalance: result.hasSufficientBalance,
                     availableBalance: result.availableBalance,
                     requiredAmount: result.requiredAmount,
@@ -964,7 +965,8 @@
                         </div>
                     `;
                     paymentStatus.className = 'payment-status payment-processing';
-                    console.warn('⚠️ Balance check unavailable, proceeding with payment');
+                    console.warn('⚠️ Balance verification skipped - balance will be checked during payment');
+                    console.log('ℹ️ This is OK - payment can proceed. IOTEC balance verification may not be configured.');
                 }
 
                 // If sufficient balance (or check skipped), proceed with payment
