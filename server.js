@@ -85,7 +85,7 @@ async function getAccessToken() {
     }
 }
 
-// Check Balance endpoint - NEW
+// Check Balance endpoint - Query ioTec API for actual mobile money provider balance
 app.post('/check-balance', async (req, res) => {
     try {
         const { phone } = req.body;
@@ -99,27 +99,37 @@ app.post('/check-balance', async (req, res) => {
 
         console.log('🔍 Checking balance for phone:', phone);
         
-        // Get access token
+        // Get access token from ioTec
         let accessToken;
         try {
             accessToken = await getAccessToken();
+            console.log('✅ Got access token from ioTec');
         } catch (tokenError) {
-            console.error('❌ Failed to get access token:', tokenError);
-            return res.json({
-                success: true,
+            console.error('❌ Failed to get access token from ioTec:', tokenError);
+            return res.status(500).json({
+                success: false,
                 availableBalance: null,
-                accountStatus: 'PENDING_VERIFICATION',
+                accountStatus: 'AUTH_ERROR',
                 currency: 'UGX',
                 phone: phone,
-                message: 'Unable to verify balance immediately. Balance will be verified during payment.',
+                message: 'Failed to authenticate with ioTec payment provider',
                 error: tokenError.message
             });
         }
 
-        // Try Primary endpoint: ioTec Account Balance Check
-        console.log('📱 Attempting balance check via primary endpoint...');
+        // ==================== QUERY ioTEC FOR BALANCE ====================
+        // This queries the actual mobile money provider (MTN, Airtel, etc) via ioTec
+        console.log('📱 Querying ioTec for mobile money balance...');
+        console.log(`   Phone: ${phone}`);
+        console.log(`   Wallet ID: ${walletId}`);
+        
         try {
-            const response = await fetch('https://pay.iotec.io/api/v2/customers/check-balance', {
+            // ioTec Balance Query Endpoint
+            const balanceQueryUrl = 'https://pay.iotec.io/api/v2/customers/balance';
+            
+            console.log(`📤 Sending balance query to: ${balanceQueryUrl}`);
+            
+            const balanceResponse = await fetch(balanceQueryUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,88 +137,98 @@ app.post('/check-balance', async (req, res) => {
                 },
                 body: JSON.stringify({
                     phone: phone,
-                    walletId: walletId
+                    walletId: walletId,
+                    currency: 'UGX'
                 })
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Balance check response:', data);
+            console.log(`📨 ioTec Response Status: ${balanceResponse.status} ${balanceResponse.statusText}`);
+            
+            const balanceData = await balanceResponse.json();
+            console.log('📋 ioTec Response Data:', balanceData);
 
-                // Check if we got a valid balance
-                if (data.availableBalance !== null && data.availableBalance !== undefined) {
-                    return res.json({
-                        success: true,
-                        availableBalance: data.availableBalance,
-                        accountStatus: 'VERIFIED',
-                        currency: data.currency || 'UGX',
-                        phone: phone,
-                        message: 'Account verified successfully',
-                        source: 'primary'
-                    });
-                }
-            }
-        } catch (primaryError) {
-            console.log('⚠️ Primary endpoint error:', primaryError.message);
-        }
-
-        // Try Alternative endpoint: Query customer account info
-        console.log('📱 Trying alternative endpoint...');
-        try {
-            const altResponse = await fetch('https://pay.iotec.io/api/v2/customers/account-info', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({
+            // Check if response is successful
+            if (!balanceResponse.ok) {
+                console.error('❌ ioTec returned error:', balanceResponse.status, balanceData);
+                return res.status(balanceResponse.status).json({
+                    success: false,
+                    availableBalance: null,
+                    accountStatus: 'ERROR',
+                    currency: 'UGX',
                     phone: phone,
-                    walletId: walletId
-                })
-            });
-
-            if (altResponse.ok) {
-                const altData = await altResponse.json();
-                console.log('✅ Alternative endpoint response:', altData);
-
-                if (altData.balance !== null && altData.balance !== undefined) {
-                    return res.json({
-                        success: true,
-                        availableBalance: altData.balance,
-                        accountStatus: 'VERIFIED',
-                        currency: altData.currency || 'UGX',
-                        phone: phone,
-                        message: 'Account verified successfully',
-                        source: 'alternative'
-                    });
-                }
+                    message: balanceData.message || 'Failed to query balance from mobile money provider',
+                    iotecError: balanceData.error || balanceData.message
+                });
             }
-        } catch (altError) {
-            console.log('⚠️ Alternative endpoint error:', altError.message);
-        }
 
-        // Fallback: Return pending verification status
-        console.log('⚠️ All endpoints failed, returning pending status');
-        return res.json({
-            success: true,
-            availableBalance: null,
-            accountStatus: 'PENDING_VERIFICATION',
-            currency: 'UGX',
-            phone: phone,
-            message: 'Account verification in progress. Balance will be checked during payment processing.'
-        });
+            // Check if we got a valid balance from the provider
+            if (balanceData.balance !== null && balanceData.balance !== undefined) {
+                console.log(`✅ Got balance from provider: ${balanceData.balance} ${balanceData.currency || 'UGX'}`);
+                
+                return res.json({
+                    success: true,
+                    availableBalance: balanceData.balance,
+                    accountStatus: 'VERIFIED',
+                    currency: balanceData.currency || 'UGX',
+                    phone: phone,
+                    message: 'Balance retrieved successfully from mobile money provider',
+                    provider: balanceData.provider || 'Mobile Money',
+                    timestamp: new Date().toISOString()
+                });
+            } else if (balanceData.availableBalance !== null && balanceData.availableBalance !== undefined) {
+                // Alternative field name
+                console.log(`✅ Got balance from provider (alt field): ${balanceData.availableBalance} ${balanceData.currency || 'UGX'}`);
+                
+                return res.json({
+                    success: true,
+                    availableBalance: balanceData.availableBalance,
+                    accountStatus: 'VERIFIED',
+                    currency: balanceData.currency || 'UGX',
+                    phone: phone,
+                    message: 'Balance retrieved successfully from mobile money provider',
+                    provider: balanceData.provider || 'Mobile Money',
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                // No balance in response
+                console.warn('⚠️ ioTec response has no balance field:', balanceData);
+                return res.status(200).json({
+                    success: true,
+                    availableBalance: null,
+                    accountStatus: 'NO_BALANCE_DATA',
+                    currency: 'UGX',
+                    phone: phone,
+                    message: 'Could not retrieve balance from mobile money provider',
+                    iotecResponse: balanceData
+                });
+            }
+
+        } catch (iotecError) {
+            console.error('❌ Error querying ioTec balance:', iotecError.message);
+            console.error('   Error type:', iotecError.name);
+            console.error('   Full error:', iotecError);
+            
+            return res.status(500).json({
+                success: false,
+                availableBalance: null,
+                accountStatus: 'CONNECTION_ERROR',
+                currency: 'UGX',
+                phone: phone,
+                message: 'Unable to connect to mobile money provider',
+                error: iotecError.message
+            });
+        }
 
     } catch (error) {
-        console.error('Error in check-balance:', error);
+        console.error('❌ Unexpected error in check-balance:', error);
         
-        // Always return success: true with pending status to allow payment process to continue
-        return res.json({
-            success: true,
+        return res.status(500).json({
+            success: false,
             availableBalance: null,
-            accountStatus: 'PENDING_VERIFICATION',
+            accountStatus: 'ERROR',
             currency: 'UGX',
             phone: req.body.phone || 'unknown',
-            message: 'Unable to verify balance now. Balance will be verified during payment.',
+            message: 'Unexpected error checking balance',
             error: error.message
         });
     }

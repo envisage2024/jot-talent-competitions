@@ -804,20 +804,19 @@
         /**
          * Check user's mobile money wallet balance before payment
          * @param {string} phone - User's phone number
-         * @param {number} amount - Payment amount required
+         * @param {number} amount - Payment amount required (optional, for comparison)
          * @param {string} currency - Currency (UGX, USD, etc.)
-         * @returns {Object} - { success: boolean, hasSufficientBalance: boolean, message: string, details: object }
+         * @returns {Object} - { success: boolean, availableBalance: number, accountStatus: string, message: string }
          */
-        async function checkWalletBalance(phone, amount, currency = 'UGX') {
-            const balanceCheckUrl = `${SERVER_URL}/verify-balance-before-payment`;
+        async function checkWalletBalance(phone, amount = null, currency = 'UGX') {
+            const balanceCheckUrl = `${SERVER_URL}/check-balance`;
             
             try {
-                console.log(`💰 Checking wallet balance for ${phone}: Need ${amount} ${currency}`);
+                console.log(`💰 Checking wallet balance for ${phone}`);
                 console.log(`🔗 Balance check URL: ${balanceCheckUrl}`);
-                console.log(`📍 Current origin: ${window.location.origin}`);
+                console.log(`🌐 Server: ${SERVER_URL}`);
                 
                 const requestBody = {
-                    amount: Number(amount),
                     phone: phone,
                     currency: currency
                 };
@@ -840,48 +839,36 @@
                     'access-control-allow-origin': response.headers.get('access-control-allow-origin')
                 });
 
-                // Always try to parse the response, regardless of status
+                // Always try to parse the response as JSON
                 let result;
                 try {
                     result = await response.json();
                     console.log('✅ Successfully parsed response JSON:', result);
+                    console.log('🔍 Balance details:', {
+                        availableBalance: result.availableBalance,
+                        accountStatus: result.accountStatus,
+                        currency: result.currency,
+                        message: result.message
+                    });
                 } catch (parseError) {
                     console.error('❌ Failed to parse response as JSON:', parseError.message);
-                    // If we can't parse JSON, still allow payment to proceed
-                    return {
-                        success: true,
-                        hasSufficientBalance: null,
-                        message: 'Balance verification temporarily unavailable',
-                        canProceedToPayment: true,
-                        debugInfo: { parseError: parseError.message, status: response.status }
-                    };
+                    throw new Error('Invalid response format from balance check API');
                 }
 
-                // Check if response indicates success
-                if (result.success === false && result.hasSufficientBalance === false) {
-                    console.log('❌ Insufficient balance detected');
-                    return result; // Return the error result
-                }
-
-                console.log('✅ Balance check passed - result:', result);
-                
-                // Process result - even if balance is null, it's OK to proceed
-                // Balance will be verified during actual payment
+                // Return the result as-is
                 return {
                     success: result.success !== false,
-                    hasSufficientBalance: result.hasSufficientBalance,
                     availableBalance: result.availableBalance,
-                    requiredAmount: result.requiredAmount,
-                    shortfall: result.shortfall,
+                    accountStatus: result.accountStatus || 'UNKNOWN',
+                    currency: result.currency || 'UGX',
+                    phone: phone,
                     message: result.message || 'Balance check completed',
-                    canProceedToPayment: result.canProceedToPayment !== false,
-                    warning: result.warning
+                    source: result.source || 'api'
                 };
 
             } catch (error) {
                 console.error('❌ Balance check network error:', error.message);
                 console.error('   Error type:', error.name);
-                console.error('   Error details:', error);
                 
                 // If it's a network error, log more details
                 if (error instanceof TypeError) {
@@ -891,15 +878,14 @@
                     console.error('   3. Are there CORS issues?');
                 }
                 
-                // If balance check fails, allow payment to proceed
-                // (payment will still validate on backend)
+                // Return error result
                 return {
                     success: false,
-                    hasSufficientBalance: null, // Unknown
-                    message: 'Unable to verify balance - proceeding with payment',
-                    canProceedToPayment: true,
-                    warning: 'Balance verification temporarily unavailable',
-                    debugInfo: { error: error.message, errorName: error.name }
+                    availableBalance: null,
+                    accountStatus: 'ERROR',
+                    message: 'Unable to check balance',
+                    error: error.message,
+                    phone: phone
                 };
             }
         }
@@ -930,172 +916,243 @@
                 return;
             }
 
-            // ==================== CHECK BALANCE BEFORE PAYMENT ====================
-            paymentStatus.textContent = 'Checking your wallet balance...';
+            // ==================== STEP 1: CHECK BALANCE ====================
+            console.log('🔷 STEP 1: Checking wallet balance...');
+            paymentStatus.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; justify-content: center;">
+                    <span style="display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(245, 158, 11, 0.3); border-top-color: var(--warning); border-radius: 50%; animation: spin 1s linear infinite;"></span>
+                    Checking your wallet balance...
+                </div>
+                <style>
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
             paymentStatus.className = 'payment-status payment-processing';
 
             try {
                 const balanceCheck = await checkWalletBalance(phone, amount, currency);
                 console.log('📊 Balance check result:', balanceCheck);
 
-                // If insufficient balance, show error and stop
-                if (balanceCheck.hasSufficientBalance === false) {
-                    const shortfall = balanceCheck.shortfall || (balanceCheck.requiredAmount - balanceCheck.availableBalance);
+                // Check if balance check was successful
+                if (!balanceCheck.success) {
+                    // Balance check failed (network error, etc.)
                     paymentStatus.innerHTML = `
-                        <div style="color: #ef4444; text-align: left;">
-                            <strong>❌ Insufficient Balance</strong>
-                            <p>Available: ${balanceCheck.availableBalance} ${currency}</p>
-                            <p>Required: ${balanceCheck.requiredAmount} ${currency}</p>
-                            <p><strong>You need ${shortfall} more ${currency}</strong></p>
-                            <p style="font-size: 0.9em; margin-top: 8px;">Please add funds to your wallet and try again.</p>
+                        <div style="color: #dc2626; text-align: left;">
+                            <strong>❌ Balance Check Failed</strong>
+                            <p><strong>Status:</strong> ${balanceCheck.accountStatus}</p>
+                            <p>${balanceCheck.message}</p>
+                            ${balanceCheck.iotecError ? `<p style="font-size: 0.85em; color: #991b1b;">Error: ${balanceCheck.iotecError}</p>` : ''}
+                            <p style="font-size: 0.9em; margin-top: 8px;">Please check:</p>
+                            <ul style="margin-top: 6px; font-size: 0.9em;">
+                                <li>Your phone number is correct</li>
+                                <li>Your phone has active mobile money service</li>
+                                <li>You are registered with your mobile money provider (MTN, Airtel, etc.)</li>
+                            </ul>
                         </div>
                     `;
                     paymentStatus.className = 'payment-status payment-error';
-                    console.warn('❌ Payment blocked - insufficient balance');
+                    console.error('❌ Balance check failed:', balanceCheck);
+                    return; // STOP - Don't proceed
+                } else if (balanceCheck.availableBalance === null) {
+                    // Balance couldn't be retrieved
+                    paymentStatus.innerHTML = `
+                        <div style="color: #dc2626; text-align: left;">
+                            <strong>❌ Unable to Read Balance</strong>
+                            <p><strong>Status:</strong> ${balanceCheck.accountStatus}</p>
+                            <p>${balanceCheck.message}</p>
+                            <p style="font-size: 0.9em; margin-top: 8px;">Possible reasons:</p>
+                            <ul style="margin-top: 6px; font-size: 0.9em;">
+                                <li>Account not registered with mobile money provider</li>
+                                <li>Account has restrictions</li>
+                                <li>Temporary service issue from provider</li>
+                            </ul>
+                        </div>
+                    `;
+                    paymentStatus.className = 'payment-status payment-error';
+                    console.error('❌ No balance data from provider:', balanceCheck);
+                    return; // STOP - Don't proceed
+                } else if (Number(balanceCheck.availableBalance) < Number(amount)) {
+                    // INSUFFICIENT BALANCE - STOP PAYMENT
+                    const shortfall = Number(amount) - Number(balanceCheck.availableBalance);
+                    paymentStatus.innerHTML = `
+                        <div style="color: #dc2626; text-align: left;">
+                            <strong>❌ Insufficient Mobile Money Balance</strong>
+                            <p><strong>Your balance:</strong> ${Number(balanceCheck.availableBalance).toLocaleString()} ${balanceCheck.currency}</p>
+                            <p><strong>Amount needed:</strong> ${Number(amount).toLocaleString()} ${currency}</p>
+                            <p><strong style="color: #991b1b;">Shortfall:</strong> ${shortfall.toLocaleString()} ${currency}</p>
+                            <p style="font-size: 0.9em; margin-top: 8px; color: #7f1d1d;">Please add funds to your ${balanceCheck.provider} account and try again.</p>
+                        </div>
+                    `;
+                    paymentStatus.className = 'payment-status payment-error';
+                    console.warn('❌ PAYMENT BLOCKED - Insufficient balance');
                     return; // STOP - Don't proceed with payment
+                } else {
+                    // SUFFICIENT BALANCE - Show it and proceed
+                    const availableFormatted = Number(balanceCheck.availableBalance).toLocaleString();
+                    const amountFormatted = Number(amount).toLocaleString();
+                    const balanceAfter = Number(balanceCheck.availableBalance) - Number(amount);
+                    const balanceAfterFormatted = balanceAfter.toLocaleString();
+                    
+                    console.log(`✅ BALANCE VERIFIED from ${balanceCheck.provider}: ${availableFormatted} ${currency} >= ${amountFormatted} ${currency}`);
+                    console.log(`   Balance after payment: ${balanceAfterFormatted} ${currency}`);
+                    
+                    paymentStatus.innerHTML = `
+                        <div style="color: #059669; text-align: left;">
+                            <strong>✅ Balance Verified from Mobile Money Provider</strong>
+                            <p><strong>Provider:</strong> ${balanceCheck.provider}</p>
+                            <p><strong>Current balance:</strong> ${availableFormatted} ${balanceCheck.currency}</p>
+                            <p><strong>Payment amount:</strong> ${amountFormatted} ${currency}</p>
+                            <p><strong>Balance after payment:</strong> ${balanceAfterFormatted} ${currency}</p>
+                            <p style="font-size: 0.9em; margin-top: 8px; color: #047857;">✓ Sufficient funds available. Proceeding with payment...</p>
+                        </div>
+                    `;
+                    paymentStatus.className = 'payment-status payment-success';
                 }
 
-                // If balance check unavailable but allowed to try
-                if (balanceCheck.hasSufficientBalance === null) {
-                    // Don't show any warning - just proceed silently
-                    // Balance will be checked during payment by IOTEC
-                    console.log('ℹ️ Balance will be verified during payment processing');
-                }
-
-                // If sufficient balance (or check skipped), proceed with payment
-                console.log('✅ Balance check passed - proceeding with payment');
-                
             } catch (error) {
-                // If balance check throws error, still allow payment to proceed
+                // Balance check threw an exception
                 console.error('❌ Balance check exception:', error);
                 paymentStatus.innerHTML = `
                     <div style="color: #f59e0b; text-align: left;">
                         <strong>⚠️ Balance Verification Error</strong>
-                        <p>Could not verify balance, but proceeding with payment.</p>
-                        <p style="font-size: 0.9em; margin-top: 8px;">Balance will be checked during processing...</p>
+                        <p>${error.message}</p>
+                        <p style="font-size: 0.9em; margin-top: 8px;">Proceeding with payment anyway...</p>
                     </div>
                 `;
                 paymentStatus.className = 'payment-status payment-processing';
+                console.log('ℹ️ Balance check error, but proceeding with payment');
             }
 
-            // ==================== PROCEED WITH PAYMENT ====================
-            paymentStatus.textContent = 'Processing payment...';
-            paymentStatus.className = 'payment-status payment-processing';
+            // ==================== STEP 2: PROCEED WITH PAYMENT ====================
+            console.log('🔷 STEP 2: Processing payment...');
+            
+            // Add a small delay before showing the next message
+            setTimeout(async () => {
+                paymentStatus.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; justify-content: center;">
+                        <span style="display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(16, 185, 129, 0.3); border-top-color: var(--success); border-radius: 50%; animation: spin 1s linear infinite;"></span>
+                        Processing payment...
+                    </div>
+                `;
+                paymentStatus.className = 'payment-status payment-processing';
 
-            try {
-                console.log('📤 Sending payment request to:', `${SERVER_URL}/process-payment`);
-                console.log('📋 Payment data:', {
-                    method: "MobileMoney",
-                    amount: amount,
-                    phone: phone,
-                    email: email,
-                    name: name,
-                    currency: currency
-                });
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-                const response = await fetch(`${SERVER_URL}/process-payment`, {
-                    method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify({
+                try {
+                    console.log('📤 Sending payment request to:', `${SERVER_URL}/process-payment`);
+                    console.log('📋 Payment data:', {
                         method: "MobileMoney",
                         amount: amount,
                         phone: phone,
                         email: email,
                         name: name,
                         currency: currency
-                    }),
-                    signal: controller.signal
-                });
+                    });
 
-                clearTimeout(timeoutId);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-                console.log('📨 Response status:', response.status);
-                console.log('📨 Response headers:', response.headers.get('content-type'));
+                    const response = await fetch(`${SERVER_URL}/process-payment`, {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({
+                            method: "MobileMoney",
+                            amount: amount,
+                            phone: phone,
+                            email: email,
+                            name: name,
+                            currency: currency
+                        }),
+                        signal: controller.signal
+                    });
 
-                let result;
-                const contentType = response.headers.get('content-type');
-                
-                if (contentType && contentType.includes('application/json')) {
-                    result = await response.json();
-                } else {
-                    // Response is not JSON (likely HTML error page)
-                    const text = await response.text();
-                    console.error('❌ Backend Response (Status ' + response.status + '):', text.substring(0, 500));
+                    clearTimeout(timeoutId);
+
+                    console.log('📨 Response status:', response.status);
+                    console.log('📨 Response headers:', response.headers.get('content-type'));
+
+                    let result;
+                    const contentType = response.headers.get('content-type');
                     
-                    if (text.trim().startsWith('<')) {
+                    if (contentType && contentType.includes('application/json')) {
+                        result = await response.json();
+                    } else {
+                        // Response is not JSON (likely HTML error page)
+                        const text = await response.text();
+                        console.error('❌ Backend Response (Status ' + response.status + '):', text.substring(0, 500));
+                        
+                        if (text.trim().startsWith('<')) {
+                            paymentStatus.innerHTML = `
+                                <div style="color: red;">
+                                    <strong>Server Error (${response.status})</strong>
+                                    <p>The backend server is not responding correctly. It may be:</p>
+                                    <ul>
+                                        <li>Still starting up on Render.com</li>
+                                        <li>Having CORS configuration issues</li>
+                                        <li>Temporarily unavailable</li>
+                                    </ul>
+                                    <p>Please try again in a few moments or contact support.</p>
+                                    <p style="font-size: 12px;">Server: ${SERVER_URL}</p>
+                                </div>
+                            `;
+                        } else {
+                            paymentStatus.textContent = `Error: Invalid response from server (${response.status}). Response: ${text.substring(0, 100)}`;
+                        }
+                        paymentStatus.className = 'payment-status payment-error';
+                        console.error('Payment processing error: Invalid response format');
+                        return;
+                    }
+
+                    if (result.success) {
+                        paymentStatus.textContent = 'Payment successful! Your transaction ID: ' + (result.transactionId || '');
+                        paymentStatus.className = 'payment-status payment-success';
+                        
+                        // Store payment success in localStorage
+                        localStorage.setItem('paymentSuccess_firstRound', 'true');
+                        localStorage.setItem('paymentTimestamp', new Date().getTime().toString());
+                        localStorage.setItem('transactionId', result.transactionId || '');
+                        
+                        // Close modal after 3 seconds
+                        setTimeout(() => {
+                            paymentModal.style.display = 'none';
+                        }, 3000);
+                        
+                    } else {
+                        // Check for insufficient balance message
+                        if (result.message && result.message.includes('Insufficient balance')) {
+                            paymentStatus.textContent = `Payment failed: ${result.message}`;
+                        } else {
+                            paymentStatus.textContent = `Payment failed: ${result.message || 'Unknown error'}`;
+                        }
+                        paymentStatus.className = 'payment-status payment-error';
+                    }
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        paymentStatus.textContent = 'Request timed out. Please check your connection and try again.';
+                    } else if (error.message === 'Failed to fetch') {
                         paymentStatus.innerHTML = `
                             <div style="color: red;">
-                                <strong>Server Error (${response.status})</strong>
-                                <p>The backend server is not responding correctly. It may be:</p>
+                                <strong>Connection Error: Failed to Fetch</strong>
+                                <p>The payment server at <strong>${SERVER_URL}</strong> is not accessible.</p>
+                                <p>This usually means:</p>
                                 <ul>
-                                    <li>Still starting up on Render.com</li>
-                                    <li>Having CORS configuration issues</li>
-                                    <li>Temporarily unavailable</li>
+                                    <li>The server is still starting on Render.com (can take 1-2 minutes)</li>
+                                    <li>There's a CORS configuration issue</li>
+                                    <li>Your internet connection is down</li>
                                 </ul>
-                                <p>Please try again in a few moments or contact support.</p>
-                                <p style="font-size: 12px;">Server: ${SERVER_URL}</p>
+                                <p>Please try again in a few moments.</p>
                             </div>
                         `;
                     } else {
-                        paymentStatus.textContent = `Error: Invalid response from server (${response.status}). Response: ${text.substring(0, 100)}`;
+                        paymentStatus.textContent = 'Error: ' + error.message;
                     }
                     paymentStatus.className = 'payment-status payment-error';
-                    console.error('Payment processing error: Invalid response format');
-                    return;
+                    console.error('❌ Payment error:', error);
                 }
-
-                if (result.success) {
-                    paymentStatus.textContent = 'Payment successful! Your transaction ID: ' + (result.transactionId || '');
-                    paymentStatus.className = 'payment-status payment-success';
-                    
-                    // Store payment success in localStorage
-                    localStorage.setItem('paymentSuccess_firstRound', 'true');
-                    localStorage.setItem('paymentTimestamp', new Date().getTime().toString());
-                    localStorage.setItem('transactionId', result.transactionId || '');
-                    
-                    // Close modal after 3 seconds
-                    setTimeout(() => {
-                        paymentModal.style.display = 'none';
-                    }, 3000);
-                    
-                } else {
-                    // Check for insufficient balance message
-                    if (result.message && result.message.includes('Insufficient balance')) {
-                        paymentStatus.textContent = `Payment failed: ${result.message}`;
-                    } else {
-                        paymentStatus.textContent = `Payment failed: ${result.message || 'Unknown error'}`;
-                    }
-                    paymentStatus.className = 'payment-status payment-error';
-                }
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    paymentStatus.textContent = 'Request timed out. Please check your connection and try again.';
-                } else if (error.message === 'Failed to fetch') {
-                    paymentStatus.innerHTML = `
-                        <div style="color: red;">
-                            <strong>Connection Error: Failed to Fetch</strong>
-                            <p>The payment server at <strong>${SERVER_URL}</strong> is not accessible.</p>
-                            <p>This usually means:</p>
-                            <ul>
-                                <li>The server is still starting on Render.com (can take 1-2 minutes)</li>
-                                <li>There's a CORS configuration issue</li>
-                                <li>Your internet connection is down</li>
-                            </ul>
-                            <p>Please try again in a few moments.</p>
-                        </div>
-                    `;
-                } else {
-                    paymentStatus.textContent = 'Error: ' + error.message;
-                }
-                paymentStatus.className = 'payment-status payment-error';
-                console.error('❌ Payment error:', error);
-            }
+            }, 1500); // Wait 1.5 seconds before proceeding to payment
         });
 
         // Send verification code to email
