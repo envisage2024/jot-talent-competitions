@@ -288,218 +288,130 @@ app.post('/check-balance', async (req, res) => {
         }
 
         // ==================== QUERY ioTEC FOR BALANCE ====================
-        // This queries the actual mobile money provider (MTN, Airtel, etc) via ioTec
-        console.log('📱 Querying ioTec for mobile money balance...');
-        console.log(`   Phone: ${phone}`);
-        console.log(`   Wallet ID: ${walletId}`);
-        
-        try {
-            // ioTec Balance Query Endpoint - Primary
-            const balanceQueryUrl = 'https://pay.iotec.io/api/v2/customers/balance';
-            
-            console.log(`📤 Sending balance query to: ${balanceQueryUrl}`);
-            console.log(`🔑 Using Bearer token starting with: ${accessToken.substring(0, 20)}...`);
-            
-            const balanceResponse = await fetch(balanceQueryUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({
-                    phone: phone,
-                    walletId: walletId,
-                    currency: 'UGX'
-                })
-            });
-
-            console.log(`📨 ioTec Response Status: ${balanceResponse.status} ${balanceResponse.statusText}`);
-            
-            let balanceData;
-            try {
-                balanceData = await balanceResponse.json();
-                console.log('📋 ioTec Full Response Data:', JSON.stringify(balanceData, null, 2));
-            } catch (parseErr) {
-                console.error('❌ Failed to parse ioTec response as JSON:', parseErr.message);
-                const textResponse = await balanceResponse.text();
-                console.error('📋 ioTec Response (raw text):', textResponse.substring(0, 500));
-                throw new Error(`Invalid JSON response from ioTec: ${textResponse.substring(0, 100)}`);
+        // Try multiple endpoints to find the working one
+        const endpointsToTry = [
+            {
+                name: 'Balance Inquiry API (v2)',
+                url: 'https://pay.iotec.io/api/v2/inquiries/balance',
+                body: { phone: phone, walletId: walletId, clientId: clientId }
+            },
+            {
+                name: 'Customers Balance API (v2)',
+                url: 'https://pay.iotec.io/api/v2/customers/balance',
+                body: { phone: phone, walletId: walletId, currency: 'UGX' }
+            },
+            {
+                name: 'Account Balance Query',
+                url: 'https://pay.iotec.io/api/v2/accounts/balance',
+                body: { phoneNumber: phone, walletId: walletId, currency: 'UGX' }
+            },
+            {
+                name: 'Balance Check (v1)',
+                url: 'https://pay.iotec.io/api/balance-check',
+                body: { phone: phone, wallet_id: walletId }
+            },
+            {
+                name: 'Account Info',
+                url: 'https://pay.iotec.io/api/v2/accounts/info',
+                body: { phoneNumber: phone, walletId: walletId }
             }
+        ];
 
-            // Check if response is successful
-            if (!balanceResponse.ok) {
-                console.error('❌ ioTec returned error:', balanceResponse.status, balanceData);
+        let successResponse = null;
+
+        // Try each endpoint
+        for (const endpoint of endpointsToTry) {
+            console.log(`\n📱 Trying endpoint: ${endpoint.name}`);
+            console.log(`   URL: ${endpoint.url}`);
+            
+            try {
+                const balanceResponse = await fetch(endpoint.url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(endpoint.body),
+                    timeout: 15000
+                });
+
+                console.log(`   📨 Response Status: ${balanceResponse.status} ${balanceResponse.statusText}`);
                 
-                // Try alternative endpoint if primary fails
-                console.log('🔄 Trying alternative ioTec endpoint...');
+                let responseData;
                 try {
-                    const altUrl = 'https://pay.iotec.io/api/v2/accounts/balance';
-                    console.log(`📤 Trying: ${altUrl}`);
-                    
-                    const altResponse = await fetch(altUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${accessToken}`
-                        },
-                        body: JSON.stringify({
-                            phoneNumber: phone,
-                            walletId: walletId
-                        })
-                    });
-                    
-                    console.log(`📨 Alternative endpoint response: ${altResponse.status}`);
-                    
-                    if (altResponse.ok) {
-                        const altData = await altResponse.json();
-                        console.log('✅ Alternative endpoint succeeded:', altData);
-                        
-                        // Extract balance from alternative response
-                        const altBalance = altData.balance || altData.availableBalance || altData.account_balance;
-                        if (altBalance !== null && altBalance !== undefined) {
-                            return res.json({
-                                success: true,
-                                availableBalance: altBalance,
-                                accountStatus: 'VERIFIED',
-                                currency: altData.currency || 'UGX',
-                                phone: phone,
-                                message: 'Balance retrieved successfully from mobile money provider',
-                                provider: altData.provider || 'Mobile Money',
-                                source: 'alternative_endpoint'
-                            });
+                    responseData = await balanceResponse.json();
+                } catch (parseErr) {
+                    const textResp = await balanceResponse.text();
+                    console.log(`   ⚠️ Non-JSON response: ${textResp.substring(0, 100)}`);
+                    continue;
+                }
+
+                console.log(`   📋 Response Data:`, JSON.stringify(responseData, null, 2));
+
+                // Check if response contains balance data
+                if (balanceResponse.ok) {
+                    // Look for balance in various possible field names
+                    let balance = null;
+                    let foundField = null;
+
+                    const fieldNames = ['balance', 'availableBalance', 'account_balance', 'accountBalance', 
+                                      'available_balance', 'current_balance', 'walletBalance', 'amount',
+                                      'data', 'result', 'payload'];
+
+                    for (const field of fieldNames) {
+                        if (responseData[field] !== null && responseData[field] !== undefined) {
+                            if (typeof responseData[field] === 'number' && responseData[field] >= 0) {
+                                balance = responseData[field];
+                                foundField = field;
+                                break;
+                            } else if (typeof responseData[field] === 'object' && responseData[field].balance) {
+                                balance = responseData[field].balance;
+                                foundField = `${field}.balance`;
+                                break;
+                            }
                         }
                     }
-                } catch (altErr) {
-                    console.log('⚠️ Alternative endpoint also failed:', altErr.message);
-                }
-                
-                return res.status(balanceResponse.status).json({
-                    success: false,
-                    availableBalance: null,
-                    accountStatus: 'ERROR',
-                    currency: 'UGX',
-                    phone: phone,
-                    message: balanceData.message || 'Failed to query balance from mobile money provider',
-                    iotecError: balanceData.error || balanceData.message,
-                    iotecResponse: balanceData,
-                    iotecStatus: balanceResponse.status
-                });
-            }
 
-            // Debug: Log all keys in the response
-            console.log('🔍 Response keys:', Object.keys(balanceData));
-            console.log('🔍 Response values:', {
-                balance: balanceData.balance,
-                availableBalance: balanceData.availableBalance,
-                data: balanceData.data,
-                balance_info: balanceData.balance_info,
-                accountBalance: balanceData.accountBalance,
-                walletBalance: balanceData.walletBalance,
-                amount: balanceData.amount
-            });
-
-            // Try different possible field names for balance
-            const possibleBalanceFields = [
-                'balance',
-                'availableBalance',
-                'accountBalance',
-                'walletBalance',
-                'amount',
-                'balance_info',
-                'data'
-            ];
-
-            let foundBalance = null;
-            let foundBalanceField = null;
-
-            // Check direct fields
-            for (const field of possibleBalanceFields) {
-                if (balanceData[field] !== null && balanceData[field] !== undefined) {
-                    // If it's an object, try to find balance inside it
-                    if (typeof balanceData[field] === 'object' && balanceData[field].balance) {
-                        foundBalance = balanceData[field].balance;
-                        foundBalanceField = `${field}.balance`;
-                        console.log(`✅ Found balance in nested field: ${foundBalanceField} = ${foundBalance}`);
-                        break;
-                    } else if (typeof balanceData[field] === 'number') {
-                        foundBalance = balanceData[field];
-                        foundBalanceField = field;
-                        console.log(`✅ Found balance in field: ${foundBalanceField} = ${foundBalance}`);
-                        break;
+                    if (balance !== null && balance >= 0) {
+                        console.log(`✅ FOUND BALANCE: ${balance} UGX (in field: ${foundField})`);
+                        successResponse = {
+                            success: true,
+                            availableBalance: balance,
+                            accountStatus: 'VERIFIED',
+                            currency: responseData.currency || 'UGX',
+                            phone: phone,
+                            message: 'Balance retrieved successfully from mobile money provider',
+                            provider: responseData.provider || 'Mobile Money',
+                            endpoint: endpoint.name,
+                            balanceFieldName: foundField
+                        };
+                        break; // Found it!
                     }
                 }
-            }
 
-            // If we found a balance, return it
-            if (foundBalance !== null && foundBalance !== undefined) {
-                return res.json({
-                    success: true,
-                    availableBalance: foundBalance,
-                    accountStatus: 'VERIFIED',
-                    currency: balanceData.currency || 'UGX',
-                    phone: phone,
-                    message: 'Balance retrieved successfully from mobile money provider',
-                    provider: balanceData.provider || 'Mobile Money',
-                    balanceFieldName: foundBalanceField,
-                    timestamp: new Date().toISOString()
-                });
-            } else {
-                // No balance found
-                console.warn('⚠️ ioTec response has no recognized balance field');
-                console.warn('Full ioTec response for debugging:', balanceData);
-                
-                return res.status(200).json({
-                    success: false,
-                    availableBalance: null,
-                    accountStatus: 'NO_BALANCE_DATA',
-                    currency: 'UGX',
-                    phone: phone,
-                    message: 'ioTec API returned no balance data',
-                    iotecResponse: balanceData,
-                    debugInfo: {
-                        possibleFieldsChecked: possibleBalanceFields,
-                        responseKeys: Object.keys(balanceData)
-                    }
-                });
+            } catch (endpointError) {
+                console.log(`   ❌ Endpoint error: ${endpointError.message}`);
+                continue;
             }
-
-        } catch (iotecError) {
-            console.error('❌ Error querying ioTec balance:', iotecError.message);
-            console.error('   Error type:', iotecError.name);
-            console.error('   Error stack:', iotecError.stack);
-            
-            // More detailed error information
-            if (iotecError.code === 'ENOTFOUND') {
-                console.error('   Network error: DNS lookup failed - cannot resolve iotec.io domain');
-            } else if (iotecError.code === 'ECONNREFUSED') {
-                console.error('   Network error: Connection refused - ioTec server may be down');
-            } else if (iotecError.code === 'ETIMEDOUT') {
-                console.error('   Network error: Connection timeout - ioTec server not responding');
-            }
-            
-            // ==================== FALLBACK: RETURN SUCCESS TO ALLOW PAYMENT ====================
-            // If balance check fails on Render due to network issues, still allow payment to proceed
-            // The actual balance will be verified during the payment processing by ioTec
-            console.warn('⚠️ Balance check failed, but returning fallback response to allow payment attempt');
-            console.warn('   The payment backend will still validate balance when processing the transaction');
-            
-            return res.status(200).json({
-                success: true,
-                availableBalance: null,
-                accountStatus: 'PENDING_VERIFICATION',
-                currency: 'UGX',
-                phone: phone,
-                message: 'Balance verification temporarily unavailable. Proceeding with payment - balance will be verified during transaction processing.',
-                warning: 'Real-time balance verification is unavailable (this may be a Render/network issue)',
-                canProceedToPayment: true,
-                debugInfo: {
-                    error: iotecError.message,
-                    errorCode: iotecError.code,
-                    errorType: iotecError.name,
-                    recommendation: 'If problem persists, check: 1) Render server is running 2) ioTec credentials are correct 3) Render IP is whitelisted with ioTec'
-                }
-            });
         }
+
+        // If we found a successful response, return it
+        if (successResponse) {
+            console.log(`\n✅ Balance check successful!`);
+            return res.json(successResponse);
+        }
+
+        // If all endpoints failed, return error (don't use fallback)
+        console.error('\n❌ All endpoints failed to return balance data');
+        return res.status(503).json({
+            success: false,
+            availableBalance: null,
+            accountStatus: 'SERVICE_UNAVAILABLE',
+            currency: 'UGX',
+            phone: phone,
+            message: 'Unable to retrieve balance from mobile money provider. Please ensure your account is properly registered and try again.',
+            recommendation: 'If problem persists, contact support or try again in a few moments.'
+        });
 
     } catch (error) {
         console.error('❌ Unexpected error in check-balance:', error);

@@ -937,10 +937,22 @@
 
                 // Check if balance check was successful
                 if (!balanceCheck.success) {
-                    // Balance check failed (network error, etc.)
+                    // Balance check failed - STOP PAYMENT
                     let errorDetails = `<strong>Status:</strong> ${balanceCheck.accountStatus}`;
                     
-                    if (balanceCheck.accountStatus === 'CONNECTION_ERROR') {
+                    if (balanceCheck.accountStatus === 'SERVICE_UNAVAILABLE') {
+                        errorDetails = `
+                            <strong>❌ Balance Service Unavailable</strong>
+                            <p>We cannot verify your balance at this time.</p>
+                            <p style="font-size: 0.9em; margin-top: 8px;">Possible reasons:</p>
+                            <ul style="margin-top: 6px; font-size: 0.9em;">
+                                <li>Your mobile money account is not properly registered</li>
+                                <li>Temporary service issue from your mobile money provider</li>
+                                <li>Network connectivity problem</li>
+                            </ul>
+                            <p style="font-size: 0.85em; margin-top: 8px; color: #991b1b;">Please try again or contact support.</p>
+                        `;
+                    } else if (balanceCheck.accountStatus === 'CONNECTION_ERROR') {
                         errorDetails = `
                             <strong>❌ Connection Error</strong>
                             <p>Unable to reach the mobile money provider.</p>
@@ -953,53 +965,39 @@
                             <p>Could not authenticate with payment gateway.</p>
                             <p><strong>Issue:</strong> ${balanceCheck.message}</p>
                         `;
-                    } else if (balanceCheck.accountStatus === 'ERROR') {
+                    } else if (balanceCheck.accountStatus === 'NO_BALANCE_DATA') {
                         errorDetails = `
-                            <strong>❌ Provider Error</strong>
+                            <strong>❌ Cannot Read Account Balance</strong>
                             <p>${balanceCheck.message}</p>
-                            <p style="font-size: 0.85em; color: #991b1b;">Error: ${balanceCheck.iotecError || balanceCheck.error || 'Unknown error'}</p>
+                            <p style="font-size: 0.9em; margin-top: 8px;">This usually means your account is not properly set up with your mobile money provider.</p>
+                        `;
+                    } else {
+                        errorDetails = `
+                            <strong>❌ Balance Check Failed</strong>
+                            <p>${balanceCheck.message}</p>
+                            <p style="font-size: 0.85em; color: #991b1b;">Status: ${balanceCheck.accountStatus}</p>
                         `;
                     }
                     
                     paymentStatus.innerHTML = `
                         <div style="color: #dc2626; text-align: left;">
                             ${errorDetails}
-                            <p style="font-size: 0.9em; margin-top: 8px;">Please try again or contact support if problem persists.</p>
                         </div>
                     `;
                     paymentStatus.className = 'payment-status payment-error';
-                    console.error('❌ Balance check failed:', balanceCheck);
+                    console.error('❌ PAYMENT BLOCKED - Balance check failed:', balanceCheck);
                     return; // STOP - Don't proceed
-                } else if (balanceCheck.accountStatus === 'PENDING_VERIFICATION') {
-                    // Balance verification temporarily unavailable (e.g., Render network issue)
-                    // But the backend will verify during payment
-                    paymentStatus.innerHTML = `
-                        <div style="color: #f59e0b; text-align: left;">
-                            <strong>ℹ️ Balance Verification Temporarily Unavailable</strong>
-                            <p>We cannot verify your balance right now, but we will validate it during payment processing.</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #92400e;">Your balance will be checked by your mobile money provider when the payment is processed.</p>
-                        </div>
-                    `;
-                    paymentStatus.className = 'payment-status payment-processing';
-                    console.log('ℹ️ Balance pending verification (will be checked during payment)');
-                    // Continue to payment - don't stop
                 } else if (balanceCheck.availableBalance === null) {
-                    // Balance couldn't be retrieved
+                    // No balance data received - STOP PAYMENT
                     paymentStatus.innerHTML = `
                         <div style="color: #dc2626; text-align: left;">
-                            <strong>❌ Unable to Read Balance</strong>
-                            <p><strong>Status:</strong> ${balanceCheck.accountStatus}</p>
+                            <strong>❌ Balance Not Available</strong>
                             <p>${balanceCheck.message}</p>
-                            <p style="font-size: 0.9em; margin-top: 8px;">Possible reasons:</p>
-                            <ul style="margin-top: 6px; font-size: 0.9em;">
-                                <li>Account not registered with mobile money provider</li>
-                                <li>Account has restrictions</li>
-                                <li>Temporary service issue from provider</li>
-                            </ul>
+                            <p style="font-size: 0.9em; margin-top: 8px;">Cannot proceed without verifying your balance.</p>
                         </div>
                     `;
                     paymentStatus.className = 'payment-status payment-error';
-                    console.error('❌ No balance data from provider:', balanceCheck);
+                    console.error('❌ PAYMENT BLOCKED - No balance data:', balanceCheck);
                     return; // STOP - Don't proceed
                 } else if (Number(balanceCheck.availableBalance) < Number(amount)) {
                     // INSUFFICIENT BALANCE - STOP PAYMENT
@@ -1010,7 +1008,7 @@
                             <p><strong>Your balance:</strong> ${Number(balanceCheck.availableBalance).toLocaleString()} ${balanceCheck.currency}</p>
                             <p><strong>Amount needed:</strong> ${Number(amount).toLocaleString()} ${currency}</p>
                             <p><strong style="color: #991b1b;">Shortfall:</strong> ${shortfall.toLocaleString()} ${currency}</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #7f1d1d;">Please add funds to your ${balanceCheck.provider} account and try again.</p>
+                            <p style="font-size: 0.9em; margin-top: 8px; color: #7f1d1d;">Please add funds to your ${balanceCheck.provider || 'mobile money'} account and try again.</p>
                         </div>
                     `;
                     paymentStatus.className = 'payment-status payment-error';
@@ -1029,11 +1027,11 @@
                     paymentStatus.innerHTML = `
                         <div style="color: #059669; text-align: left;">
                             <strong>✅ Balance Verified from Mobile Money Provider</strong>
-                            <p><strong>Provider:</strong> ${balanceCheck.provider}</p>
+                            <p><strong>Provider:</strong> ${balanceCheck.provider || 'Mobile Money'}</p>
                             <p><strong>Current balance:</strong> ${availableFormatted} ${balanceCheck.currency}</p>
                             <p><strong>Payment amount:</strong> ${amountFormatted} ${currency}</p>
                             <p><strong>Balance after payment:</strong> ${balanceAfterFormatted} ${currency}</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #047857;">✓ Sufficient funds available. Proceeding with payment...</p>
+                            <p style="font-size: 0.9em; margin-top: 8px; color: #047857;">✓ Sufficient funds available. Processing payment...</p>
                         </div>
                     `;
                     paymentStatus.className = 'payment-status payment-success';
