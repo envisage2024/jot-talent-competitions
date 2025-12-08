@@ -833,221 +833,149 @@ app.post('/process-payment', async (req, res) => {
     }
 });
 
-// Check user balance via ioTec - Using account verification method
+// ==================== HELPER: Try balance endpoint with retry ====================
+async function tryBalanceEndpoint(endpoint, accessToken, maxRetries = 2) {
+    const possibleBalanceFields = [
+        'balance', 'availableBalance', 'account_balance', 'accountBalance',
+        'walletBalance', 'currentBalance', 'amount', 'balance_info', 'data'
+    ];
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`  📤 Attempt ${attempt + 1}/${maxRetries + 1}: ${endpoint.name}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout per endpoint
+
+            const balanceResponse = await fetch(endpoint.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify(endpoint.body),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!balanceResponse.ok) {
+                console.log(`    ↳ Status ${balanceResponse.status}, retrying...`);
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                }
+                continue;
+            }
+
+            let balanceData = await balanceResponse.json();
+
+            // Search for balance in various field names
+            for (const field of possibleBalanceFields) {
+                let balanceValue = null;
+
+                if (balanceData[field] !== null && balanceData[field] !== undefined) {
+                    if (typeof balanceData[field] === 'number') {
+                        balanceValue = balanceData[field];
+                    } else if (typeof balanceData[field] === 'object' && balanceData[field].balance) {
+                        balanceValue = balanceData[field].balance;
+                    }
+                }
+
+                if (balanceValue !== null && balanceValue >= 0) {
+                    console.log(`  ✅ Found balance: ${balanceValue} (field: ${field})`);
+                    return {
+                        success: true,
+                        balance: balanceValue,
+                        currency: balanceData.currency || 'UGX'
+                    };
+                }
+            }
+
+            console.log(`    ↳ No valid balance field found`);
+
+        } catch (err) {
+            console.log(`    ↳ Error: ${err.message}`);
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            }
+        }
+    }
+
+    return { success: false, balance: null };
+}
+
+// Check user balance via ioTec - with retry logic
 app.post('/check-balance', async (req, res) => {
     try {
         const { phone } = req.body;
-        
+
         if (!phone) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: 'Phone number is required.' 
+                availableBalance: null,
+                message: 'Phone number is required.'
             });
         }
 
-        console.log('🔍 Checking balance for phone:', phone);
-        
-        // Get access token from ioTec
+        console.log(`\n🔍 [BALANCE CHECK] Checking balance for: ${phone}`);
+
+        // Get access token
         let accessToken;
         try {
             accessToken = await getAccessToken();
-            console.log('✅ Got access token from ioTec');
         } catch (tokenError) {
-            console.error('❌ Failed to get access token from ioTec:', tokenError);
+            console.error(`❌ [BALANCE CHECK] Token error: ${tokenError.message}`);
             return res.status(500).json({
                 success: false,
                 availableBalance: null,
-                accountStatus: 'AUTH_ERROR',
-                currency: 'UGX',
-                phone: phone,
-                message: 'Failed to authenticate with ioTec payment provider',
-                error: NODE_ENV === 'development' ? tokenError.message : undefined
+                message: 'Authentication failed',
+                code: 'AUTH_ERROR'
             });
         }
 
-        // ==================== TRY MULTIPLE IOTEC ENDPOINTS ====================
-        // Since ioTec balance endpoint format is not fully documented, try multiple endpoints
-        console.log('📱 Attempting balance check from ioTec - trying multiple endpoints...');
-        console.log(`   Phone: ${phone}`);
-        console.log(`   Wallet ID: ${walletId}`);
-        
+        // Define endpoints to try
         const endpointsToTry = [
             {
                 name: 'v2 Inquiries Balance',
                 url: 'https://pay.iotec.io/api/v2/inquiries/balance',
-                body: { phone: phone, walletId: walletId, currency: 'UGX' }
-            },
-            {
-                name: 'v2 Customers Balance',
-                url: 'https://pay.iotec.io/api/v2/customers/balance',
-                body: { phone: phone, walletId: walletId, currency: 'UGX' }
+                body: { phone, walletId, currency: 'UGX' }
             },
             {
                 name: 'v2 Accounts Balance',
                 url: 'https://pay.iotec.io/api/v2/accounts/balance',
-                body: { phoneNumber: phone, walletId: walletId }
-            },
-            {
-                name: 'v2 Balance Check',
-                url: 'https://pay.iotec.io/api/v2/balance-check',
-                body: { phone: phone, walletId: walletId }
-            },
-            {
-                name: 'v2 Accounts Info',
-                url: 'https://pay.iotec.io/api/v2/accounts/info',
-                body: { phone: phone, walletId: walletId }
+                body: { phoneNumber: phone, walletId }
             }
         ];
-
-        const possibleBalanceFields = [
-            'balance',
-            'availableBalance',
-            'account_balance',
-            'accountBalance',
-            'walletBalance',
-            'currentBalance',
-            'amount',
-            'balance_info',
-            'data'
-        ];
-
-        let successResponse = null;
-        const endpointResults = [];
 
         // Try each endpoint
         for (const endpoint of endpointsToTry) {
-            try {
-                console.log(`📤 Trying endpoint: ${endpoint.name} → ${endpoint.url}`);
-                console.log(`   Body:`, JSON.stringify(endpoint.body));
-                const startTime = Date.now();
-                
-                const balanceResponse = await fetch(endpoint.url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify(endpoint.body)
+            const result = await tryBalanceEndpoint(endpoint, accessToken, 1);
+            if (result.success) {
+                console.log(`✅ [BALANCE CHECK] Balance verified: ${result.balance} ${result.currency}`);
+                return res.json({
+                    success: true,
+                    availableBalance: result.balance,
+                    currency: result.currency,
+                    phone: phone
                 });
-
-                const duration = Date.now() - startTime;
-                console.log(`📨 Response: ${balanceResponse.status} ${balanceResponse.statusText} (${duration}ms)`);
-                console.log(`   Response keys:`, Object.keys(await balanceResponse.clone().json().catch(() => ({}))));
-                
-                if (balanceResponse.ok) {
-                    let balanceData;
-                    try {
-                        balanceData = await balanceResponse.json();
-                    } catch (parseErr) {
-                        console.warn(`⚠️ Could not parse response from ${endpoint.name}`);
-                        endpointResults.push({
-                            endpoint: endpoint.name,
-                            status: balanceResponse.status,
-                            error: 'parse_error'
-                        });
-                        continue;
-                    }
-
-                    console.log(`   📋 Full response:`, JSON.stringify(balanceData, null, 2));
-
-                    endpointResults.push({
-                        endpoint: endpoint.name,
-                        status: balanceResponse.status,
-                        keys: Object.keys(balanceData),
-                        data: balanceData
-                    });
-
-                    // Look for balance in various field names
-                    for (const field of possibleBalanceFields) {
-                        let balanceValue = null;
-
-                        // Direct field check
-                        if (balanceData[field] !== null && balanceData[field] !== undefined) {
-                            if (typeof balanceData[field] === 'number') {
-                                balanceValue = balanceData[field];
-                            } else if (typeof balanceData[field] === 'object' && balanceData[field].balance) {
-                                balanceValue = balanceData[field].balance;
-                            }
-                        }
-
-                        if (balanceValue !== null) {
-                            console.log(`✅ FOUND BALANCE: ${balanceValue} (field: ${field})`);
-                            console.log(`   From endpoint: ${endpoint.name}`);
-
-                            return res.json({
-                                success: true,
-                                availableBalance: balanceValue,
-                                accountStatus: 'VERIFIED',
-                                currency: balanceData.currency || 'UGX',
-                                phone: phone,
-                                message: 'Balance retrieved successfully from mobile money provider',
-                                provider: balanceData.provider || 'Mobile Money',
-                                endpoint: NODE_ENV === 'development' ? endpoint.name : undefined,
-                                field: NODE_ENV === 'development' ? field : undefined,
-                                timestamp: new Date().toISOString()
-                            });
-                        }
-                    }
-
-                    console.log(`⚠️ No balance field found in response from ${endpoint.name}`);
-                } else {
-                    console.log(`   ✗ Endpoint returned ${balanceResponse.status} - trying next`);
-                    endpointResults.push({
-                        endpoint: endpoint.name,
-                        status: balanceResponse.status,
-                        error: 'non-200-response'
-                    });
-                }
-
-            } catch (endpointError) {
-                console.warn(`⚠️ Error with ${endpoint.name}: ${endpointError.message}`);
-                endpointResults.push({
-                    endpoint: endpoint.name,
-                    status: 'error',
-                    error: endpointError.message,
-                    code: endpointError.code
-                });
-                if (endpointError.code === 'ENOTFOUND') {
-                    console.error('   DNS error - cannot resolve domain');
-                } else if (endpointError.code === 'ECONNREFUSED') {
-                    console.error('   Connection refused');
-                } else if (endpointError.code === 'ETIMEDOUT') {
-                    console.error('   Connection timeout');
-                }
-                // Continue to next endpoint
             }
         }
 
-        // All endpoints failed - return error with debugging info
-        console.error('❌ All ioTec balance endpoints failed to return balance data');
-        console.error('📊 Endpoint Results Summary:', JSON.stringify(endpointResults, null, 2));
-        
-        return res.status(503).json({
-            success: false,
-            availableBalance: null,
-            accountStatus: 'SERVICE_UNAVAILABLE',
-            currency: 'UGX',
-            phone: phone,
-            message: 'Unable to retrieve balance from mobile money provider. Please check your account status or try again later.',
-            recommendation: 'If problem persists, contact support or try again in a few moments.',
-            debugInfo: NODE_ENV === 'development' ? {
-                endpointsAttempted: endpointResults.length,
-                results: endpointResults
-            } : undefined
-        });
-
-    } catch (error) {
-        console.error('❌ Unexpected error in check-balance:', error);
-        console.error('   Stack:', error.stack);
-        
+        // All endpoints exhausted - return 500, not 503
+        console.error(`❌ [BALANCE CHECK] Unable to retrieve balance after all retries`);
         return res.status(500).json({
             success: false,
             availableBalance: null,
-            accountStatus: 'ERROR',
-            currency: 'UGX',
-            phone: req.body.phone || 'unknown',
-            message: 'Unexpected error checking balance',
-            error: NODE_ENV === 'development' ? error.message : undefined
+            message: 'Unable to verify balance. Please try again.',
+            code: 'BALANCE_UNAVAILABLE'
+        });
+
+    } catch (error) {
+        console.error(`❌ [BALANCE CHECK] Unexpected error: ${error.message}`);
+        return res.status(500).json({
+            success: false,
+            availableBalance: null,
+            message: 'Balance check failed',
+            code: 'INTERNAL_ERROR'
         });
     }
 });
