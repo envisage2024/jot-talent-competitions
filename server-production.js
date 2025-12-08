@@ -579,6 +579,94 @@ app.post('/verify-balance-before-payment', async (req, res) => {
     }
 });
 
+// ==================== HELPER FUNCTION: Check wallet balance ====================
+/**
+ * Check user's mobile money wallet balance before payment
+ * @param {string} phone - User's phone number
+ * @param {number} requiredAmount - Amount required for payment
+ * @param {string} currency - Currency (UGX, USD, etc.)
+ * @param {string} accessToken - OAuth access token from ioTec
+ * @returns {Object} - { success: boolean, balance: number, hasSufficientFunds: boolean, message: string }
+ */
+async function checkWalletBalance(phone, requiredAmount, currency = 'UGX', accessToken) {
+    const balanceCheckUrl = 'https://pay.iotec.io/api/v2/inquiries/balance';
+    
+    try {
+        console.log(`💰 [BALANCE CHECK] Verifying balance for ${phone}`);
+        console.log(`   Required amount: ${requiredAmount} ${currency}`);
+        
+        const balanceResponse = await fetch(balanceCheckUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                phone: phone,
+                walletId: walletId,
+                currency: currency
+            }),
+            timeout: 10000
+        });
+
+        if (!balanceResponse.ok) {
+            console.warn(`⚠️  [BALANCE CHECK] ioTec returned ${balanceResponse.status}`);
+            return {
+                success: false,
+                balance: null,
+                hasSufficientFunds: null,
+                message: `Balance check failed (${balanceResponse.status})`,
+                canProceed: false // Do not proceed if we can't verify balance
+            };
+        }
+
+        const balanceData = await balanceResponse.json();
+        const availableBalance = balanceData.balance || 
+                                 balanceData.availableBalance || 
+                                 balanceData.account_balance ||
+                                 balanceData.accountBalance;
+
+        if (availableBalance === null || availableBalance === undefined) {
+            console.warn('⚠️  [BALANCE CHECK] No balance field found in response');
+            return {
+                success: false,
+                balance: null,
+                hasSufficientFunds: null,
+                message: 'Could not retrieve balance data',
+                canProceed: false
+            };
+        }
+
+        const numBalance = Number(availableBalance);
+        const numRequired = Number(requiredAmount);
+        const hasSufficientFunds = numBalance >= numRequired;
+
+        console.log(`✅ [BALANCE CHECK] Retrieved balance: ${numBalance} ${currency}`);
+        console.log(`   Sufficient funds: ${hasSufficientFunds ? 'YES ✓' : 'NO ✗'}`);
+
+        return {
+            success: true,
+            balance: numBalance,
+            hasSufficientFunds: hasSufficientFunds,
+            shortfall: !hasSufficientFunds ? (numRequired - numBalance) : 0,
+            message: hasSufficientFunds 
+                ? 'Sufficient balance available'
+                : `Insufficient balance. Need ${numRequired} but have ${numBalance} ${currency}`,
+            canProceed: hasSufficientFunds
+        };
+
+    } catch (error) {
+        console.error(`❌ [BALANCE CHECK] Error:`, error.message);
+        return {
+            success: false,
+            balance: null,
+            hasSufficientFunds: null,
+            message: `Balance check error: ${error.message}`,
+            canProceed: false
+        };
+    }
+}
+
 // Payment endpoint - Process payment
 app.post('/process-payment', async (req, res) => {
     try {
@@ -610,6 +698,45 @@ app.post('/process-payment', async (req, res) => {
                 error: NODE_ENV === 'development' ? tokenError.message : undefined
             });
         }
+
+        // ==================== STEP 1: CHECK BALANCE FOR MOBILE MONEY ====================
+        if (method === 'MobileMoney') {
+            console.log(`\n🔷 STEP 1: Checking wallet balance before payment...`);
+            
+            const balanceCheck = await checkWalletBalance(phone, amount, currency, accessToken);
+            
+            if (!balanceCheck.success) {
+                // Balance check failed - cannot verify sufficient funds
+                console.error(`❌ Balance verification failed: ${balanceCheck.message}`);
+                return res.status(503).json({
+                    success: false,
+                    message: balanceCheck.message,
+                    code: 'BALANCE_CHECK_FAILED',
+                    phone: phone
+                });
+            }
+
+            if (!balanceCheck.hasSufficientFunds) {
+                // User has insufficient balance - reject payment
+                console.warn(`❌ Insufficient balance: ${balanceCheck.message}`);
+                return res.status(402).json({
+                    success: false,
+                    message: balanceCheck.message,
+                    code: 'INSUFFICIENT_FUNDS',
+                    phone: phone,
+                    requiredAmount: amount,
+                    availableBalance: balanceCheck.balance,
+                    shortfall: balanceCheck.shortfall,
+                    currency: currency
+                });
+            }
+
+            // Balance is sufficient - proceed to payment
+            console.log(`✅ Balance check passed: Proceeding with payment`);
+        }
+
+        // ==================== STEP 2: PROCESS PAYMENT ====================
+        console.log(`\n🔷 STEP 2: Processing payment...`);
 
         // Generate transaction ID
         const transactionId = 'TXN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
