@@ -12,6 +12,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <style>
         :root {
             --primary: #FF7A00;
@@ -469,71 +473,8 @@
         };
     </script>
 
-        <!-- Dynamically load verification script; if it fails, wire a minimal built-in fallback handler -->
-        <script>
-        (function(){
-            const statusEl = document.getElementById('status');
-            const detailsEl = document.getElementById('details');
-            const phoneInput = document.getElementById('phoneInput');
-            const checkBtn = document.getElementById('checkBtn');
-
-            function show(msg, detail) {
-                if (statusEl) statusEl.textContent = msg;
-                if (detailsEl && detail !== undefined) detailsEl.textContent = detail;
-            }
-
-            async function fallbackVerify(phone) {
-                if (!phone) { show('Please enter your phone number'); return; }
-                show('Checking server for phone ' + phone + '...');
-
-                const SERVER_URL = (function() {
-                    const hostname = window.location.hostname;
-                    if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:10000';
-                    return window.location.origin;
-                })();
-
-                try {
-                    const res = await fetch(`${SERVER_URL}/payment-status?phone=${encodeURIComponent(phone)}`);
-                    if (res.status === 404) {
-                        show('No payment found for that phone number yet.', 'If you recently paid, wait a moment and try again.');
-                        return;
-                    }
-                    if (!res.ok) {
-                        const body = await res.text().catch(()=>'');
-                        show('Server error', `Status ${res.status}: ${body}`);
-                        return;
-                    }
-
-                    const data = await res.json();
-                    detailsEl.textContent = JSON.stringify(data, null, 2);
-                    show(`Found transaction ${data.transactionId || data.id}`);
-                } catch (err) {
-                    console.warn('Fallback verify network error', err);
-                    show('Network error: ' + (err.message || err));
-                }
-            }
-
-            // Try to load the heavier verification script from common locations (origin, absolute, relative)
-            const tryPaths = [window.location.origin + '/js/verify-payment.js', '/js/verify-payment.js', 'js/verify-payment.js'];
-            function tryLoad(i) {
-                if (i >= tryPaths.length) {
-                    show('Verification script failed to load — using built-in fallback.');
-                    // Bind fallback to the button
-                    if (checkBtn) checkBtn.addEventListener('click', () => fallbackVerify((phoneInput && phoneInput.value) || ''));
-                    return;
-                }
-                const path = tryPaths[i];
-                const s = document.createElement('script');
-                s.src = path;
-                s.async = true;
-                s.onload = () => { console.log('Loaded verify script from', path); };
-                s.onerror = () => { console.warn('Failed to load verify script from', path); s.remove(); tryLoad(i+1); };
-                document.body.appendChild(s);
-            }
-
-            tryLoad(0);
-        })();
-        </script>
+    <!-- Use server-backed phone verification script (includes fallback to client Firestore) -->
+    <script src="verify-payment.js"></script>
     <script>
 (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
