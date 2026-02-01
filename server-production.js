@@ -634,6 +634,145 @@ app.post('/process-payment', async (req, res) => {
     }
 });
 
+// ==================== WEBHOOK: Provider -> Server payment events ====================
+// Accepts provider webhook events and updates Firestore payments atomically.
+// Expected body: { transactionId | externalId | reference, status, amount, currency, eventId }
+// Verifies HMAC-SHA256 signature using PAYMENT_WEBHOOK_SECRET if configured.
+const crypto = require('crypto');
+const PAYMENT_WEBHOOK_SECRET = process.env.PAYMENT_WEBHOOK_SECRET || process.env.IOTEC_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
+
+async function updatePaymentStatusInDB(txRef, newStatus, amount = null, currency = null, eventId = null) {
+    // newStatus expected: 'SUCCESS' or 'FAILED'
+    if (!adminInitAvailable || !db) {
+        throw new Error('Firestore not initialized');
+    }
+
+    if (!txRef) throw new Error('txRef required');
+    const paymentRef = db.collection('payments').doc(String(txRef));
+
+    return await db.runTransaction(async (tx) => {
+        const doc = await tx.get(paymentRef);
+        const now = admin.firestore.FieldValue.serverTimestamp();
+
+        // If doc exists and already success, noop
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.status === 'SUCCESS' || data.status === 'VERIFIED') {
+                // record eventId for dedupe
+                if (eventId) tx.update(paymentRef, { _processedEventIds: admin.firestore.FieldValue.arrayUnion(eventId) });
+                return { ok: true, action: 'noop_already_success' };
+            }
+
+            // Validate amount and currency if provided and present in DB
+            if (amount != null && data.amount != null && Number(amount) !== Number(data.amount)) {
+                return { ok: false, reason: 'amount_mismatch', expected: data.amount, received: amount };
+            }
+            if (currency != null && data.currency && currency.toUpperCase() !== String(data.currency).toUpperCase()) {
+                return { ok: false, reason: 'currency_mismatch', expected: data.currency, received: currency };
+            }
+
+            const updates = {
+                status: newStatus,
+                statusMessage: `Updated by webhook: ${newStatus}`,
+                updatedAt: now,
+                providerUpdatedAt: now
+            };
+
+            if (eventId) updates._processedEventIds = admin.firestore.FieldValue.arrayUnion(eventId);
+            if (newStatus === 'SUCCESS') updates.verifiedAt = now;
+            if (amount != null) updates.amount = Number(amount);
+            if (currency != null) updates.currency = String(currency).toUpperCase();
+
+            tx.update(paymentRef, updates);
+            return { ok: true, action: 'updated' };
+        }
+
+        // Document doesn't exist — create it with provided data
+        const createDoc = {
+            transactionId: String(txRef),
+            status: newStatus,
+            statusMessage: `Created by webhook: ${newStatus}`,
+            amount: amount != null ? Number(amount) : null,
+            currency: currency != null ? String(currency).toUpperCase() : null,
+            createdAt: now,
+            updatedAt: now,
+            providerUpdatedAt: now
+        };
+        if (eventId) createDoc._processedEventIds = [eventId];
+        if (newStatus === 'SUCCESS') createDoc.verifiedAt = now;
+
+        tx.set(paymentRef, createDoc, { merge: true });
+        return { ok: true, action: 'created' };
+    });
+}
+
+app.post('/webhook/iotec-payment', async (req, res) => {
+    try {
+        const raw = req.rawBody || JSON.stringify(req.body || {});
+        const body = req.body || {};
+
+        const txRef = body.transactionId || body.externalId || body.reference || body.txid || body.id;
+        const providerStatus = (body.status || '').toString().toUpperCase();
+        const amount = body.amount || body.value || null;
+        const currency = body.currency || null;
+        const eventId = body.eventId || body.id || null;
+
+        // Verify signature if secret configured
+        function verifySignature(headers, rawPayload) {
+            if (!PAYMENT_WEBHOOK_SECRET) return true; // not configured -> allow
+            const headerCandidates = ['x-signature', 'x-provider-signature', 'x-iotec-signature', 'x-hub-signature-256', 'x-hub-signature', 'signature'];
+            let sig = null;
+            for (const h of headerCandidates) {
+                if (headers[h]) { sig = headers[h]; break; }
+                if (headers[h.toLowerCase()]) { sig = headers[h.toLowerCase()]; break; }
+            }
+            if (!sig) return false;
+            if (sig.indexOf('=') !== -1) sig = sig.split('=')[1];
+            try {
+                const expected = crypto.createHmac('sha256', PAYMENT_WEBHOOK_SECRET).update(rawPayload || '').digest('hex');
+                const sigBuf = Buffer.from(sig, 'hex');
+                const expBuf = Buffer.from(expected, 'hex');
+                if (sigBuf.length !== expBuf.length) return false;
+                return crypto.timingSafeEqual(sigBuf, expBuf);
+            } catch (e) {
+                console.error('Webhook signature verify error:', e.message);
+                return false;
+            }
+        }
+
+        if (!verifySignature(req.headers, raw)) {
+            console.error('Invalid webhook signature');
+            return res.status(400).send('Invalid signature');
+        }
+
+        if (!txRef) {
+            console.warn('Webhook missing transaction reference');
+            return res.status(400).send('Missing transaction reference');
+        }
+
+        // Map provider status to SUCCESS/FAILED/PENDING
+        const successValues = ['SUCCESS', 'SUCCEEDED', 'COMPLETED', 'PAID'];
+        const failedValues = ['FAILED', 'DECLINED', 'CANCELLED', 'EXPIRED'];
+        let newStatus = 'PENDING';
+        if (successValues.includes(providerStatus)) newStatus = 'SUCCESS';
+        else if (failedValues.includes(providerStatus)) newStatus = 'FAILED';
+
+        // Update DB via helper (idempotent)
+        try {
+            const result = await updatePaymentStatusInDB(txRef, newStatus, amount, currency, eventId);
+            console.log('Webhook update result for', txRef, result);
+        } catch (dbErr) {
+            console.error('Error updating payment in DB from webhook:', dbErr.message);
+            return res.status(500).send('DB update failed');
+        }
+
+        return res.status(200).send('OK');
+    } catch (error) {
+        console.error('Error processing webhook:', error);
+        return res.status(500).send('Internal error');
+    }
+});
+
 // NOTE: tryBalanceEndpoint helper removed — balance endpoint helpers are disabled.
 // tryBalanceEndpoint removed
 
