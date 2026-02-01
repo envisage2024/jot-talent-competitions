@@ -445,6 +445,14 @@
             <div class="card">
                 <h1>Payment verification</h1>
                 <div id="status">Enter your phone number to check payment status</div>
+
+                <!-- Static phone input so users can type their phone number even if JS fails to inject -->
+                <div style="margin:1rem 0;">
+                    <input id="phoneInput" placeholder="Enter phone number (e.g. 0700123456)" 
+                        style="width:60%; padding:10px; border:1px solid #e5e7eb; border-radius:8px;" />
+                    <button id="checkBtn" style="padding:10px 14px; margin-left:8px; background:#FF7A00; color:#fff; border:none; border-radius:8px; cursor:pointer;">Verify</button>
+                </div>
+
                 <pre id="details" style="margin-top:1rem; white-space:pre-wrap"></pre>
             </div>
         </div>
