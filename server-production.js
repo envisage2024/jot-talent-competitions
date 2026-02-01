@@ -723,14 +723,9 @@ app.post('/process-payment', async (req, res) => {
             const balanceCheck = await checkWalletBalance(phone, amount, currency, accessToken);
             
             if (!balanceCheck.success) {
-                // Balance check failed - cannot verify sufficient funds
-                console.error(`❌ Balance verification failed: ${balanceCheck.message}`);
-                return res.status(503).json({
-                    success: false,
-                    message: balanceCheck.message,
-                    code: 'BALANCE_CHECK_FAILED',
-                    phone: phone
-                });
+                // Balance check failed (network/token/etc). Log and proceed with payment attempt.
+                console.warn(`⚠️ Balance verification unavailable: ${balanceCheck.message} - proceeding with payment attempt`);
+                // Continue without blocking; the payment provider will ultimately confirm or fail the transaction.
             }
 
             if (!balanceCheck.hasSufficientFunds) {
