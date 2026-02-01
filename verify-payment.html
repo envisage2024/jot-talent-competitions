@@ -8,6 +8,9 @@
     <title>Verify Payment - Jot Talent Competitions</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase client SDK (used as a fallback if server DB is unavailable) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -447,11 +450,25 @@
         </div>
     </main>
 
-    <!-- Use server-backed phone verification script -->
-    <script src="verify-payment.js"></script>
+    <!-- Provide Firebase config for client-side fallback lookup -->
+    <script>
+        // Minimal Firebase client config (safe to expose). Kept in a global for the fallback logic.
+        window.__FIREBASE_CONFIG__ = {
+            apiKey: "AIzaSyBgnkqrg_2clJ77WTonEQFC3gwVrG7HrO4",
+            authDomain: "jot-talent-competitions-72b9f.firebaseapp.com",
+            databaseURL: "https://jot-talent-competitions-72b9f-default-rtdb.firebaseio.com",
+            projectId: "jot-talent-competitions-72b9f",
+            storageBucket: "jot-talent-competitions-72b9f.firebasestorage.app",
+            messagingSenderId: "25581487736",
+            appId: "1:25581487736:web:a3730b66cd4fb7d9ebcf8d",
+            measurementId: "G-8NRD37H5YD"
+        };
+    </script>
+
+    <!-- Use server-backed phone verification script (includes fallback to client Firestore) -->
+    <script src="js/verify-payment.js"></script>
     <script>
 (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 </body>
 </html>
-

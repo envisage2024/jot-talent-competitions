@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Strict default: deny everything unless explicitly allowed below
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Payments collection: only allow authenticated reads (recommended)
+    // This prevents public unauthenticated access to payment records.
+    // If you need public phone-based lookup, prefer the "token" approach described below
+    match /payments/{paymentId} {
+      // Allow get/list only for authenticated users (service accounts or end-users)
+      allow get, list: if request.auth != null;
+
+      // Writes (creation/updates) should be performed by server (admin SDK)
+      allow create, update, delete: if false;
+    }
+
+    // Phone lookup tokens (managed by server admin SDK):
+    // - The server creates a short-lived token document with ID = a random token
+    // - The token doc contains { phone: "0700123456", expiresAt: <timestamp> }
+    // - The client requests the server to create the token; server returns the token string
+    // - The client then calls a server endpoint (recommended) which validates the token
+    //   and returns the payment record. Avoid letting clients query Firestore directly
+    //   using these tokens where possible.
+    match /phone_lookup_tokens/{tokenId} {
+      // Explicitly deny client reads/writes — tokens are managed by the server only.
+      allow read, write: if false;
+    }
+
+    // Optional: If you're running a trusted frontend with Firebase Authentication,
+    // you can allow users to read their own payment records by checking a claim or
+    // comparing request.auth.token.phone (if you set that via custom claims) to
+    // resource.data.phone. Example (uncomment and adapt if you use auth + claims):
+    //
+    // match /payments/{paymentId} {
+    //   allow get: if request.auth != null && request.auth.token.phone == resource.data.phone;
+    // }
+    //
+    // Note: Setting custom claims with phone numbers is sensitive. Prefer server-side
+    // verification (OTP) or server endpoints that return data after verifying the user.
+  }
+}

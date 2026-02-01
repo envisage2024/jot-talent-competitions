@@ -35,18 +35,39 @@
         return 'https://jot-talent-competitions.onrender.com';
       })();
 
-      const res = await fetch(`${SERVER_URL}/payment-status?phone=${encodeURIComponent(phone)}`);
-      if (res.status === 404) {
-        show('No payment found for that phone number yet.', 'If you recently paid, wait a moment and try again.');
-        return;
-      }
-      if (!res.ok) {
-        const body = await res.text();
-        show('Server error', `Status ${res.status}: ${body}`);
-        return;
+      let payment = null;
+      let serverOk = false;
+      try {
+        const res = await fetch(`${SERVER_URL}/payment-status?phone=${encodeURIComponent(phone)}`);
+        if (res.ok) {
+          payment = await res.json();
+          serverOk = true;
+        } else if (res.status === 404) {
+          show('No payment found for that phone number yet.', 'If you recently paid, wait a moment and try again.');
+          return;
+        } else if (res.status === 503) {
+          // Server reports DB unavailable -> fallback to client Firestore lookup
+          console.warn('Server returned 503, attempting client Firestore lookup fallback');
+        } else {
+          const body = await res.text();
+          show('Server error', `Status ${res.status}: ${body}`);
+          return;
+        }
+      } catch (err) {
+        console.warn('Network/server error when contacting verification server:', err.message);
       }
 
-      const payment = await res.json();
+      // If server failed or returned 503, attempt client-side Firestore lookup as a fallback
+      if (!serverOk) {
+        const fallback = await clientFirestoreLookup(phone);
+        if (fallback) {
+          payment = fallback;
+          show(`Found transaction ${payment.transactionId || payment.id}. (from client Firestore)`);
+        } else {
+          show('Verification service unavailable and no client cached payment found.', 'Please try again later or contact support.');
+          return;
+        }
+      }
       if (!payment || !payment.transactionId) {
         show('No valid payment found for that phone');
         return;
@@ -77,6 +98,18 @@
         try {
           const r = await fetch(`${SERVER_URL}/payment-status/${encodeURIComponent(tx)}`);
           if (!r.ok) {
+            // If server DB is flakey, attempt client-side lookup as fallback
+            if (r.status === 503) {
+              const fb = await clientFirestoreLookup(phone);
+              if (fb && (fb.status === 'SUCCESS' || fb.status === 'FAILED')) {
+                show(fb.status === 'SUCCESS' ? '✅ Payment verified — entry confirmed' : '❌ Payment failed: ' + (fb.statusMessage || 'Unknown'));
+                document.getElementById('details').innerText = JSON.stringify(fb, null, 2);
+                clearInterval(intervalId);
+                return;
+              }
+              console.warn('Polling server returned 503 and no client fallback found');
+              return;
+            }
             console.warn('Polling error', r.status);
             return;
           }
@@ -106,5 +139,37 @@
       show('Error verifying payment: ' + (err.message || err));
     }
   });
+
+
+  // Client-side Firestore fallback lookup
+  async function clientFirestoreLookup(phone) {
+    try {
+      if (!window.firebase || !window.__FIREBASE_CONFIG__) {
+        console.warn('Firebase SDK or config not present for client fallback');
+        return null;
+      }
+
+      if (!window._clientDb) {
+        try {
+          firebase.initializeApp(window.__FIREBASE_CONFIG__);
+        } catch (e) {
+          // ignore if already initialized
+        }
+        window._clientDb = firebase.firestore();
+      }
+
+      const paymentsSnapshot = await window._clientDb.collection('payments')
+        .where('phone', '==', phone)
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
+
+      if (paymentsSnapshot.empty) return null;
+      return paymentsSnapshot.docs[0].data();
+    } catch (e) {
+      console.error('Client Firestore lookup failed:', e.message || e);
+      return null;
+    }
+  }
 
 })();
