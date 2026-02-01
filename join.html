@@ -827,113 +827,15 @@
                 return;
             }
 
-            // ==================== STEP 1: CHECK BALANCE ====================
-            console.log('🔷 STEP 1: Checking wallet balance...');
+            // NOTE: client-side balance checks removed. Proceeding directly to payment processing.
+            console.log('🔷 STEP 1: (skipped) Client-side balance check removed — proceeding to payment');
             paymentStatus.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px; justify-content: center;">
-                    <span style="display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(245, 158, 11, 0.3); border-top-color: var(--warning); border-radius: 50%; animation: spin 1s linear infinite;"></span>
-                    Checking your wallet balance...
+                <div style="color: #f59e0b; text-align: left;">
+                    <strong>ℹ️ Balance check skipped</strong>
+                    <p>We no longer perform client-side balance verification. The server will handle payment validation and reconciliation.</p>
                 </div>
-                <style>
-                    @keyframes spin {
-                        to { transform: rotate(360deg); }
-                    }
-                </style>
             `;
             paymentStatus.className = 'payment-status payment-processing';
-
-            try {
-                const balanceCheck = await checkWalletBalance(phone, amount, currency);
-                console.log('📊 Balance check result:', balanceCheck);
-
-                // ==================== STRICT VALIDATION: NO GRACE PERIOD ====================
-                // Condition 1: API must return success: true
-                if (balanceCheck.success !== true) {
-                    // Balance verification unavailable (network/token). Warn but allow proceeding.
-                    paymentStatus.innerHTML = `
-                        <div style="color: #f59e0b; text-align: left;">
-                            <strong>⚠️ Balance Verification Unavailable</strong>
-                            <p>${balanceCheck.message}</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #5c3d00;">
-                                We couldn't verify your balance right now. We'll attempt the payment — if it fails you will be notified.
-                            </p>
-                        </div>
-                    `;
-                    paymentStatus.className = 'payment-status payment-processing';
-                    console.warn('⚠️ PAYMENT: Balance check unavailable — proceeding');
-                    // Do not return; continue to payment step
-                }
-
-                // Condition 2: availableBalance must NOT be null/undefined
-                if (balanceCheck.availableBalance === null || balanceCheck.availableBalance === undefined) {
-                    // Balance could not be read but the API reported success === true unexpectedly.
-                    paymentStatus.innerHTML = `
-                        <div style="color: #f59e0b; text-align: left;">
-                            <strong>⚠️ Account Balance Unavailable</strong>
-                            <p>Your mobile money account balance could not be retrieved right now.</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #5c3d00;">
-                                We'll attempt the payment; if it fails you will be notified.
-                            </p>
-                        </div>
-                    `;
-                    paymentStatus.className = 'payment-status payment-processing';
-                    console.warn('⚠️ PAYMENT: No balance data but proceeding');
-                    // Do not return; continue to payment
-                }
-
-                // Condition 3: availableBalance must be >= required amount
-                if (Number(balanceCheck.availableBalance) < Number(amount)) {
-                    const shortfall = Number(amount) - Number(balanceCheck.availableBalance);
-                    paymentStatus.innerHTML = `
-                        <div style="color: #dc2626; text-align: left;">
-                            <strong>❌ Insufficient Mobile Money Balance</strong>
-                            <p><strong>Your balance:</strong> ${Number(balanceCheck.availableBalance).toLocaleString()} ${balanceCheck.currency}</p>
-                            <p><strong>Amount needed:</strong> ${Number(amount).toLocaleString()} ${currency}</p>
-                            <p><strong style="color: #991b1b;">Shortfall:</strong> ${shortfall.toLocaleString()} ${currency}</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #7f1d1d;">
-                                Please add funds to your mobile money account and try again.
-                            </p>
-                        </div>
-                    `;
-                    paymentStatus.className = 'payment-status payment-error';
-                    console.error('❌ PAYMENT BLOCKED: Insufficient balance');
-                    return; // STOP - Do NOT proceed
-                }
-
-                // ==================== ALL CHECKS PASSED ====================
-                const availableFormatted = Number(balanceCheck.availableBalance).toLocaleString();
-                const amountFormatted = Number(amount).toLocaleString();
-                const balanceAfter = Number(balanceCheck.availableBalance) - Number(amount);
-                const balanceAfterFormatted = balanceAfter.toLocaleString();
-
-                console.log(`✅ [STEP 1 PASS] Balance verified: ${availableFormatted} >= ${amountFormatted}`);
-
-                paymentStatus.innerHTML = `
-                    <div style="color: #059669; text-align: left;">
-                        <strong>✅ Balance Verified</strong>
-                        <p><strong>Your balance:</strong> ${availableFormatted} ${balanceCheck.currency}</p>
-                        <p><strong>Payment amount:</strong> ${amountFormatted} ${currency}</p>
-                        <p><strong>Balance after:</strong> ${balanceAfterFormatted} ${currency}</p>
-                    </div>
-                `;
-                paymentStatus.className = 'payment-status payment-success';
-
-            } catch (error) {
-                // Unexpected exception during balance check - warn and proceed with payment attempt
-                console.error('❌ Balance check exception:', error);
-                paymentStatus.innerHTML = `
-                    <div style="color: #f59e0b; text-align: left;">
-                        <strong>⚠️ Balance Check Error</strong>
-                        <p>${error.message}</p>
-                        <p style="font-size: 0.9em; margin-top: 8px; color: #5c3d00;">
-                            Could not verify your balance. We'll attempt the payment; if it fails you will be notified.
-                        </p>
-                    </div>
-                `;
-                paymentStatus.className = 'payment-status payment-processing';
-                console.warn('⚠️ PAYMENT: Balance check error — proceeding');
-                // Do not return; continue to payment step
-            }
 
             // ==================== STEP 2: PROCEED WITH PAYMENT ====================
             console.log('🔷 STEP 2: Processing payment...');
