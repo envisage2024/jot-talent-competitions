@@ -474,9 +474,10 @@
     </script>
 
     <!-- Use server-backed phone verification script (includes fallback to client Firestore) -->
-    <script src="js/verify-payment.js"></script>
+    <script src="verify-payment.js"></script>
     <script>
 (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="c6VJtpfWM1-jfpJmOkkFU";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 </body>
 </html>
+
