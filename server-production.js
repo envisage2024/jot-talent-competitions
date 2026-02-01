@@ -785,40 +785,48 @@ app.get('/payment-status/:transactionId?', async (req, res) => {
         let transactionId = req.params.transactionId;
         const email = req.query.email;
         
-        // If email query param provided, search by email
-        if (email && !transactionId) {
-            console.log(`🔍 Searching payments by email: ${email}`);
-            
-            if (!adminInitAvailable || !db) {
-                return res.status(503).json({ 
-                    message: 'Payment database unavailable',
-                    success: false 
-                });
-            }
-            
-            try {
-                // Query Firestore for payments by email
-                const paymentsSnapshot = await db.collection('payments')
-                    .where('email', '==', email)
-                    .orderBy('createdAt', 'desc')
-                    .limit(1)
-                    .get();
-                
-                if (paymentsSnapshot.empty) {
-                    return res.status(404).json({ 
-                        message: `No payments found for email: ${email}`,
+        // If email or phone query param provided, search by those fields
+        if (!transactionId) {
+            // prefer email if present, otherwise phone
+            const queryEmail = req.query.email;
+            const queryPhone = req.query.phone;
+
+            if (queryEmail || queryPhone) {
+                const field = queryEmail ? 'email' : 'phone';
+                const value = queryEmail || queryPhone;
+                console.log(`🔍 Searching payments by ${field}: ${value}`);
+
+                if (!adminInitAvailable || !db) {
+                    return res.status(503).json({ 
+                        message: 'Payment database unavailable',
                         success: false 
                     });
                 }
-                
-                const paymentData = paymentsSnapshot.docs[0].data();
-                return res.json(paymentData);
-            } catch (firestoreError) {
-                console.error('❌ Firestore query error:', firestoreError.message);
-                return res.status(500).json({ 
-                    message: 'Error searching payments',
-                    error: NODE_ENV === 'development' ? firestoreError.message : undefined
-                });
+
+                try {
+                    // Query Firestore for payments by the field
+                    const paymentsSnapshot = await db.collection('payments')
+                        .where(field, '==', value)
+                        .orderBy('createdAt', 'desc')
+                        .limit(1)
+                        .get();
+
+                    if (paymentsSnapshot.empty) {
+                        return res.status(404).json({ 
+                            message: `No payments found for ${field}: ${value}`,
+                            success: false 
+                        });
+                    }
+
+                    const paymentData = paymentsSnapshot.docs[0].data();
+                    return res.json(paymentData);
+                } catch (firestoreError) {
+                    console.error('❌ Firestore query error:', firestoreError.message);
+                    return res.status(500).json({ 
+                        message: 'Error searching payments',
+                        error: NODE_ENV === 'development' ? firestoreError.message : undefined
+                    });
+                }
             }
         }
 
