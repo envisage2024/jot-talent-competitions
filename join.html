@@ -919,19 +919,55 @@
                     }
 
                     if (result.success) {
-                        paymentStatus.textContent = 'Payment successful! Your transaction ID: ' + (result.transactionId || '');
+                        const txnId = result.transactionId || '';
+                        paymentStatus.textContent = 'Payment processed. Transaction ID: ' + txnId;
                         paymentStatus.className = 'payment-status payment-success';
-                        
-                        // Store payment success in localStorage
+
+                        // Store payment success and transaction id in localStorage
                         localStorage.setItem('paymentSuccess_firstRound', 'true');
                         localStorage.setItem('paymentTimestamp', new Date().getTime().toString());
-                        localStorage.setItem('transactionId', result.transactionId || '');
-                        
-                        // Close modal after 3 seconds
+                        if (txnId) localStorage.setItem('transactionId', txnId);
+
+                        // Start listening for verification updates in Firestore (webhook will update the payments doc)
+                        try {
+                            if (txnId && typeof db !== 'undefined' && db) {
+                                const paymentDocRef = db.collection('payments').doc(txnId);
+                                const unsubscribe = paymentDocRef.onSnapshot(doc => {
+                                    if (!doc.exists) return;
+                                    const data = doc.data();
+                                    console.log('🔔 Payment doc update:', data);
+
+                                    if (data.status === 'SUCCESS' || data.status === 'VERIFIED') {
+                                        paymentStatus.textContent = '✅ Payment verified — your entry is confirmed. Transaction ID: ' + txnId;
+                                        paymentStatus.className = 'payment-status payment-success';
+                                        // Show join button
+                                        payBtn.style.display = 'none';
+                                        joinBtn.style.display = 'block';
+                                        joinBtn.disabled = false;
+                                        // Unsubscribe after final state
+                                        try { unsubscribe(); } catch (e) { /* ignore */ }
+                                    } else if (data.status === 'FAILED') {
+                                        paymentStatus.textContent = '❌ Payment failed: ' + (data.statusMessage || 'Please try again.');
+                                        paymentStatus.className = 'payment-status payment-error';
+                                        try { unsubscribe(); } catch (e) { /* ignore */ }
+                                    } else {
+                                        // Still pending
+                                        paymentStatus.textContent = '⏳ Payment pending — waiting for confirmation...';
+                                        paymentStatus.className = 'payment-status payment-processing';
+                                    }
+                                }, err => {
+                                    console.error('Payment doc listener error:', err);
+                                });
+                            }
+                        } catch (listenErr) {
+                            console.warn('Could not attach payment verification listener:', listenErr.message);
+                        }
+
+                        // Close modal after 3 seconds (UI will update when webhook arrives)
                         setTimeout(() => {
                             paymentModal.style.display = 'none';
                         }, 3000);
-                        
+
                     } else {
                         // Check for insufficient balance message
                         if (result.message && result.message.includes('Insufficient balance')) {
