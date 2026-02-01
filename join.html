@@ -1028,36 +1028,36 @@
                 // ==================== STRICT VALIDATION: NO GRACE PERIOD ====================
                 // Condition 1: API must return success: true
                 if (balanceCheck.success !== true) {
+                    // Balance verification unavailable (network/token). Warn but allow proceeding.
                     paymentStatus.innerHTML = `
-                        <div style="color: #dc2626; text-align: left;">
-                            <strong>❌ Balance Verification Failed</strong>
+                        <div style="color: #f59e0b; text-align: left;">
+                            <strong>⚠️ Balance Verification Unavailable</strong>
                             <p>${balanceCheck.message}</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #991b1b;">
-                                We cannot proceed without verifying your balance. 
-                                Please ensure your mobile money account is active and try again.
+                            <p style="font-size: 0.9em; margin-top: 8px; color: #5c3d00;">
+                                We couldn't verify your balance right now. We'll attempt the payment — if it fails you will be notified.
                             </p>
                         </div>
                     `;
-                    paymentStatus.className = 'payment-status payment-error';
-                    console.error('❌ PAYMENT BLOCKED: Balance check failed');
-                    return; // STOP - Do NOT proceed
+                    paymentStatus.className = 'payment-status payment-processing';
+                    console.warn('⚠️ PAYMENT: Balance check unavailable — proceeding');
+                    // Do not return; continue to payment step
                 }
 
                 // Condition 2: availableBalance must NOT be null/undefined
                 if (balanceCheck.availableBalance === null || balanceCheck.availableBalance === undefined) {
+                    // Balance could not be read but the API reported success === true unexpectedly.
                     paymentStatus.innerHTML = `
-                        <div style="color: #dc2626; text-align: left;">
-                            <strong>❌ Cannot Read Account Balance</strong>
-                            <p>Your mobile money account balance could not be retrieved.</p>
-                            <p style="font-size: 0.9em; margin-top: 8px; color: #991b1b;">
-                                This usually means your account is not properly set up. 
-                                Contact your mobile money provider or try again later.
+                        <div style="color: #f59e0b; text-align: left;">
+                            <strong>⚠️ Account Balance Unavailable</strong>
+                            <p>Your mobile money account balance could not be retrieved right now.</p>
+                            <p style="font-size: 0.9em; margin-top: 8px; color: #5c3d00;">
+                                We'll attempt the payment; if it fails you will be notified.
                             </p>
                         </div>
                     `;
-                    paymentStatus.className = 'payment-status payment-error';
-                    console.error('❌ PAYMENT BLOCKED: No balance data');
-                    return; // STOP - Do NOT proceed
+                    paymentStatus.className = 'payment-status payment-processing';
+                    console.warn('⚠️ PAYMENT: No balance data but proceeding');
+                    // Do not return; continue to payment
                 }
 
                 // Condition 3: availableBalance must be >= required amount
@@ -1098,20 +1098,20 @@
                 paymentStatus.className = 'payment-status payment-success';
 
             } catch (error) {
-                // Unexpected exception - also block payment
+                // Unexpected exception during balance check - warn and proceed with payment attempt
                 console.error('❌ Balance check exception:', error);
                 paymentStatus.innerHTML = `
-                    <div style="color: #dc2626; text-align: left;">
-                        <strong>❌ Balance Check Error</strong>
+                    <div style="color: #f59e0b; text-align: left;">
+                        <strong>⚠️ Balance Check Error</strong>
                         <p>${error.message}</p>
-                        <p style="font-size: 0.9em; margin-top: 8px; color: #991b1b;">
-                            Could not verify your balance. Payment cannot proceed.
+                        <p style="font-size: 0.9em; margin-top: 8px; color: #5c3d00;">
+                            Could not verify your balance. We'll attempt the payment; if it fails you will be notified.
                         </p>
                     </div>
                 `;
-                paymentStatus.className = 'payment-status payment-error';
-                console.error('❌ PAYMENT BLOCKED: Unexpected error');
-                return; // STOP - Do NOT proceed
+                paymentStatus.className = 'payment-status payment-processing';
+                console.warn('⚠️ PAYMENT: Balance check error — proceeding');
+                // Do not return; continue to payment step
             }
 
             // ==================== STEP 2: PROCEED WITH PAYMENT ====================
