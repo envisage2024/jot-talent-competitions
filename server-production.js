@@ -114,10 +114,21 @@ const corsOptions = {
     }
     
     // Check if origin is in whitelist
-    if (ALLOWED_ORIGINS.includes(origin)) {
+        if (ALLOWED_ORIGINS.includes(origin)) {
       console.log(`[CORS] ✓ Allowing ${origin}`);
       return callback(null, true);
     }
+    
+        // Allow Render-hosted subdomains (e.g. your-app.onrender.com)
+        try {
+                const originHost = new URL(origin).hostname;
+                if (originHost && originHost.endsWith('.onrender.com')) {
+                        console.log(`[CORS] ✓ Allowing Render origin ${origin}`);
+                        return callback(null, true);
+                }
+        } catch (e) {
+                // ignore URL parse errors and continue to rejection
+        }
     
     // In development, allow more origins for testing
     if (NODE_ENV === 'development') {
@@ -138,8 +149,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Body parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Capture raw body for webhook signature verification (some providers sign the raw payload)
+const rawBodySaver = (req, res, buf, encoding) => {
+    if (buf && buf.length) {
+        req.rawBody = buf.toString(encoding || 'utf8');
+    }
+};
+app.use(express.json({ limit: '10mb', verify: rawBodySaver }));
+app.use(express.urlencoded({ extended: true, limit: '10mb', verify: rawBodySaver }));
 
 // Handle preflight requests explicitly for all routes
 app.options('*', cors(corsOptions));
@@ -1775,6 +1792,152 @@ app.post('/admin/update-judge', verifyIdToken, async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to update judge' });
     }
 });
+
+// ==================== PAYMENT RECONCILER (AUTO) ====================
+// Periodically scans for PENDING payments and reconciles with ioTec API.
+// This runs inside the main server process (suitable for Render). Configure with env vars.
+const ENABLE_PAYMENT_RECONCILER = (process.env.ENABLE_PAYMENT_RECONCILER || 'true').toLowerCase() === 'true';
+const PAYMENT_RECONCILER_INTERVAL_MS = Number(process.env.PAYMENT_RECONCILER_INTERVAL_MS || 5 * 60 * 1000); // default 5 minutes
+const PAYMENT_RECONCILER_PENDING_AGE_MS = Number(process.env.PAYMENT_RECONCILER_PENDING_AGE_MS || 60 * 1000); // default 1 minute
+const PAYMENT_RECONCILER_QUERY_LIMIT = Number(process.env.PAYMENT_RECONCILER_QUERY_LIMIT || 50);
+
+async function reconcilePendingPaymentsOnce() {
+    if (!adminInitAvailable || !db) {
+        console.warn('⏯️ Reconciler: Firebase admin not available, skipping reconciliation');
+        return;
+    }
+
+    console.log(`
+🔁 [RECONCILER] Starting reconciliation run - looking for PENDING payments older than ${PAYMENT_RECONCILER_PENDING_AGE_MS}ms`);
+
+    try {
+        const cutoff = new Date(Date.now() - PAYMENT_RECONCILER_PENDING_AGE_MS);
+        const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+        const q = db.collection('payments')
+            .where('status', '==', 'PENDING')
+            .where('createdAt', '<=', cutoffTs)
+            .orderBy('createdAt', 'asc')
+            .limit(PAYMENT_RECONCILER_QUERY_LIMIT);
+
+        const snapshot = await q.get();
+        if (snapshot.empty) {
+            console.log('🔁 [RECONCILER] No pending payments to reconcile');
+            return;
+        }
+
+        console.log(`🔁 [RECONCILER] Found ${snapshot.size} pending payments to check`);
+
+        // Get access token once per run
+        let accessToken = null;
+        try {
+            accessToken = await getAccessToken();
+        } catch (tokenErr) {
+            console.error('🔁 [RECONCILER] Failed to obtain access token:', tokenErr.message);
+            return;
+        }
+
+        // Process sequentially to avoid hitting provider rate limits; could be parallelized with care
+        for (const doc of snapshot.docs) {
+            const paymentId = doc.id;
+            const data = doc.data();
+            const ioTecId = data.ioTecTransactionId || data.ioTecId || data.externalId || data.transactionId;
+
+            // If no provider id to check, skip but log
+            if (!ioTecId) {
+                console.warn(`🔁 [RECONCILER] Payment ${paymentId} missing ioTecTransactionId; skipping`);
+                continue;
+            }
+
+            console.log(`🔁 [RECONCILER] Checking payment ${paymentId} -> ioTec ${ioTecId}`);
+
+            try {
+                const resp = await fetch(`https://pay.iotec.io/api/collections/${ioTecId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    timeout: 15000
+                });
+
+                if (!resp.ok) {
+                    // If 404, provider says not found - we mark as FAILED and add note
+                    if (resp.status === 404) {
+                        console.warn(`🔁 [RECONCILER] ioTec returned 404 for ${ioTecId} - marking payment ${paymentId} as FAILED`);
+                        try {
+                            await db.collection('payments').doc(paymentId).update({
+                                status: 'FAILED',
+                                statusMessage: 'ioTec: transaction not found (reconciler)',
+                                lastReconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+                                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                            });
+                        } catch (e) {
+                            console.error(`🔁 [RECONCILER] Failed to update Firestore for ${paymentId}:`, e.message);
+                        }
+                        continue;
+                    }
+
+                    console.warn(`🔁 [RECONCILER] ioTec check for ${ioTecId} returned HTTP ${resp.status}; skipping update`);
+                    continue;
+                }
+
+                const payload = await resp.json();
+                const providerStatus = (payload.status || '').toString().toUpperCase();
+
+                // Decide mapped status
+                const successValues = ['SUCCESS', 'SUCCEEDED', 'COMPLETED', 'PAID'];
+                const failedValues = ['FAILED', 'DECLINED', 'CANCELLED', 'EXPIRED'];
+                let mappedStatus = 'PENDING';
+                if (successValues.includes(providerStatus)) mappedStatus = 'SUCCESS';
+                else if (failedValues.includes(providerStatus)) mappedStatus = 'FAILED';
+
+                // Update Firestore document
+                const updatePayload = {
+                    status: mappedStatus,
+                    providerStatus: providerStatus,
+                    statusMessage: payload.statusMessage || `Reconciled: ${providerStatus}`,
+                    ioTecData: payload,
+                    lastReconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (mappedStatus === 'SUCCESS') {
+                    updatePayload.verifiedAt = admin.firestore.FieldValue.serverTimestamp();
+                }
+
+                await db.collection('payments').doc(paymentId).update(updatePayload);
+                console.log(`🔁 [RECONCILER] Updated payment ${paymentId} => ${mappedStatus}`);
+
+                // Small delay between requests to be polite to ioTec
+                await new Promise(r => setTimeout(r, 250));
+
+            } catch (err) {
+                console.error(`🔁 [RECONCILER] Error checking payment ${paymentId}:`, err.message);
+            }
+        }
+
+    } catch (error) {
+        console.error('🔁 [RECONCILER] Unexpected error during reconciliation run:', error.message);
+    }
+}
+
+// Start periodic reconciler if enabled
+if (ENABLE_PAYMENT_RECONCILER) {
+    // Kick off an immediate run after server starts
+    setTimeout(() => {
+        reconcilePendingPaymentsOnce().catch(e => console.error('Initial reconciler run failed:', e.message));
+    }, 5000);
+
+    // Schedule recurring runs
+    setInterval(() => {
+        reconcilePendingPaymentsOnce().catch(e => console.error('Scheduled reconciler run failed:', e.message));
+    }, PAYMENT_RECONCILER_INTERVAL_MS);
+
+    console.log(`🔁 Payment reconciler enabled: interval=${PAYMENT_RECONCILER_INTERVAL_MS}ms pendingAge=${PAYMENT_RECONCILER_PENDING_AGE_MS}ms`);
+} else {
+    console.log('🔁 Payment reconciler disabled (ENABLE_PAYMENT_RECONCILER=false)');
+}
 
 // Delete judge (admin)
 app.post('/admin/delete-judge', verifyIdToken, async (req, res) => {
