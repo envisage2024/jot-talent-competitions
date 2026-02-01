@@ -167,7 +167,18 @@
       if (paymentsSnapshot.empty) return null;
       return paymentsSnapshot.docs[0].data();
     } catch (e) {
-      console.error('Client Firestore lookup failed:', e.message || e);
+      const msg = (e && (e.message || e.toString())) || 'Unknown error';
+      console.error('Client Firestore lookup failed:', msg, e);
+
+      // If this is the 'requires an index' error, show a helpful UI message with link
+      if (msg.toLowerCase().includes('requires an index') || msg.toLowerCase().includes('index')) {
+        const project = (window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__.projectId) || 'your-project-id';
+        const link = `https://console.firebase.google.com/project/${project}/firestore/indexes`;
+        const advice = `Client Firestore query requires a composite index. Create it in the Firebase Console: ${link}`;
+        try { show('Lookup failed: missing Firestore index', advice); } catch(_) {}
+        console.warn('Create Firestore index at:', link);
+      }
+
       return null;
     }
   }
