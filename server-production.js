@@ -15,6 +15,7 @@ const admin = require('firebase-admin');
 // Initialize Firebase Admin
 let db = null;
 let adminInitAvailable = true;
+let adminInitError = null; // capture any Firebase Admin init error message for diagnostics
 try {
     // Try to load from serviceAccountKey.json first
     let serviceAccount;
@@ -53,7 +54,8 @@ try {
     console.log('✓ Firebase Admin initialized');
 } catch (err) {
     adminInitAvailable = false;
-    console.warn('⚠ Firebase Admin initialization skipped:', err.message);
+    adminInitError = err && err.message ? String(err.message) : String(err);
+    console.warn('⚠ Firebase Admin initialization skipped:', adminInitError);
     console.warn('⚠ Admin-only endpoints will not be available');
 }
 
@@ -797,10 +799,17 @@ app.get('/payment-status/:transactionId?', async (req, res) => {
                 console.log(`🔍 Searching payments by ${field}: ${value}`);
 
                 if (!adminInitAvailable || !db) {
-                    return res.status(503).json({ 
+                    const payload = {
                         message: 'Payment database unavailable',
-                        success: false 
-                    });
+                        success: false,
+                        adminInitAvailable: !!adminInitAvailable
+                    };
+                    // Provide helpful debug hint in development
+                    if (NODE_ENV === 'development' && adminInitError) {
+                        payload.adminInitError = adminInitError;
+                        payload.hint = 'Check FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY environment variables on the host.';
+                    }
+                    return res.status(503).json(payload);
                 }
 
                 try {
