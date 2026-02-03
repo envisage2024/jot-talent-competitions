@@ -8,13 +8,27 @@
     <title>Verify Payment - Jot Talent Competitions</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Firebase client SDK (used as a fallback if server DB is unavailable) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+        <!-- Firebase client SDK (loaded only if not already present) -->
+        <script>
+            (function(){
+                // Avoid loading Firebase multiple times (prevents the console warning)
+                if (window.firebase && window.firebase.apps) return;
+
+                var loadScript = function(src, cb){
+                    var s = document.createElement('script');
+                    s.src = src;
+                    s.async = false;
+                    s.onload = cb || function(){};
+                    s.onerror = function(){ console.warn('Failed to load', src); };
+                    document.head.appendChild(s);
+                };
+
+                // Load firebase-app then firestore
+                loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js', function(){
+                    loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js');
+                });
+            })();
+        </script>
     
     <style>
         :root {

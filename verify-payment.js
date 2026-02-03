@@ -150,10 +150,9 @@
       }
 
       if (!window._clientDb) {
-        try {
+        // Initialize Firebase client only if it hasn't been initialized by another script
+        if (!firebase.apps || firebase.apps.length === 0) {
           firebase.initializeApp(window.__FIREBASE_CONFIG__);
-        } catch (e) {
-          // ignore if already initialized
         }
         window._clientDb = firebase.firestore();
       }
